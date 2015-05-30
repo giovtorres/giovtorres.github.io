@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="">	
+<head>
+	<meta charset="utf-8"/>
+	<title>How to Setup an RPM Build Environment on CentOS 6 - Giovanni Torres</title>	
+	<meta name="author" content="Giovanni Torres">
+	
+
+	<meta name="description" content="This is part 1 of 4 in this series Introduction If you are working on or developing software for a RHEL based operating system, building RPMs is a great way to distribute packages within a group or enterprise. Sometimes, the package you want is not in any of the usual ...">
+
+
+	<link rel="top" href="#" /><link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,300italic,400italic,600italic|Source+Code+Pro' rel='stylesheet' type='text/css'></link>
+	<link rel="stylesheet" href="http://giovannitorres.me/theme/css/main.css" type="text/css" />
+		
+
+</head>
+	
+<body>
+
+    <div class="container">
+	  
+	  <header role="banner">
+	    <div class="feeds">
+	    </div>
+		<h2><a href="http://giovannitorres.me" class="title">Giovanni Torres</a></h2>
+ 
+            <h3 class="subtitle">too much contextswitching... not enough cpu cycles...</h3> 
+
+      </header>
+	
+	  <div class="wrapper">
+
+		  <div role="main" class="content">
+	<article class="full">
+			
+		<h1>How to Setup an RPM Build Environment on CentOS 6</h1>
+		
+<div class="metadata">
+  <time datetime="2015-05-24T10:38:00-04:00" pubdate>Sun 24 May 2015</time>
+ by <a class="url fn" href="http://giovannitorres.me/author/giovanni-torres.html">Giovanni Torres</a> </address>  
+</div>		
+		<h3>This is part 1 of 4 in this series</h3>
+<h2>Introduction</h2>
+<p>If you are working on or developing software for a RHEL based operating system,
+building RPMs is a great way to distribute packages within a group or
+enterprise.  Sometimes, the package you want is not in any of the usual RPM
+repositories, like <a href="https://fedoraproject.org/wiki/EPEL" title="EPEL">EPEL</a> for
+example. </p>
+<p>At this point, you can compile the package from source and distribute it to
+each machine or place it on a shared filesystem.  Alternatively, you could use
+a configuration management tool like Puppet or Ansible to take the tarball and
+run the build/compile/install commands for you.</p>
+<p>In this guide, we will walk through the steps required to setup an environment
+to build RPMs.</p>
+<h2>Prerequisites</h2>
+<p>Before continuing with this guide, start with a new virtual machine with the
+EPEL yum repository configured.</p>
+<h2>Install Packages</h2>
+<p>Building RPMs requires several development packages such as the GCC compiler
+and the autotools suite.</p>
+<p>To install the required packages, run the following:</p>
+<div class="highlight"><pre>sudo yum groupinstall &#39;Development Tools&#39;
+sudo yum install yum install rpmdevtools mock yum-utils
+</pre></div>
+
+
+<h2>Create a Dedicated User</h2>
+<p>Do <strong>not</strong> build RPMs as the <em>root</em> user!  You have been warned.  Things can go
+really wrong if the spec file is not written properly.  In fact, the <em>rpmbuild</em>
+command will build the RPM in its own <em>BUILD_ROOT</em>, therefore root access is
+simply not needed.  It is better to build RPMs as your own user or just create
+a dedicated user for this process. This way, if the RPM build environment is
+setup on a shared virtual machine, other users can switch to the dedicated user
+and use the same environment.</p>
+<p>Create a dedicated user:</p>
+<div class="highlight"><pre>sudo useradd makerpm
+</pre></div>
+
+
+<h2>Set Up The rpmbuild Tree</h2>
+<p>This process is trivial when using the <em>rpmdevtools</em> package. This package
+contains several scripts that help with building RPM packages. </p>
+<p>As the <em>makerpm</em> user, run the <em>rpmdev-setuptree</em> command:</p>
+<div class="highlight"><pre>sudo su - makerpm
+rpmdev-setuptree
+</pre></div>
+
+
+<p>The <em>rpmdev-setuptree</em> will create the <em>~/rpmbuild</em> directory and also create a
+<em>.rpmmacros</em> file in the home directory.  The needed subdirectories are
+created under the rpmbuild directory:</p>
+<div class="highlight"><pre>[makerpm@localhost ~]$ tree rpmbuild/
+rpmbuild/
+├── BUILD
+├── RPMS
+├── SOURCES
+├── SPECS
+└── SRPMS
+
+5 directories, 0 files
+</pre></div>
+
+
+<h2>The .rpmmacros File</h2>
+<p>The <em>rpmdev-setuptree</em> command also installs a <em>.rpmmacros</em> file in the user's
+home directory.  This file contains three lines by default:</p>
+<div class="highlight"><pre>%_topdir      %<span class="o">(</span><span class="nb">echo</span> <span class="nv">$HOME</span><span class="o">)</span>/rpmbuild
+%_smp_mflags  -j3
+%__arch_install_post   /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
+</pre></div>
+
+
+<p>The first macro, <em>%_topdir</em>, is set to the <em>/home/makerpm/rpmbuild</em> by default.
+It refers to the root directory of the RPM build environment.</p>
+<p>The second macro, <em>%_smp_mflags</em>, is to set the level or parallelism for the
+<em>make</em> step in building the package.  On a dedicated machine, you can set this
+to the number of available processors.</p>
+<p>Use the nproc command to determine the number of available processors:</p>
+<div class="highlight"><pre>[makerpm@localhost ~]$ nproc
+4
+</pre></div>
+
+
+<p>The third macro, <em>%__arch_install_post</em>, runs various checks at the end of
+building the RPM package.  The default macro has a check to look for <em>rpaths</em>
+in the buildroot directories.  This has to do with hardcoding library paths in
+the resulting binaries.  The Linux dynamic linker, <em>ld</em>, can find the right
+libraries as long as the libraries are put in the standard locations, such as
+/lib, /lib64, etc. or an appropriate config file is placed <em>/etc/ld.so.conf.d</em>
+for libraries in non-standard locations.</p>
+<p>For a more thorough explanation, see this Fedora Project link:
+<a href="https://fedoraproject.org/wiki/RPath_Packaging_Draft">https://fedoraproject.org/wiki/RPath_Packaging_Draft</a>.</p>
+<h2>Conclusion</h2>
+<p>You now have a working RPM build environment with a dedicated user for building
+RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
+follow good practice and sign your RPM packages.</p>	
+
+	</article>
+
+
+	<div class="comments">
+	<!--<h2>Comments !</h2>-->
+	    <div id="disqus_thread"></div>
+	    <script type="text/javascript">
+	       var disqus_identifier = "how-to-setup-an-rpm-build-environment-on-centos-6.html";
+	       (function() {
+	       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+	       dsq.src = 'http://giovannitorres.disqus.com/embed.js';
+	       (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+	      })();
+	    </script>
+	</div>
+
+		  </div>	
+		  
+		  <div class="sidebar">
+
+	        <nav>
+	          <h2>Categories</h2>
+	          <ul>
+	              <li ><a href="http://giovannitorres.me/category/linux.html">Linux</a></li>
+	              <li class="active"><a href="http://giovannitorres.me/category/rpm.html">RPM</a></li>
+	          </ul>
+	        </nav>
+
+
+
+		  </div>
+
+	  </div>
+
+      <footer>
+		<p role="contentinfo">
+		  © 2015 Giovanni Torres - Proudly powered by <a href="http://alexis.notmyidea.org/pelican/">pelican</a>. Theme <a href="https://github.com/fle/pelican-simplegrey">pelican-simplegrey</a>.
+    	</p>
+
+	  </footer>	
+
+	</div>
+	
+	  <script>
+		var _gaq=[['_setAccount','UA-54838714-1'],['_trackPageview']];
+		(function(d,t){var g=d.createElement(t),s=d.getElementsByTagName(t)[0];
+		g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
+		s.parentNode.insertBefore(g,s)}(document,'script'));
+	  </script>
+
+</body>
+</html>

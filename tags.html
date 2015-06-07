@@ -19,7 +19,7 @@
 <body>
 
     <div class="container-fluid">
-	  
+	 <div class="row">  
 	  <header role="banner">
 	    <div class="feeds">
 	        <a href="http://giovannitorres.me/feeds/all.atom.xml" rel="alternate"><img src="http://giovannitorres.me/theme/images/icons/feed-32px.png" alt="atom feed"/></a>
@@ -32,19 +32,19 @@
 	
 	  <div class="wrapper">
 
-		  <div role="main" class="content">
+		  <div role="main" class="col-lg-9 col-sm-9 content">
 
 <h1>Tags</h1>
 	
 <ul class="tagcloud">
-    <li class="tag-1"><a href="http://giovannitorres.me/tag/rpm.html">rpm</a></li>
     <li class="tag-4"><a href="http://giovannitorres.me/tag/gpg.html">gpg</a></li>
     <li class="tag-4"><a href="http://giovannitorres.me/tag/virtual-machine.html">virtual machine</a></li>
+    <li class="tag-1"><a href="http://giovannitorres.me/tag/rpm.html">rpm</a></li>
 </ul>
 
 		  </div>	
 		  
-		  <div class="sidebar">
+		  <div class="hidden-xs col-lg-3 col-sm-3 sidebar">
 
 	        <nav>
 	          <h2>Categories</h2>
@@ -57,7 +57,7 @@
 
 
 		  </div>
-
+        </div>
 	  </div>
 
       <footer>
@@ -75,6 +75,7 @@
 		g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
 		s.parentNode.insertBefore(g,s)}(document,'script'));
 	  </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
 </body>
 </html>

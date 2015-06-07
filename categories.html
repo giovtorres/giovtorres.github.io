@@ -19,7 +19,7 @@
 <body>
 
     <div class="container-fluid">
-	  
+	 <div class="row">  
 	  <header role="banner">
 	    <div class="feeds">
 	        <a href="http://giovannitorres.me/feeds/all.atom.xml" rel="alternate"><img src="http://giovannitorres.me/theme/images/icons/feed-32px.png" alt="atom feed"/></a>
@@ -32,14 +32,14 @@
 	
 	  <div class="wrapper">
 
-		  <div role="main" class="content">
+		  <div role="main" class="col-lg-9 col-sm-9 content">
 <ul>
     <li><a href="http://giovannitorres.me/category/linux.html">Linux</a></li>
     <li><a href="http://giovannitorres.me/category/rpm.html">RPM</a></li>
 </ul>
 		  </div>	
 		  
-		  <div class="sidebar">
+		  <div class="hidden-xs col-lg-3 col-sm-3 sidebar">
 
 	        <nav>
 	          <h2>Categories</h2>
@@ -52,7 +52,7 @@
 
 
 		  </div>
-
+        </div>
 	  </div>
 
       <footer>
@@ -70,6 +70,7 @@
 		g.src=('https:'==location.protocol?'//ssl':'//www')+'.google-analytics.com/ga.js';
 		s.parentNode.insertBefore(g,s)}(document,'script'));
 	  </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
 
 </body>
 </html>

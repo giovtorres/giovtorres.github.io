@@ -1,0 +1,443 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-05-29T13:47:00-04:00</updated><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><updated>2015-05-29T13:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h3&gt;This is part 2 of 4 in this series&lt;/h3&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt; of
+this series, we set up an RPM build environment with a dedicated user for
+building RPMs.  &lt;/p&gt;
+&lt;p&gt;Before we actually walk through the steps for building an RPM, we need to
+create a GPG key to sign the RPMs before they are distributed and installed.
+Signing RPMs is a good practice and ensures all the installed RPMs in your
+environment are verified from trusted sources.&lt;/p&gt;
+&lt;p&gt;In this guide, we will walk through the steps required to create your own RPM
+GPG signing key, distribute it and import it into a machine's RPM database.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;Creating a GPG key requires a certain amount of entropy in order to ensure
+sufficient randomness.  If you are following this guide on a virtual machine,
+you will need to make sure that the virtual machine has sufficient entropy.&lt;/p&gt;
+&lt;p&gt;See this &lt;a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html"&gt;post&lt;/a&gt; on how to
+increase the entropy on your virtual machine using &lt;em&gt;rng-tools&lt;/em&gt; before
+continuing.&lt;/p&gt;
+&lt;h2&gt;Install Packages&lt;/h2&gt;
+&lt;p&gt;To install the GPG package, run the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install gnupg2
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Create a GPG Key Pair&lt;/h2&gt;
+&lt;p&gt;Use the &lt;em&gt;gpg&lt;/em&gt; command to create a new key pair:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg --gen-key
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;strong&gt;--gen-key&lt;/strong&gt; option is used interactively.  Select the key you want to use.
+The first option, &lt;em&gt;RSA and RSA&lt;/em&gt;, creates an RSA key for digital signing and
+another RSA key for encryption.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;Please select what kind of key you want:
+   (1) RSA and RSA (default)
+   (2) DSA and Elgamal
+   (3) DSA (sign only)
+   (4) RSA (sign only)
+Your selection? 1
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Next, select the size.  The default &lt;em&gt;2048&lt;/em&gt; bits is sufficient, but if you are
+feeling particularly paranoid, go for &lt;em&gt;4096&lt;/em&gt; bits.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;RSA keys may be between 1024 and 4096 bits long.
+What keysize do you want? (2048) 2048
+Requested keysize is 2048 bits
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Next, choose how long the key should be valid.  In this example, we choose the
+default choice, &lt;em&gt;0&lt;/em&gt;, so the key will not expire.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;Please specify how long the key should be valid.
+         0 = key does not expire
+      &amp;lt;n&amp;gt;  = key expires in n days
+      &amp;lt;n&amp;gt;w = key expires in n weeks
+      &amp;lt;n&amp;gt;m = key expires in n months
+      &amp;lt;n&amp;gt;y = key expires in n years
+Key is valid for? (0) 
+Key does not expire at all
+Is this correct? (y/N) y
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, you will need to fill out some identifying information about the key, like
+your name and email.  In this example, we leave the &lt;em&gt;Comment&lt;/em&gt; field empty.
+After filling out the fields, you are prompted to confirm the information or
+change any of the fields before continuing.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;GnuPG needs to construct a user ID to identify your key.
+
+Real name: Example Org Signing Key
+Email address: support@example.com
+Comment: 
+You selected this USER-ID:
+    &amp;quot;Example Org Signing Key &amp;lt;support@example.com&amp;gt;&amp;quot;
+
+Change (N)ame, (C)omment, (E)mail or (O)kay/(Q)uit? o
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The last step in creating the key pair is to protect your secret key with a
+passphrase.  Note the use of a suggested passphrase and not a password.  We
+recommend using an easy to remember sentence to protect the secret key.&lt;/p&gt;
+&lt;p&gt;You should now be presented with a curses based prompt to enter and confirm
+your passphrase.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;┌─────────────────────────────────────────────────────┐
+│ Enter passphrase                                    │
+│                                                     │
+│                                                     │
+│ Passphrase ________________________________________ │
+│                                                     │
+│   &amp;lt;OK&amp;gt;                             &amp;lt;Cancel&amp;gt;         │
+└─────────────────────────────────────────────────────┘
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This passphrase prompt is displayed by the &lt;em&gt;pinentry&lt;/em&gt; package. If you are in an
+X environment, whether on a desktop or via SSH with X11 forwarding enabled to a
+remote server, you may get a GUI version of the passphrase prompt.  To get the
+GUI prompt, however, you will need to have the &lt;em&gt;pinentry-gtk&lt;/em&gt; package installed
+if you are using GNOME and &lt;em&gt;pinentry-qt&lt;/em&gt; or &lt;em&gt;pinentry-qt4&lt;/em&gt; if you are using KDE.&lt;/p&gt;
+&lt;p&gt;After typing your password, the key generation may stall and you may see the following message:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This has to do with insufficient entropy.  Again, see this
+&lt;a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html"&gt;post&lt;/a&gt; on how to increase
+the entropy on your virtual machine.  You may open another terminal to the
+server you are generating the keys on and install and run &lt;em&gt;rng-tools&lt;/em&gt;.  Shortly
+after the &lt;em&gt;rngd&lt;/em&gt; daemon is running, the key generation should complete and you should see a message like this:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg: key 3D832D1E marked as ultimately trusted
+public and secret key created and signed.
+
+gpg: checking the trustdb
+gpg: 3 marginal(s) needed, 1 complete(s) needed, PGP trust model
+gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
+pub   2048R/3D832D1E 2015-05-29
+      Key fingerprint = 7F50 5CA9 0CD0 DBF1 FAC2  AB46 E5E5 4444 3D83 2D1E
+uid                  Example Org Signing Key &amp;lt;support@example.com&amp;gt;
+sub   2048R/D4F51F8B 2015-05-29
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Confirming your keys&lt;/h2&gt;
+&lt;p&gt;To list your keys, run the following command:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg --list-keys
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;You will see a listing of all keys.  In this example, only a single key is listed, the one we just created from the above steps.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;/home/giovanni/.gnupg/pubring.gpg
+---------------------------------
+pub   2048R/3D832D1E 2015-05-29
+uid                  Example Org Signing Key &amp;lt;support@example.com&amp;gt;
+sub   2048R/D4F51F8B 2015-05-29
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Troubleshooting TTY Issues&lt;/h2&gt;
+&lt;p&gt;There is an &lt;a href="https://bugzilla.redhat.com/show_bug.cgi?id=659512#c5"&gt;issue&lt;/a&gt;,
+apparently with the &lt;em&gt;gnupg2&lt;/em&gt; package, where if you &lt;em&gt;su&lt;/em&gt;, i.e. switch, to
+another user, a new pseudo-terminal is not opened for the switched user.&lt;/p&gt;
+&lt;p&gt;This causes problems since gnupg2 requires permissions to open a tty for the
+&lt;em&gt;pinentry&lt;/em&gt; package, which is responsible for displaying the passphrase prompt
+to the screen. Therefore, if you run the &lt;strong&gt;gpg --gen-key&lt;/strong&gt; command after
+switching to a different user, you may see one of the following error messages:&lt;/p&gt;
+&lt;p&gt;Without X11 Forwarding:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg-agent[5569]: directory `/home/giovanni/.gnupg/private-keys-v1.d&amp;#39; created
+gpg-agent[5569]: command get_passphrase failed: Operation cancelled
+gpg: cancelled by user
+gpg: Key generation canceled.
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;With X11 Forwarding:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;X11 connection rejected because of wrong authentication.
+xprop:  unable to open display &amp;#39;localhost:10.0&amp;#39;
+X11 connection rejected because of wrong authentication.
+
+(pinentry-gtk-2:10602): Gtk-WARNING **: cannot open display: localhost:10.0
+gpg-agent[10601]: can&amp;#39;t connect server: ec=4.16383
+gpg-agent[10601]: can&amp;#39;t connect to the PIN entry module: End of file
+gpg-agent[10601]: command get_passphrase failed: No pinentry
+gpg: problem with the agent: No pinentry
+gpg: Key generation canceled.
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Workaround&lt;/h3&gt;
+&lt;p&gt;In order to work around the above TTY issue, you will need to use X11
+forwarding when switching to a different user.  To do this, you need an
+&lt;em&gt;export&lt;/em&gt; file in root's &lt;strong&gt;.xauth&lt;/strong&gt; directory.&lt;/p&gt;
+&lt;p&gt;First, switch to root:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;su -
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Then, create an export file with the user you want to switch to, for example,
+&lt;strong&gt;user1&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cd $HOME
+mkdir -p .xauth
+echo &amp;quot;user1&amp;quot; &amp;gt;&amp;gt; .xauth/export
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Switch to &lt;strong&gt;user1&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;su - user1
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, if you try to generate gpg keys, pinentry will present the passphrase
+prompt.&lt;/p&gt;
+&lt;h2&gt;Distributing the Public Key&lt;/h2&gt;
+&lt;p&gt;If you plan to distribute custom built RPMs to multiple or even all machines in your
+environment, you will need to distribute the public key to all machines and
+import it into each machine's local RPM database.&lt;/p&gt;
+&lt;h3&gt;Export the Signing Key&lt;/h3&gt;
+&lt;p&gt;We need to export the signing key into ASCII armored output, which is a form of
+binary-to-text encoding.  We need the &lt;em&gt;name&lt;/em&gt; of the key in order to export it.&lt;/p&gt;
+&lt;p&gt;Get a list of keys:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg --list-keys
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The output, as seen above, should similar to the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;/home/giovanni/.gnupg/pubring.gpg
+---------------------------------
+pub   2048R/3D832D1E 2015-05-29
+uid                  Example Org Signing Key &amp;lt;support@example.com&amp;gt;
+sub   2048R/D4F51F8B 2015-05-29
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;name&lt;/em&gt; is in the &lt;em&gt;uid&lt;/em&gt; line, before the email address.  In this case, it is
+&lt;strong&gt;Example Org Signing Key&lt;/strong&gt;.  Use gpg to export this key in ASCII armored
+output to a file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg --export -a &amp;quot;Example Org Signing Key&amp;quot; &amp;gt; RPM-GPG-KEY-example-org-signing-key
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The resulting file, &lt;strong&gt;RPM-GPG-KEY-example-org-signing-key&lt;/strong&gt;, is the RPM signing
+key that we can distribute to other machines.&lt;/p&gt;
+&lt;h3&gt;Importing the Key into the RPM database&lt;/h3&gt;
+&lt;p&gt;On RHEL 6 and its clones, the default location on the filesystem for RPM GPG
+keys are &lt;strong&gt;/etc/pki/rpm-gpg&lt;/strong&gt;.  Use your tool of choice, such as scp, rsync,
+Puppet, Ansible, etc., to copy the file to any remote machine where you will
+install custom RPMs signed with this key.&lt;/p&gt;
+&lt;p&gt;If SELinux is in &lt;em&gt;Enforcing&lt;/em&gt; mode, be sure that the TYPE in the target security
+context is &lt;strong&gt;cert_t&lt;/strong&gt;. Use the &lt;strong&gt;ls&lt;/strong&gt; command to view the SELinux context of
+the key file&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;ls -lZ /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The output should look something similar to the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;-rw-r--r--. root root unconfined_u:object_r:cert_t:s0 /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Lastly, import the key into the RPM database on all machines where you copied
+the key. This command will not return any output and exit with return code &lt;strong&gt;0&lt;/strong&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Verify Key Import&lt;/h3&gt;
+&lt;p&gt;To verify that the key has been imported, we can search the RPM database.
+First, we need the public GPG key id.  In the output of &lt;strong&gt;gpg --list-keys&lt;/strong&gt;,
+the public key id is found in the &lt;strong&gt;pub&lt;/strong&gt; line.  It is the 8 hex digits after
+the slash.  The size of the key, &lt;em&gt;2048&lt;/em&gt;, and the algorithm, &lt;em&gt;R&lt;/em&gt; for RSA, is
+shown before the slash on the &lt;strong&gt;pub&lt;/strong&gt; line.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;pub   2048R/3D832D1E 2015-05-29
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Then, use the &lt;strong&gt;rpm&lt;/strong&gt; command to find the public key.  &lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;rpm -qa gpg-pubkey\*
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The output will show all GPG keys that have been imported into the RPM
+database.  You should see your public key ID, in lowercase, in one of the pubkeys listed:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;gpg-pubkey-3d832d1e-556873e0
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Finally, use &lt;strong&gt;rpm&lt;/strong&gt; command again to see more information about the key:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;rpm -qi gpg-pubkey-3d832d1e-556873e0
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The output should look similar to the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;Name        : gpg-pubkey                   Relocations: (not relocatable)
+Version     : 3d832d1e                          Vendor: (none)
+Release     : 556873e0                      Build Date: Fri 29 May 2015 08:13:22 PM EDT
+Install Date: Fri 29 May 2015 08:13:22 PM EDT      Build Host: localhost
+Group       : Public Keys                   Source RPM: (none)
+Size        : 0                                License: pubkey
+Signature   : (none)
+Summary     : gpg(Example Org Signing Key &amp;lt;support@example.com&amp;gt;)
+Description :
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+...
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;You now have an RPM GPG key that you can use sign and verify custom RPMs.  In
+Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><updated>2015-05-24T10:38:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h3&gt;This is part 1 of 4 in this series&lt;/h3&gt;
+&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;If you are working on or developing software for a RHEL based operating system,
+building RPMs is a great way to distribute packages within a group or
+enterprise.  Sometimes, the package you want is not in any of the usual RPM
+repositories, like &lt;a href="https://fedoraproject.org/wiki/EPEL" title="EPEL"&gt;EPEL&lt;/a&gt; for
+example. &lt;/p&gt;
+&lt;p&gt;At this point, you can compile the package from source and distribute it to
+each machine or place it on a shared filesystem.  Alternatively, you could use
+a configuration management tool like Puppet or Ansible to take the tarball and
+run the build/compile/install commands for you.&lt;/p&gt;
+&lt;p&gt;In this guide, we will walk through the steps required to setup an environment
+to build RPMs.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;Before continuing with this guide, start with a new virtual machine with the
+EPEL yum repository configured.&lt;/p&gt;
+&lt;h2&gt;Install Packages&lt;/h2&gt;
+&lt;p&gt;Building RPMs requires several development packages such as the GCC compiler
+and the autotools suite.&lt;/p&gt;
+&lt;p&gt;To install the required packages, run the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum groupinstall &amp;#39;Development Tools&amp;#39;
+sudo yum install yum install rpmdevtools mock yum-utils
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Create a Dedicated User&lt;/h2&gt;
+&lt;p&gt;Do &lt;strong&gt;not&lt;/strong&gt; build RPMs as the &lt;em&gt;root&lt;/em&gt; user!  You have been warned.  Things can go
+really wrong if the spec file is not written properly.  In fact, the &lt;em&gt;rpmbuild&lt;/em&gt;
+command will build the RPM in its own &lt;em&gt;BUILD_ROOT&lt;/em&gt;, therefore root access is
+simply not needed.  It is better to build RPMs as your own user or just create
+a dedicated user for this process. This way, if the RPM build environment is
+setup on a shared virtual machine, other users can switch to the dedicated user
+and use the same environment.&lt;/p&gt;
+&lt;p&gt;Create a dedicated user:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo useradd makerpm
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Set Up The rpmbuild Tree&lt;/h2&gt;
+&lt;p&gt;This process is trivial when using the &lt;em&gt;rpmdevtools&lt;/em&gt; package. This package
+contains several scripts that help with building RPM packages. &lt;/p&gt;
+&lt;p&gt;As the &lt;em&gt;makerpm&lt;/em&gt; user, run the &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo su - makerpm
+rpmdev-setuptree
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; will create the &lt;em&gt;~/rpmbuild&lt;/em&gt; directory and also create a
+&lt;em&gt;.rpmmacros&lt;/em&gt; file in the home directory.  The needed subdirectories are
+created under the rpmbuild directory:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost ~]$ tree rpmbuild/
+rpmbuild/
+├── BUILD
+├── RPMS
+├── SOURCES
+├── SPECS
+└── SRPMS
+
+5 directories, 0 files
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;The .rpmmacros File&lt;/h2&gt;
+&lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command also installs a &lt;em&gt;.rpmmacros&lt;/em&gt; file in the user's
+home directory.  This file contains three lines by default:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;%_topdir      %&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="nv"&gt;$HOME&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;/rpmbuild
+%_smp_mflags  -j3
+%__arch_install_post   /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The first macro, &lt;em&gt;%_topdir&lt;/em&gt;, is set to the &lt;em&gt;/home/makerpm/rpmbuild&lt;/em&gt; by default.
+It refers to the root directory of the RPM build environment.&lt;/p&gt;
+&lt;p&gt;The second macro, &lt;em&gt;%_smp_mflags&lt;/em&gt;, is to set the level or parallelism for the
+&lt;em&gt;make&lt;/em&gt; step in building the package.  On a dedicated machine, you can set this
+to the number of available processors.&lt;/p&gt;
+&lt;p&gt;Use the nproc command to determine the number of available processors:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost ~]$ nproc
+4
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The third macro, &lt;em&gt;%__arch_install_post&lt;/em&gt;, runs various checks at the end of
+building the RPM package.  The default macro has a check to look for &lt;em&gt;rpaths&lt;/em&gt;
+in the buildroot directories.  This has to do with hardcoding library paths in
+the resulting binaries.  The Linux dynamic linker, &lt;em&gt;ld&lt;/em&gt;, can find the right
+libraries as long as the libraries are put in the standard locations, such as
+/lib, /lib64, etc. or an appropriate config file is placed &lt;em&gt;/etc/ld.so.conf.d&lt;/em&gt;
+for libraries in non-standard locations.&lt;/p&gt;
+&lt;p&gt;For a more thorough explanation, see this Fedora Project link:
+&lt;a href="https://fedoraproject.org/wiki/RPath_Packaging_Draft"&gt;https://fedoraproject.org/wiki/RPath_Packaging_Draft&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;You now have a working RPM build environment with a dedicated user for building
+RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
+follow good practice and sign your RPM packages.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+waiting for kernel to gather sufficient entropy in order to sufficiently
+randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Virtual machines tend to not have a lot of entropy, at least not without some
+help.  Entropy in Linux refers to the level of random numbers available from
+the pseudorandom number generator available to the Linux kernel. &lt;a href="http://wiki.qemu-project.org/Features-Done/VirtIORNG"&gt;VirtIO
+RNG&lt;/a&gt; promises to help
+with this.  Until this becomes ubiquitous, you can use
+&lt;a href="https://www.gnu.org/software/hurd/user/tlecarrour/rng-tools.html"&gt;rng-tools&lt;/a&gt;
+to gather entropy inside your virtual machine. In fact, rngd is enabled by
+default since Fedora 18.&lt;/p&gt;
+&lt;p&gt;Install the rng-tools package using YUM:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rng-tools
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Edit the rng-tools configuration file and configure the kernel device used for
+random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pseudorandom number generator:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo perl -p -i -e &amp;#39;s/EXTRAOPTIONS=&amp;quot;&amp;quot;/EXTRAOPTIONS=&amp;quot;-r \/dev\/urandom&amp;quot;/&amp;#39; /etc/sysconfig/rngd
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Start rngd&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo chkconfig rngd on
+sudo service rngd start
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Verify available kernel entropy (higher is better)&lt;/h3&gt;
+&lt;p&gt;Before:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+173
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;After:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+4096
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That's it.&lt;/p&gt;
+&lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
+&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
+try to put meaningful things here regarding deployment, configuration and
+troubleshooting of processes and applications running on Linux, mostly CentOS
+6, 7 and sometimes Fedora.&lt;/p&gt;
+&lt;p&gt;Let's see how it goes...&lt;/p&gt;</summary></entry></feed>

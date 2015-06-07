@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/linux.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2014-09-13T15:12:00-04:00</updated><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+waiting for kernel to gather sufficient entropy in order to sufficiently
+randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Virtual machines tend to not have a lot of entropy, at least not without some
+help.  Entropy in Linux refers to the level of random numbers available from
+the pseudorandom number generator available to the Linux kernel. &lt;a href="http://wiki.qemu-project.org/Features-Done/VirtIORNG"&gt;VirtIO
+RNG&lt;/a&gt; promises to help
+with this.  Until this becomes ubiquitous, you can use
+&lt;a href="https://www.gnu.org/software/hurd/user/tlecarrour/rng-tools.html"&gt;rng-tools&lt;/a&gt;
+to gather entropy inside your virtual machine. In fact, rngd is enabled by
+default since Fedora 18.&lt;/p&gt;
+&lt;p&gt;Install the rng-tools package using YUM:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rng-tools
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Edit the rng-tools configuration file and configure the kernel device used for
+random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pseudorandom number generator:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo perl -p -i -e &amp;#39;s/EXTRAOPTIONS=&amp;quot;&amp;quot;/EXTRAOPTIONS=&amp;quot;-r \/dev\/urandom&amp;quot;/&amp;#39; /etc/sysconfig/rngd
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Start rngd&lt;/h3&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo chkconfig rngd on
+sudo service rngd start
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Verify available kernel entropy (higher is better)&lt;/h3&gt;
+&lt;p&gt;Before:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+173
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;After:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+4096
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;That's it.&lt;/p&gt;
+&lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
+&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
+try to put meaningful things here regarding deployment, configuration and
+troubleshooting of processes and applications running on Linux, mostly CentOS
+6, 7 and sometimes Fedora.&lt;/p&gt;
+&lt;p&gt;Let's see how it goes...&lt;/p&gt;</summary></entry></feed>

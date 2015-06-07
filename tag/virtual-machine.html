@@ -19,8 +19,9 @@
 <body>
 
     <div class="container-fluid">
+
 	 <div class="row">  
-	  <header role="banner">
+	  <header class="header col-md-12 col-xs-8" role="banner">
 	    <div class="feeds">
 	        <a href="http://giovannitorres.me/feeds/all.atom.xml" rel="alternate"><img src="http://giovannitorres.me/theme/images/icons/feed-32px.png" alt="atom feed"/></a>
 	    </div>
@@ -29,10 +30,11 @@
             <h3 class="subtitle">too much contextswitching... not enough cpu cycles...</h3> 
 
       </header>
+     </div>
 	
-	  <div class="wrapper">
+	 <div class="row">
 
-		  <div role="main" class="col-lg-9 col-sm-9 content">
+		  <div class="col-md-9 col-xs-8 content" role="main">
 
 <h1>Post tagged: virtual machine</h1>
 
@@ -56,7 +58,7 @@ randomize the encrypted output?  You have probably seen a message such as:</p>
 
 		  </div>	
 		  
-		  <div class="hidden-xs col-lg-3 col-sm-3 sidebar">
+		  <div class="hidden-xs hidden-sm col-md-3 sidebar">
 
 	        <nav>
 	          <h2>Categories</h2>
@@ -69,17 +71,19 @@ randomize the encrypted output?  You have probably seen a message such as:</p>
 
 
 		  </div>
-        </div>
-	  </div>
+        </div> <!-- closes row -->
 
-      <footer>
-		<p role="contentinfo">
-		  © 2015 Giovanni Torres - Proudly powered by <a href="http://alexis.notmyidea.org/pelican/">pelican</a>. Theme <a href="https://github.com/fle/pelican-simplegrey">pelican-simplegrey</a>.
-    	</p>
+      <div class="row">
+        <footer class="footer col-md-12 col-sm-8 col-xs-8">
+          <div class="container">
+              <p role="contentinfo">
+              © 2015 Giovanni Torres - Proudly powered by <a href="http://alexis.notmyidea.org/pelican/">pelican</a>. Theme <a href="https://github.com/fle/pelican-simplegrey">pelican-simplegrey</a>.
+              </p>
+          </div>
+	    </footer>	
+      </div>
 
-	  </footer>	
-
-	</div>
+    </div>
 	
 	  <script>
 		var _gaq=[['_setAccount','UA-54838714-1'],['_trackPageview']];

@@ -45,15 +45,15 @@ body {
 header {
   font-family: 'Source Sans Pro', sans-serif;
   background-color: #40403F;
-  height: 70px;
+  height: 90px;
   line-height: 50px;
   padding: 0 1em; 
 }
 
-.wrapper {
+/*.wrapper {
   display: table;
   width: 100%;
-}
+}*/
 
 .content {
   display: table-cell;
@@ -65,7 +65,7 @@ header {
 .sidebar {
   display: table-cell;
   width: 25%;
-  border-right: 1px solid #d6d6d6;
+/*  border-right: 1px solid #d6d6d6;*/
   padding: 0 20px 1em 20px;
 }
 

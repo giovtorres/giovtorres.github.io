@@ -1,0 +1,8 @@
+.navbar {
+    min-height: 50px;
+}
+
+.navbar-brand {
+    font-weight: 300;
+    font-size: 25px;
+}

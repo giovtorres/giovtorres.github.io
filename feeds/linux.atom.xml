@@ -51,7 +51,8 @@ sudo service rngd start
 &lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
 &lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
 put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
-try to put meaningful things here regarding deployment, configuration and
+try to put meaningful things here regarding monitoring, configuration and
 troubleshooting of processes and applications running on Linux, mostly CentOS
 6, 7 and sometimes Fedora.&lt;/p&gt;
+&lt;p&gt;I also tend to gravitate towards the areas of monitoring, visualization and documentation.&lt;/p&gt;
 &lt;p&gt;Let's see how it goes...&lt;/p&gt;</summary></entry></feed>

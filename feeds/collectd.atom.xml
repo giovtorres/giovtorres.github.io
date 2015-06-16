@@ -1,0 +1,431 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/collectd.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-06-15T17:34:00-04:00</updated><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><updated>2015-06-15T17:34:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;There are a variety of ways to extract system resource information from a Linux
+server. Some of these utilities are triggered by cron, such as sysstat, while others are
+based on a predefined check interval, such as Nagios.  Others are meant to be used
+interactively, such as htop or vmstat.&lt;/p&gt;
+&lt;p&gt;&lt;a href="https://collectd.org" title="collectd"&gt;collectd&lt;/a&gt; is another utility that gathers
+system metrics on a given system.  It is written in C, giving it great
+performance.  Its versatility, however, comes from the almost 100 plugins that
+is bundled with the daemon.  These plugins include various read and write
+plugins.  Some of the read plugins collect the standard Linux subsystem
+metrics, such as CPU, Disk, Memory and Network, while other read plugins are
+more specialized, such as reading Apache httpd or DNS metrics.&lt;/p&gt;
+&lt;p&gt;collectd gathers these metrics, but where are they stored?  collectd has a
+handful of write plugins that allow you either store the metrics in local
+round-robin databases (RRDs) or externally to another collector, such as
+Graphite.&lt;/p&gt;
+&lt;p&gt;The collectd package in the EPEL 6 repository package is out of date.  Often,
+users opt to compile collectd from source to obtain a newer, more recent version.
+The process of compiling collectd can be somewhat daunting at times because the
+more plugins that are available, the more dependencies are necessary.&lt;/p&gt;
+&lt;p&gt;The goal of this guide is to list the necessary packages for building collectd
+from source with most of the plugins enabled.  These dependencies can all be
+found in the CentOS Base and EPEL repositories.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;Compiling any package from source requires a compiler.  If you don't already
+have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install gcc
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;For this exercise, you will also need kernel and the C library header files:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install kernel-headers glibc-headers
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Downloading collectd&lt;/h2&gt;
+&lt;p&gt;A link to the collectd source is hosted on the main page of the &lt;a href="https://collectd.org" title="collectd website"&gt;collectd
+website&lt;/a&gt;.  Download and untar the
+the latest source tarball.  At the time of this writing, version 5.5.0 is the
+latest stable version.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Configuring collectd&lt;/h2&gt;
+&lt;p&gt;After downloading and extracting the source files, change to that directory:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cd collect-5.5.0
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This package can be configured, built and installed with the typical &lt;strong&gt;configure &amp;amp;&amp;amp; make &amp;amp;&amp;amp; make
+install&lt;/strong&gt; sequence of commands.&lt;/p&gt;
+&lt;p&gt;Start by running the configure step so that we can have a look at the
+available plugins:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;./configure
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This command will output quite a bit to the screen, checking your system for
+the presence of various libraries, header files and binaries in the process.
+Have a look at the summary at the end, for example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;Configuration:
+  Libraries:
+    intel mic . . . . . . no (MicAccessApi not found)
+    libaquaero5 . . . . . no (libaquaero5.h not found)
+    libatasmart . . . . . no (atasmart.h not found)
+    libcurl . . . . . . . no (curl-config failed)
+    libdbi  . . . . . . . no (dbi/dbi.h not found)
+    libesmtp  . . . . . . no (libesmtp not found)
+    libganglia  . . . . . no (gm_protocol.h not found)
+[...output truncated...]
+  Modules:
+    aggregation . . . . . yes
+    amqp    . . . . . . . no
+    apache  . . . . . . . no
+    apcups  . . . . . . . yes
+    apple_sensors . . . . no
+    aquaero . . . . . . . no
+    ascent  . . . . . . . no
+    barometer . . . . . . no
+[...output truncated...]
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The summary at the end shows the various plugins and whether or not the
+configure step was able to locate the necessary prerequisites to build each plugin.&lt;/p&gt;
+&lt;p&gt;Even though the configure step was not able to find many libraries or modules,
+collectd will still compile successfully, albeit without these plugins.  Often,
+you would like to enable several plugins at compile time, for example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;./configure --enable-java --enable-python
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Without the appropriate package dependencies installed, the configure step will
+output the following line at the very end:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;configure&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;error&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Some plugins are missing dependencies - see the summary&lt;/span&gt;
+&lt;span class="s2"&gt;above for details&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Use the two tables below to install the appropriate RPM packages for the
+plugins you would like to enable.&lt;/p&gt;
+&lt;h2&gt;Libaries&lt;/h2&gt;
+&lt;p&gt;The following table shows the collectd libraries and their corresponding RPM
+package dependencies:&lt;/p&gt;
+&lt;table&gt;
+    &lt;col width="150"&gt;
+    &lt;col width="300"&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Library&lt;/tn&gt;
+            &lt;th&gt;RPM Package(s)&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libatasmart&lt;/td&gt;
+            &lt;td&gt;libatasmart-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libcurl&lt;/td&gt;
+            &lt;td&gt;libcurl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libdbi&lt;/td&gt;
+            &lt;td&gt;libdbi-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libesmtp&lt;/td&gt;
+            &lt;td&gt;libesmtp-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libganglia&lt;/td&gt;
+            &lt;td&gt;ganglia-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libgcrypt&lt;/td&gt;
+            &lt;td&gt;libgcrypt-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libhal&lt;/td&gt;
+            &lt;td&gt;hal-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libhiredis&lt;/td&gt;
+            &lt;td&gt;hiredis-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libiptc&lt;/td&gt;
+            &lt;td&gt;iptables-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libjvm&lt;/td&gt;
+            &lt;td&gt;java-1.8.0-openjdk-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libldap&lt;/td&gt;
+            &lt;td&gt;openldap-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;liblvm2app&lt;/td&gt;
+            &lt;td&gt;lvm2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libmemcached&lt;/td&gt;
+            &lt;td&gt;libmemcached-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libmnl&lt;/td&gt;
+            &lt;td&gt;libmnl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libmodbus&lt;/td&gt;
+            &lt;td&gt;libmodbus-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libmysql&lt;/td&gt;
+            &lt;td&gt;mysql-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libnetsnmp&lt;/td&gt;
+            &lt;td&gt;net-snmp-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libnotify&lt;/td&gt;
+            &lt;td&gt;libnotify-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libopenipmi&lt;/td&gt;
+            &lt;td&gt;OpenIPMI-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;liboping&lt;/td&gt;
+            &lt;td&gt;liboping-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libpcap&lt;/td&gt;
+            &lt;td&gt;libpcap-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libperl&lt;/td&gt;
+            &lt;td&gt;perl-devel, perl-ExtUtils-Embed&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libpq&lt;/td&gt;
+            &lt;td&gt;postgresql-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;librabbitmq&lt;/td&gt;
+            &lt;td&gt;librabbitmq-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;librrd&lt;/td&gt;
+            &lt;td&gt;rrdtool-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libsensors&lt;/td&gt;
+            &lt;td&gt;lm_sensors-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libstatgrab&lt;/td&gt;
+            &lt;td&gt;libstatgrab-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libudev&lt;/td&gt;
+            &lt;td&gt;libudev-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libupsclient&lt;/td&gt;
+            &lt;td&gt;nut-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libvarnish&lt;/td&gt;
+            &lt;td&gt;varnish-libs-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libvirt&lt;/td&gt;
+            &lt;td&gt;libvirt-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libxml2&lt;/td&gt;
+            &lt;td&gt;libxml2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;libyajl&lt;/td&gt;
+            &lt;td&gt;yajl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;protobuf-c&lt;/td&gt;
+            &lt;td&gt;protobuf-c-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;python&lt;/td&gt;
+            &lt;td&gt;python-devel&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2&gt;Modules&lt;/h2&gt;
+&lt;p&gt;The following table shows the collectd modules and their corresponding RPM
+package dependencies:&lt;/p&gt;
+&lt;table&gt;
+    &lt;col width="150"&gt;
+    &lt;col width="300"&gt;
+    &lt;thead&gt;
+        &lt;tr&gt;
+            &lt;th&gt;Module&lt;/tn&gt;
+            &lt;th&gt;RPM Package(s)&lt;/th&gt;
+        &lt;/tr&gt;
+    &lt;/thead&gt;
+    &lt;tbody&gt;
+        &lt;tr&gt;
+            &lt;td&gt;amqp&lt;/td&gt;
+            &lt;td&gt;librabbitmq-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;apache&lt;/td&gt;
+            &lt;td&gt;libcurl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;bind&lt;/td&gt;
+            &lt;td&gt;libcurl-devel, libxml2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;ceph&lt;/td&gt;
+            &lt;td&gt;yajl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;curl&lt;/td&gt;
+            &lt;td&gt;libcurl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;curl_json&lt;/td&gt;
+            &lt;td&gt;libcurl-devel, yajl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;curl_xml&lt;/td&gt;
+            &lt;td&gt;libcurl-devel, libxml2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;dbi&lt;/td&gt;
+            &lt;td&gt;libdbi-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;dns&lt;/td&gt;
+            &lt;td&gt;libpcap-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;gmond&lt;/td&gt;
+            &lt;td&gt;ganglia-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;ipmi&lt;/td&gt;
+            &lt;td&gt;OpenIPMI-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;iptables&lt;/td&gt;
+            &lt;td&gt;iptables-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;java&lt;/td&gt;
+            &lt;td&gt;java-1.8.0-openjdk-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;log_logstash&lt;/td&gt;
+            &lt;td&gt;yajl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;lvm&lt;/td&gt;
+            &lt;td&gt;lvm2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;memcachec&lt;/td&gt;
+            &lt;td&gt;libmemcached-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;mysql&lt;/td&gt;
+            &lt;td&gt;mysql-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;netlink&lt;/td&gt;
+            &lt;td&gt;libmnl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;nginx&lt;/td&gt;
+            &lt;td&gt;libcurl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;notify_desktop&lt;/td&gt;
+            &lt;td&gt;libnotify-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;notify_email&lt;/td&gt;
+            &lt;td&gt;libesmtp-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;nut&lt;/td&gt;
+            &lt;td&gt;nut-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;openldap&lt;/td&gt;
+            &lt;td&gt;openldap-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;perl&lt;/td&gt;
+            &lt;td&gt;perl-devel, perl-ExtUtils-Embed&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;ping&lt;/td&gt;
+            &lt;td&gt;liboping-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;postgresql&lt;/td&gt;
+            &lt;td&gt;postgresql-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;python&lt;/td&gt;
+            &lt;td&gt;python-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;redis&lt;/td&gt;
+            &lt;td&gt;hiredis-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;rrdtool&lt;/td&gt;
+            &lt;td&gt;rrdtool-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;smart&lt;/td&gt;
+            &lt;td&gt;libatasmart-devel, libudev-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;snmp&lt;/td&gt;
+            &lt;td&gt;net-snmp-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;varnish&lt;/td&gt;
+            &lt;td&gt;varnish-libs-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;virt&lt;/td&gt;
+            &lt;td&gt;libvirt-devel, libxml2-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;write_http&lt;/td&gt;
+            &lt;td&gt;libcurl-devel&lt;/td&gt;
+        &lt;/tr&gt;
+        &lt;tr&gt;
+            &lt;td&gt;write_redis&lt;/td&gt;
+            &lt;td&gt;hiredis-devel&lt;/td&gt;
+        &lt;/tr&gt;
+    &lt;/tbody&gt;
+&lt;/table&gt;
+
+&lt;h2&gt;Notes&lt;/h2&gt;
+&lt;p&gt;Not all plugin dependencies were available from the CentOS Base and EPEL
+repositories.  For these particular plugins, you would either have to:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;configure another YUM repository that has the necessary RPMs&lt;/li&gt;
+&lt;li&gt;download and install the individual RPM from a third-party site&lt;/li&gt;
+&lt;li&gt;build your own RPM&lt;/li&gt;
+&lt;li&gt;compile the dependency from source&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;With regards to the java plugin, the 1.6.0 and 1.7.0 openjdk versions, in
+addition to the 1.8.0 version listed above, are able to satisfy the java
+dependency.&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Once the plugin dependencies are sorted out, the &lt;strong&gt;make&lt;/strong&gt; and &lt;strong&gt;make install&lt;/strong&gt;
+steps typically go without a hitch.  In a future post, I will outline how to
+build the collectd RPMs using the latest available version. &lt;/p&gt;</summary><category term="collectd"></category></entry></feed>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Enabling (Almost All) Collectd Plugins on CentOS 6 - Giovanni Torres</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
+
+        <meta name="author" content="Giovanni Torres" />
+        <meta name="keywords" content="collectd" />
+        <meta name="description" content="Introduction There are a variety of ways to extract system resource information from a Linux server. Some of these utilities are triggered by cron, such as sysstat, while others are based on a predefined check interval, such as Nagios. Others are meant to be used interactively, such as htop or ..." />
+
+        <meta property="og:site_name" content="Giovanni Torres" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Enabling (Almost All) Collectd Plugins on CentOS 6"/>
+        <meta property="og:url" content="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"/>
+        <meta property="og:description" content="Introduction There are a variety of ways to extract system resource information from a Linux server. Some of these utilities are triggered by cron, such as sysstat, while others are based on a predefined check interval, such as Nagios. Others are meant to be used interactively, such as htop or ..."/>
+        <meta property="article:published_time" content="2015-06-15" />
+            <meta property="article:section" content="Collectd" />
+            <meta property="article:tag" content="collectd" />
+            <meta property="article:author" content="Giovanni Torres" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="http://giovannitorres.me/theme/css/bootstrap.cosmo.min.css" type="text/css"/>
+    <link href="http://giovannitorres.me/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
+        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
+
+        <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres ATOM Feed"/>
+
+
+
+        <link href="http://giovannitorres.me/feeds/collectd.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres Collectd ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="http://giovannitorres.me/" class="navbar-brand">
+Giovanni Torres            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"
+                       rel="bookmark"
+                       title="Permalink to Enabling (Almost All) Collectd Plugins on CentOS 6">
+                        Enabling (Almost All) Collectd Plugins on CentOS 6
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-06-15T17:34:00-04:00"> Mon 15 June 2015</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="http://giovannitorres.me/tag/collectd.html">collectd</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>Introduction</h2>
+<p>There are a variety of ways to extract system resource information from a Linux
+server. Some of these utilities are triggered by cron, such as sysstat, while others are
+based on a predefined check interval, such as Nagios.  Others are meant to be used
+interactively, such as htop or vmstat.</p>
+<p><a href="https://collectd.org" title="collectd">collectd</a> is another utility that gathers
+system metrics on a given system.  It is written in C, giving it great
+performance.  Its versatility, however, comes from the almost 100 plugins that
+is bundled with the daemon.  These plugins include various read and write
+plugins.  Some of the read plugins collect the standard Linux subsystem
+metrics, such as CPU, Disk, Memory and Network, while other read plugins are
+more specialized, such as reading Apache httpd or DNS metrics.</p>
+<p>collectd gathers these metrics, but where are they stored?  collectd has a
+handful of write plugins that allow you either store the metrics in local
+round-robin databases (RRDs) or externally to another collector, such as
+Graphite.</p>
+<p>The collectd package in the EPEL 6 repository package is out of date.  Often,
+users opt to compile collectd from source to obtain a newer, more recent version.
+The process of compiling collectd can be somewhat daunting at times because the
+more plugins that are available, the more dependencies are necessary.</p>
+<p>The goal of this guide is to list the necessary packages for building collectd
+from source with most of the plugins enabled.  These dependencies can all be
+found in the CentOS Base and EPEL repositories.</p>
+<h2>Prerequisites</h2>
+<p>Compiling any package from source requires a compiler.  If you don't already
+have one installed, go ahead and install the GNU GCC compiler:</p>
+<div class="highlight"><pre>sudo yum install gcc
+</pre></div>
+
+
+<p>For this exercise, you will also need kernel and the C library header files:</p>
+<div class="highlight"><pre>sudo yum install kernel-headers glibc-headers
+</pre></div>
+
+
+<h2>Downloading collectd</h2>
+<p>A link to the collectd source is hosted on the main page of the <a href="https://collectd.org" title="collectd website">collectd
+website</a>.  Download and untar the
+the latest source tarball.  At the time of this writing, version 5.5.0 is the
+latest stable version.</p>
+<div class="highlight"><pre>curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
+</pre></div>
+
+
+<h2>Configuring collectd</h2>
+<p>After downloading and extracting the source files, change to that directory:</p>
+<div class="highlight"><pre>cd collect-5.5.0
+</pre></div>
+
+
+<p>This package can be configured, built and installed with the typical <strong>configure &amp;&amp; make &amp;&amp; make
+install</strong> sequence of commands.</p>
+<p>Start by running the configure step so that we can have a look at the
+available plugins:</p>
+<div class="highlight"><pre>./configure
+</pre></div>
+
+
+<p>This command will output quite a bit to the screen, checking your system for
+the presence of various libraries, header files and binaries in the process.
+Have a look at the summary at the end, for example:</p>
+<div class="highlight"><pre>Configuration:
+  Libraries:
+    intel mic . . . . . . no (MicAccessApi not found)
+    libaquaero5 . . . . . no (libaquaero5.h not found)
+    libatasmart . . . . . no (atasmart.h not found)
+    libcurl . . . . . . . no (curl-config failed)
+    libdbi  . . . . . . . no (dbi/dbi.h not found)
+    libesmtp  . . . . . . no (libesmtp not found)
+    libganglia  . . . . . no (gm_protocol.h not found)
+[...output truncated...]
+  Modules:
+    aggregation . . . . . yes
+    amqp    . . . . . . . no
+    apache  . . . . . . . no
+    apcups  . . . . . . . yes
+    apple_sensors . . . . no
+    aquaero . . . . . . . no
+    ascent  . . . . . . . no
+    barometer . . . . . . no
+[...output truncated...]
+</pre></div>
+
+
+<p>The summary at the end shows the various plugins and whether or not the
+configure step was able to locate the necessary prerequisites to build each plugin.</p>
+<p>Even though the configure step was not able to find many libraries or modules,
+collectd will still compile successfully, albeit without these plugins.  Often,
+you would like to enable several plugins at compile time, for example:</p>
+<div class="highlight"><pre>./configure --enable-java --enable-python
+</pre></div>
+
+
+<p>Without the appropriate package dependencies installed, the configure step will
+output the following line at the very end:</p>
+<div class="highlight"><pre><span class="n">configure</span><span class="o">:</span> <span class="n">error</span><span class="o">:</span> <span class="s2">&quot;Some plugins are missing dependencies - see the summary</span>
+<span class="s2">above for details&quot;</span>
+</pre></div>
+
+
+<p>Use the two tables below to install the appropriate RPM packages for the
+plugins you would like to enable.</p>
+<h2>Libaries</h2>
+<p>The following table shows the collectd libraries and their corresponding RPM
+package dependencies:</p>
+<table>
+    <col width="150">
+    <col width="300">
+    <thead>
+        <tr>
+            <th>Library</tn>
+            <th>RPM Package(s)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>libatasmart</td>
+            <td>libatasmart-devel</td>
+        </tr>
+        <tr>
+            <td>libcurl</td>
+            <td>libcurl-devel</td>
+        </tr>
+        <tr>
+            <td>libdbi</td>
+            <td>libdbi-devel</td>
+        </tr>
+        <tr>
+            <td>libesmtp</td>
+            <td>libesmtp-devel</td>
+        </tr>
+        <tr>
+            <td>libganglia</td>
+            <td>ganglia-devel</td>
+        </tr>
+        <tr>
+            <td>libgcrypt</td>
+            <td>libgcrypt-devel</td>
+        </tr>
+        <tr>
+            <td>libhal</td>
+            <td>hal-devel</td>
+        </tr>
+        <tr>
+            <td>libhiredis</td>
+            <td>hiredis-devel</td>
+        </tr>
+        <tr>
+            <td>libiptc</td>
+            <td>iptables-devel</td>
+        </tr>
+        <tr>
+            <td>libjvm</td>
+            <td>java-1.8.0-openjdk-devel</td>
+        </tr>
+        <tr>
+            <td>libldap</td>
+            <td>openldap-devel</td>
+        </tr>
+        <tr>
+            <td>liblvm2app</td>
+            <td>lvm2-devel</td>
+        </tr>
+        <tr>
+            <td>libmemcached</td>
+            <td>libmemcached-devel</td>
+        </tr>
+        <tr>
+            <td>libmnl</td>
+            <td>libmnl-devel</td>
+        </tr>
+        <tr>
+            <td>libmodbus</td>
+            <td>libmodbus-devel</td>
+        </tr>
+        <tr>
+            <td>libmysql</td>
+            <td>mysql-devel</td>
+        </tr>
+        <tr>
+            <td>libnetsnmp</td>
+            <td>net-snmp-devel</td>
+        </tr>
+        <tr>
+            <td>libnotify</td>
+            <td>libnotify-devel</td>
+        </tr>
+        <tr>
+            <td>libopenipmi</td>
+            <td>OpenIPMI-devel</td>
+        </tr>
+        <tr>
+            <td>liboping</td>
+            <td>liboping-devel</td>
+        </tr>
+        <tr>
+            <td>libpcap</td>
+            <td>libpcap-devel</td>
+        </tr>
+        <tr>
+            <td>libperl</td>
+            <td>perl-devel, perl-ExtUtils-Embed</td>
+        </tr>
+        <tr>
+            <td>libpq</td>
+            <td>postgresql-devel</td>
+        </tr>
+        <tr>
+            <td>librabbitmq</td>
+            <td>librabbitmq-devel</td>
+        </tr>
+        <tr>
+            <td>librrd</td>
+            <td>rrdtool-devel</td>
+        </tr>
+        <tr>
+            <td>libsensors</td>
+            <td>lm_sensors-devel</td>
+        </tr>
+        <tr>
+            <td>libstatgrab</td>
+            <td>libstatgrab-devel</td>
+        </tr>
+        <tr>
+            <td>libudev</td>
+            <td>libudev-devel</td>
+        </tr>
+        <tr>
+            <td>libupsclient</td>
+            <td>nut-devel</td>
+        </tr>
+        <tr>
+            <td>libvarnish</td>
+            <td>varnish-libs-devel</td>
+        </tr>
+        <tr>
+            <td>libvirt</td>
+            <td>libvirt-devel</td>
+        </tr>
+        <tr>
+            <td>libxml2</td>
+            <td>libxml2-devel</td>
+        </tr>
+        <tr>
+            <td>libyajl</td>
+            <td>yajl-devel</td>
+        </tr>
+        <tr>
+            <td>protobuf-c</td>
+            <td>protobuf-c-devel</td>
+        </tr>
+        <tr>
+            <td>python</td>
+            <td>python-devel</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Modules</h2>
+<p>The following table shows the collectd modules and their corresponding RPM
+package dependencies:</p>
+<table>
+    <col width="150">
+    <col width="300">
+    <thead>
+        <tr>
+            <th>Module</tn>
+            <th>RPM Package(s)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>amqp</td>
+            <td>librabbitmq-devel</td>
+        </tr>
+        <tr>
+            <td>apache</td>
+            <td>libcurl-devel</td>
+        </tr>
+        <tr>
+            <td>bind</td>
+            <td>libcurl-devel, libxml2-devel</td>
+        </tr>
+        <tr>
+            <td>ceph</td>
+            <td>yajl-devel</td>
+        </tr>
+        <tr>
+            <td>curl</td>
+            <td>libcurl-devel</td>
+        </tr>
+        <tr>
+            <td>curl_json</td>
+            <td>libcurl-devel, yajl-devel</td>
+        </tr>
+        <tr>
+            <td>curl_xml</td>
+            <td>libcurl-devel, libxml2-devel</td>
+        </tr>
+        <tr>
+            <td>dbi</td>
+            <td>libdbi-devel</td>
+        </tr>
+        <tr>
+            <td>dns</td>
+            <td>libpcap-devel</td>
+        </tr>
+        <tr>
+            <td>gmond</td>
+            <td>ganglia-devel</td>
+        </tr>
+        <tr>
+            <td>ipmi</td>
+            <td>OpenIPMI-devel</td>
+        </tr>
+        <tr>
+            <td>iptables</td>
+            <td>iptables-devel</td>
+        </tr>
+        <tr>
+            <td>java</td>
+            <td>java-1.8.0-openjdk-devel</td>
+        </tr>
+        <tr>
+            <td>log_logstash</td>
+            <td>yajl-devel</td>
+        </tr>
+        <tr>
+            <td>lvm</td>
+            <td>lvm2-devel</td>
+        </tr>
+        <tr>
+            <td>memcachec</td>
+            <td>libmemcached-devel</td>
+        </tr>
+        <tr>
+            <td>mysql</td>
+            <td>mysql-devel</td>
+        </tr>
+        <tr>
+            <td>netlink</td>
+            <td>libmnl-devel</td>
+        </tr>
+        <tr>
+            <td>nginx</td>
+            <td>libcurl-devel</td>
+        </tr>
+        <tr>
+            <td>notify_desktop</td>
+            <td>libnotify-devel</td>
+        </tr>
+        <tr>
+            <td>notify_email</td>
+            <td>libesmtp-devel</td>
+        </tr>
+        <tr>
+            <td>nut</td>
+            <td>nut-devel</td>
+        </tr>
+        <tr>
+            <td>openldap</td>
+            <td>openldap-devel</td>
+        </tr>
+        <tr>
+            <td>perl</td>
+            <td>perl-devel, perl-ExtUtils-Embed</td>
+        </tr>
+        <tr>
+            <td>ping</td>
+            <td>liboping-devel</td>
+        </tr>
+        <tr>
+            <td>postgresql</td>
+            <td>postgresql-devel</td>
+        </tr>
+        <tr>
+            <td>python</td>
+            <td>python-devel</td>
+        </tr>
+        <tr>
+            <td>redis</td>
+            <td>hiredis-devel</td>
+        </tr>
+        <tr>
+            <td>rrdtool</td>
+            <td>rrdtool-devel</td>
+        </tr>
+        <tr>
+            <td>smart</td>
+            <td>libatasmart-devel, libudev-devel</td>
+        </tr>
+        <tr>
+            <td>snmp</td>
+            <td>net-snmp-devel</td>
+        </tr>
+        <tr>
+            <td>varnish</td>
+            <td>varnish-libs-devel</td>
+        </tr>
+        <tr>
+            <td>virt</td>
+            <td>libvirt-devel, libxml2-devel</td>
+        </tr>
+        <tr>
+            <td>write_http</td>
+            <td>libcurl-devel</td>
+        </tr>
+        <tr>
+            <td>write_redis</td>
+            <td>hiredis-devel</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>Notes</h2>
+<p>Not all plugin dependencies were available from the CentOS Base and EPEL
+repositories.  For these particular plugins, you would either have to:</p>
+<ul>
+<li>configure another YUM repository that has the necessary RPMs</li>
+<li>download and install the individual RPM from a third-party site</li>
+<li>build your own RPM</li>
+<li>compile the dependency from source</li>
+</ul>
+<p>With regards to the java plugin, the 1.6.0 and 1.7.0 openjdk versions, in
+addition to the 1.8.0 version listed above, are able to satisfy the java
+dependency.</p>
+<h2>Conclusion</h2>
+<p>Once the plugin dependencies are sorted out, the <strong>make</strong> and <strong>make install</strong>
+steps typically go without a hitch.  In a future post, I will outline how to
+build the collectd RPMs using the latest available version. </p>
+            </div>
+            <!-- /.entry-content -->
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+                    var disqus_identifier = 'enabling-almost-all-collectd-plugins-on-centos-6';
+                var disqus_url = 'http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html';
+
+            var disqus_config = function () {
+                this.language = "en";
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+
+<section class="well well-sm">
+    <ul class="list-group list-group-flush">
+
+            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
+                <ul class="list-group" id="recentposts">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
+                            Enabling (Almost All) Collectd Plugins on CentOS 6
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">
+                            How to Setup an RPM Signing Key
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">
+                            How to Setup an RPM Build Environment on CentOS 6
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
+                <ul class="list-group" id="categories">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/collectd.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Collectd
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/linux.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Linux
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/rpm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> RPM
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
+                <ul class="list-group " id="tags">
+                    <li class="list-group-item tag-1">
+                        <a href="http://giovannitorres.me/tag/rpm.html">
+                            rpm
+                        </a>
+                    </li>
+                    <li class="list-group-item tag-4">
+                        <a href="http://giovannitorres.me/tag/virtual-machine.html">
+                            virtual machine
+                        </a>
+                    </li>
+                    <li class="list-group-item tag-4">
+                        <a href="http://giovannitorres.me/tag/gpg.html">
+                            gpg
+                        </a>
+                    </li>
+                    <li class="list-group-item tag-4">
+                        <a href="http://giovannitorres.me/tag/collectd.html">
+                            collectd
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
+    </li>
+    </ul>
+</section>
+            </aside>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 Giovanni Torres
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="http://giovannitorres.me/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://giovannitorres.me/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="http://giovannitorres.me/theme/js/respond.min.js"></script>
+
+    <!-- GitHub JS -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (!window.jXHR) {
+                var jxhr = document.createElement('script');
+                jxhr.type = 'text/javascript';
+                jxhr.src = 'http://giovannitorres.me/theme/js/jXHR.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(jxhr, s);
+            }
+
+            github.showRepos({
+                user: 'giovtorres',
+                count: 5,
+                skip_forks: true,
+                target: '#gh_repos'
+            });
+        });
+    </script>
+    <script src="http://giovannitorres.me/theme/js/github.js" type="text/javascript"></script>
+    <!-- End GitHub JS Code -->
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-54838714-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+</body>
+</html>

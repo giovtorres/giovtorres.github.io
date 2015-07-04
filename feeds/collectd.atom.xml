@@ -1,5 +1,246 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/collectd.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-06-15T17:34:00-04:00</updated><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><updated>2015-06-15T17:34:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/collectd.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-07-03T12:47:00-04:00</updated><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><updated>2015-07-03T12:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;&lt;a href="https://collectd.org/"&gt;Collectd&lt;/a&gt; comes with a long &lt;a href="https://collectd.org/wiki/index.php/Table_of_Plugins"&gt;list of
+plugins&lt;/a&gt;.  In a previous
+&lt;a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"&gt;article&lt;/a&gt;, we showed how to install the
+necessary dependencies to enable most of the collectd plugins when compiling
+collectd from source.&lt;/p&gt;
+&lt;p&gt;One of these plugins is the &lt;a href="https://collectd.org/wiki/index.php/Plugin:Python"&gt;Python
+plugin&lt;/a&gt;, which is a binding
+that allows you to write Python scripts that behave as custom read and write
+plugins for collectd. With this plugin enabled, the collectd daemon will embed a Python
+interpreter and can directly run Python scripts without having to launch a new
+interpreter every time the scripts need to run.&lt;/p&gt;
+&lt;p&gt;In this article, we will demonstrate how to write a Python script for collectd
+that will graph CPU cores by state from &lt;a href="http://slurm.schedmd.com"&gt;Slurm&lt;/a&gt;, an HPC
+resource manager. &lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;This article assumes you have some familiarity with Collectd and have an
+existing Graphite installation. For instructions on how to install Graphite,
+read the &lt;a href="https://graphite.readthedocs.org/en/stable/install.html"&gt;installation
+docs&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Furthermore, details about Slurm is outside the scope of this article and only
+used as an real-world example.&lt;/p&gt;
+&lt;p&gt;Lastly, of the python modules used in the example below, the 
+&lt;a href="https://pypi.python.org/pypi/pyparsing/2.0.3"&gt;PyParsing&lt;/a&gt; module is not a core
+Python module.  You can, however, install it easily with Pip:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo pip install pyparsing
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Enabling the Python Plugin&lt;/h2&gt;
+&lt;p&gt;The default &lt;em&gt;collectd.conf&lt;/em&gt; comes with the Python plugin disabled:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;##&amp;lt;LoadPlugin python&amp;gt;
+##  Globals true
+##&amp;lt;/LoadPlugin&amp;gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Simply uncomment the stanza to have collectd load this plugin at run time:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="nt"&gt;&amp;lt;LoadPlugin&lt;/span&gt; &lt;span class="err"&gt;python&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
+  Globals true
+&lt;span class="nt"&gt;&amp;lt;/LoadPlugin&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Writing a Python Read Plugin&lt;/h2&gt;
+&lt;p&gt;The &lt;a href="https://collectd.org/documentation/manpages/collectd-python.5.shtml"&gt;collectd-python
+manpage&lt;/a&gt;
+documents how to use the Python plugin structure to create your own plugins. We
+will walk through writing a script, section by section, to understand how to
+gather and dispatch metrics to collectd.&lt;/p&gt;
+&lt;h3&gt;Importing Modules&lt;/h3&gt;
+&lt;p&gt;The first part of our script will import the necessary modules.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;collectd&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;signal&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;subprocess&lt;/span&gt;
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pyparsing&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;alphanums&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The first import statement loads the collectd module.  This is the module that
+will register the read and write functions with collectd.  The remaining
+modules are used elsewhere in the script to gather information.&lt;/p&gt;
+&lt;h3&gt;Gathering Metrics&lt;/h3&gt;
+&lt;p&gt;The purpose of the plugin is to gather metrics and feed it to collectd.  From
+there, collectd will send it wherever it is configured to, for example to RRD
+files, to Graphite or another time-series database. &lt;/p&gt;
+&lt;p&gt;Our example uses the subprocess module to execute a Slurm command that
+will return the number of cores by state per partition in a parsable format.
+This is done using the &lt;strong&gt;sinfo&lt;/strong&gt; command.  It then uses the pyparsing module to
+parse the output.  Lastly, it iterates over the output and returns a
+dictionary.  This will be used in the &lt;em&gt;read_callback&lt;/em&gt; function.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;get_cpus_by_state&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;Returns a dictionary of CPU cores and their states, per Slurm&lt;/span&gt;
+&lt;span class="sd"&gt;    partition.&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+
+    &lt;span class="n"&gt;cores&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+
+    &lt;span class="n"&gt;sinfo&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/path/to/sinfo&amp;quot;&lt;/span&gt;
+
+    &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;used_core_count&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Popen&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;sinfo&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-o&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;%P %C&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;--noheader&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;PIPE&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;communicate&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+        &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;used_core_count&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;
+            &lt;span class="k"&gt;return&lt;/span&gt;
+
+        &lt;span class="n"&gt;part_parse&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;alphanums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;part_parse&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;scanString&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stdout&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;output&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;queue&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+            &lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;total&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;
+
+    &lt;span class="k"&gt;except&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+      &lt;span class="k"&gt;return&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Taking care of SIGCHLD&lt;/h3&gt;
+&lt;p&gt;This particular example uses the &lt;em&gt;subprocess&lt;/em&gt; module to fork a child process that will execute
+the &lt;em&gt;sinfo&lt;/em&gt; command.  The Python plugin is a parent to this forked process, and
+as such, the forked process will send a &lt;strong&gt;SIGCHLD&lt;/strong&gt; signal to the parent process upon
+completion. Collectd, however, will ignore the &lt;strong&gt;SIGCHLD&lt;/strong&gt; signal that the
+parent Python plugin process is waiting for.  As a result, the Python plugin
+will throw an OSError exception when the child process terminates and logs the
+following error:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;Unhandled python exception in read callback: OSError: [Errno 10] No child processes&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This function will restore the default SIGCHLD behavior so that the
+plugin can create new processes without throwing exceptions.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SIGCHLD&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SIG_DFL&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Defining a Read Callback&lt;/h3&gt;
+&lt;p&gt;The purpose of the read callback is to setup the &lt;em&gt;Values&lt;/em&gt; object with the
+parameters of the metrics you are dispatching to collectd.  It sets:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;host (slurm, which is not a real host)&lt;/li&gt;
+&lt;li&gt;plugin name (core_states)&lt;/li&gt;
+&lt;li&gt;type of metric (gauge)&lt;/li&gt;
+&lt;li&gt;submit interval (30 seconds)&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;This is required to abide by collectd's &lt;a href="https://collectd.org/wiki/index.php/Naming_schema"&gt;naming
+schema&lt;/a&gt;. Therefore, the
+resulting metric name will be &lt;strong&gt;slurm.core_states.gauge-&lt;metric_name&gt;&lt;/strong&gt;, where
+metric_name refers to each of the keys in the dictionary returned by the
+&lt;em&gt;get_cpus_by_state()&lt;/em&gt; function.  Finally, the metric is dispatched to collectd.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;read_callback&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot; Callback function for dispatching data into collectd&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
+
+    &lt;span class="n"&gt;cores&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_cpus_by_state&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="ow"&gt;not&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="k"&gt;pass&lt;/span&gt;
+    &lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="c"&gt;# for each key in each partition output, put the value&lt;/span&gt;
+        &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Values&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;plugin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;core_states&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;host&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;slurm&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;interval&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;30&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;gauge&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;type_instance&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;values&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Registering Functions&lt;/h3&gt;
+&lt;p&gt;The final lines of the script registers two callbacks: an init function to
+restore the behavior of &lt;em&gt;SIGCHLD&lt;/em&gt; and the other to periodically run the
+read_callback function, which in turn calls the get_cpus_by_state() function to
+gather metrics and dispatch the values to the daemon.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;register_init&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;register_read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;read_callback&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Save all the bits in a file, such as &lt;strong&gt;slurm_core_states.py&lt;/strong&gt; (available here
+as a &lt;a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40"&gt;gist&lt;/a&gt;).&lt;/p&gt;
+&lt;h2&gt;Configuring the Python Plugin Section&lt;/h2&gt;
+&lt;p&gt;Now that we have enabled the Python plugin in collectd and wrote a read plugin,
+the last thing needed is to configure the plugin in collectd's configuration
+file. Add the following configuration stanza to &lt;strong&gt;collectd.conf&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Plugin&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class="n"&gt;ModulePath&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/path/to/python/plugin&amp;quot;&lt;/span&gt;
+  &lt;span class="n"&gt;LogTraces&lt;/span&gt; &lt;span class="n"&gt;true&lt;/span&gt;
+  &lt;span class="n"&gt;Interactive&lt;/span&gt; &lt;span class="n"&gt;false&lt;/span&gt;
+  &lt;span class="n"&gt;Import&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm_core_states&amp;quot;&lt;/span&gt;
+&lt;span class="o"&gt;&amp;lt;/&lt;/span&gt;&lt;span class="n"&gt;Plugin&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;ModulePath&lt;/em&gt; option prepends the path to &lt;em&gt;sys.path&lt;/em&gt;, thus making your
+plugin available to Python when importing it.  Otherwise, you would get an
+&lt;strong&gt;ImportError&lt;/strong&gt; exception.&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;LogTraces&lt;/em&gt; option will log any exceptions and the full stacktrace thrown
+by the plugin. This is good for debugging.&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;Interactive&lt;/em&gt; option will launch an interactive Python interpreter.  This
+script will not run interactively and is therefore set to &lt;strong&gt;false&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;The &lt;em&gt;Import&lt;/em&gt; option imports our plugin into collectd's embedded Python
+interpreter.&lt;/p&gt;
+&lt;h2&gt;Verifying&lt;/h2&gt;
+&lt;p&gt;After restarting the collectd service, check the logs to make sure there are no
+issues with the plugin.  If there are no warning or errors in the logs, verify
+that the plugin is working by querying the metrics.&lt;/p&gt;
+&lt;p&gt;This step will vary depending on where your metrics are stored.  For example,
+if the metrics are written to a Graphite instance, you could query the metrics
+using the Graphite URL API:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;curl -s 
+&lt;span class="s2"&gt;&amp;quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;amp;from=-1mins&amp;amp;format=json&amp;quot;&lt;/span&gt;
+&lt;span class="p"&gt;|&lt;/span&gt; python -m json.tool
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This fetches the cumulative number of allocated cores across all Slurm partitions, in json format. The last two datapoints are shown below:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="p"&gt;[&lt;/span&gt;
+    &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="nt"&gt;&amp;quot;datapoints&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
+            &lt;span class="p"&gt;[&lt;/span&gt;
+                &lt;span class="mf"&gt;19488.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                &lt;span class="mi"&gt;1435969380&lt;/span&gt;
+            &lt;span class="p"&gt;],&lt;/span&gt;
+            &lt;span class="p"&gt;[&lt;/span&gt;
+                &lt;span class="mf"&gt;19488.0&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                &lt;span class="mi"&gt;1435969410&lt;/span&gt;
+            &lt;span class="p"&gt;]&lt;/span&gt;
+        &lt;span class="p"&gt;],&lt;/span&gt;
+        &lt;span class="nt"&gt;&amp;quot;target&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;slurm.core_states.gauge-all-allocated&amp;quot;&lt;/span&gt;
+    &lt;span class="p"&gt;}&lt;/span&gt;
+&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;And finally, here is what a Graphite graph would look like:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png" /&gt;&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;This is just one example of how to use Python and collectd to gather metrics
+and visualize them.  You could write a plugin with a similar structure to
+dispatch custom metrics to your metric collector, such as the Graphite suite or
+any other time-series database.&lt;/p&gt;</summary><category term="collectd"></category><category term="python"></category><category term="slurm"></category></entry><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><updated>2015-06-15T17:34:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;There are a variety of ways to extract system resource information from a Linux
 server. Some of these utilities are triggered by cron, such as sysstat, while others are
 based on a predefined check interval, such as Nagios.  Others are meant to be used

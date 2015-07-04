@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Using Collectd, Python and Graphite to Graph Slurm Partitions - Giovanni Torres</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
+
+        <meta name="author" content="Giovanni Torres" />
+        <meta name="keywords" content="collectd,python,slurm" />
+        <meta name="description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write ..." />
+
+        <meta property="og:site_name" content="Giovanni Torres" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Using Collectd, Python and Graphite to Graph Slurm Partitions"/>
+        <meta property="og:url" content="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html"/>
+        <meta property="og:description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write ..."/>
+        <meta property="article:published_time" content="2015-07-03" />
+            <meta property="article:section" content="Collectd" />
+            <meta property="article:tag" content="collectd" />
+            <meta property="article:tag" content="python" />
+            <meta property="article:tag" content="slurm" />
+            <meta property="article:author" content="Giovanni Torres" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="http://giovannitorres.me/theme/css/bootstrap.cosmo.min.css" type="text/css"/>
+    <link href="http://giovannitorres.me/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
+        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
+
+        <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres ATOM Feed"/>
+
+
+
+        <link href="http://giovannitorres.me/feeds/collectd.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres Collectd ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="http://giovannitorres.me/" class="navbar-brand">
+Giovanni Torres            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html"
+                       rel="bookmark"
+                       title="Permalink to Using Collectd, Python and Graphite to Graph Slurm Partitions">
+                        Using Collectd, Python and Graphite to Graph Slurm Partitions
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-07-03T12:47:00-04:00"> Fri 03 July 2015</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="http://giovannitorres.me/tag/collectd.html">collectd</a>
+        /
+	<a href="http://giovannitorres.me/tag/python.html">python</a>
+        /
+	<a href="http://giovannitorres.me/tag/slurm.html">slurm</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>Introduction</h2>
+<p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
+plugins</a>.  In a previous
+<a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
+necessary dependencies to enable most of the collectd plugins when compiling
+collectd from source.</p>
+<p>One of these plugins is the <a href="https://collectd.org/wiki/index.php/Plugin:Python">Python
+plugin</a>, which is a binding
+that allows you to write Python scripts that behave as custom read and write
+plugins for collectd. With this plugin enabled, the collectd daemon will embed a Python
+interpreter and can directly run Python scripts without having to launch a new
+interpreter every time the scripts need to run.</p>
+<p>In this article, we will demonstrate how to write a Python script for collectd
+that will graph CPU cores by state from <a href="http://slurm.schedmd.com">Slurm</a>, an HPC
+resource manager. </p>
+<h2>Prerequisites</h2>
+<p>This article assumes you have some familiarity with Collectd and have an
+existing Graphite installation. For instructions on how to install Graphite,
+read the <a href="https://graphite.readthedocs.org/en/stable/install.html">installation
+docs</a>.</p>
+<p>Furthermore, details about Slurm is outside the scope of this article and only
+used as an real-world example.</p>
+<p>Lastly, of the python modules used in the example below, the 
+<a href="https://pypi.python.org/pypi/pyparsing/2.0.3">PyParsing</a> module is not a core
+Python module.  You can, however, install it easily with Pip:</p>
+<div class="highlight"><pre>sudo pip install pyparsing
+</pre></div>
+
+
+<h2>Enabling the Python Plugin</h2>
+<p>The default <em>collectd.conf</em> comes with the Python plugin disabled:</p>
+<div class="highlight"><pre>##&lt;LoadPlugin python&gt;
+##  Globals true
+##&lt;/LoadPlugin&gt;
+</pre></div>
+
+
+<p>Simply uncomment the stanza to have collectd load this plugin at run time:</p>
+<div class="highlight"><pre><span class="nt">&lt;LoadPlugin</span> <span class="err">python</span><span class="nt">&gt;</span>
+  Globals true
+<span class="nt">&lt;/LoadPlugin&gt;</span>
+</pre></div>
+
+
+<h2>Writing a Python Read Plugin</h2>
+<p>The <a href="https://collectd.org/documentation/manpages/collectd-python.5.shtml">collectd-python
+manpage</a>
+documents how to use the Python plugin structure to create your own plugins. We
+will walk through writing a script, section by section, to understand how to
+gather and dispatch metrics to collectd.</p>
+<h3>Importing Modules</h3>
+<p>The first part of our script will import the necessary modules.</p>
+<div class="highlight"><pre><span class="kn">import</span> <span class="nn">collectd</span>
+<span class="kn">import</span> <span class="nn">signal</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">pyparsing</span> <span class="kn">import</span> <span class="n">Word</span><span class="p">,</span> <span class="n">alphanums</span><span class="p">,</span> <span class="n">nums</span>
+</pre></div>
+
+
+<p>The first import statement loads the collectd module.  This is the module that
+will register the read and write functions with collectd.  The remaining
+modules are used elsewhere in the script to gather information.</p>
+<h3>Gathering Metrics</h3>
+<p>The purpose of the plugin is to gather metrics and feed it to collectd.  From
+there, collectd will send it wherever it is configured to, for example to RRD
+files, to Graphite or another time-series database. </p>
+<p>Our example uses the subprocess module to execute a Slurm command that
+will return the number of cores by state per partition in a parsable format.
+This is done using the <strong>sinfo</strong> command.  It then uses the pyparsing module to
+parse the output.  Lastly, it iterates over the output and returns a
+dictionary.  This will be used in the <em>read_callback</em> function.</p>
+<div class="highlight"><pre><span class="k">def</span> <span class="nf">get_cpus_by_state</span><span class="p">():</span>
+    <span class="sd">&quot;&quot;&quot;Returns a dictionary of CPU cores and their states, per Slurm</span>
+<span class="sd">    partition.&quot;&quot;&quot;</span>
+
+    <span class="n">cores</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="n">sinfo</span> <span class="o">=</span> <span class="s">&quot;/path/to/sinfo&quot;</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">used_core_count</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="n">sinfo</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="s">&#39;%P %C&#39;</span><span class="p">,</span> <span class="s">&#39;--noheader&#39;</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="n">used_core_count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stdout</span> <span class="o">==</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">]:</span>
+            <span class="k">return</span>
+
+        <span class="n">part_parse</span> <span class="o">=</span> <span class="n">Word</span><span class="p">(</span><span class="n">alphanums</span> <span class="o">+</span> <span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">Word</span><span class="p">(</span><span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span><span class="p">)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">part_parse</span><span class="o">.</span><span class="n">scanString</span><span class="p">(</span><span class="n">stdout</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">partition</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
+            <span class="n">queue</span> <span class="o">=</span> <span class="n">partition</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">allocated</span><span class="p">,</span> <span class="n">idle</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">partition</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+
+            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cores</span>
+
+    <span class="k">except</span><span class="p">:</span>
+      <span class="k">return</span>
+</pre></div>
+
+
+<h3>Taking care of SIGCHLD</h3>
+<p>This particular example uses the <em>subprocess</em> module to fork a child process that will execute
+the <em>sinfo</em> command.  The Python plugin is a parent to this forked process, and
+as such, the forked process will send a <strong>SIGCHLD</strong> signal to the parent process upon
+completion. Collectd, however, will ignore the <strong>SIGCHLD</strong> signal that the
+parent Python plugin process is waiting for.  As a result, the Python plugin
+will throw an OSError exception when the child process terminates and logs the
+following error:</p>
+<div class="highlight"><pre><span class="go">Unhandled python exception in read callback: OSError: [Errno 10] No child processes</span>
+</pre></div>
+
+
+<p>This function will restore the default SIGCHLD behavior so that the
+plugin can create new processes without throwing exceptions.</p>
+<div class="highlight"><pre><span class="k">def</span> <span class="nf">restore_sigchld</span><span class="p">():</span>
+    <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGCHLD</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_DFL</span><span class="p">)</span>
+</pre></div>
+
+
+<h3>Defining a Read Callback</h3>
+<p>The purpose of the read callback is to setup the <em>Values</em> object with the
+parameters of the metrics you are dispatching to collectd.  It sets:</p>
+<ul>
+<li>host (slurm, which is not a real host)</li>
+<li>plugin name (core_states)</li>
+<li>type of metric (gauge)</li>
+<li>submit interval (30 seconds)</li>
+</ul>
+<p>This is required to abide by collectd's <a href="https://collectd.org/wiki/index.php/Naming_schema">naming
+schema</a>. Therefore, the
+resulting metric name will be <strong>slurm.core_states.gauge-<metric_name></strong>, where
+metric_name refers to each of the keys in the dictionary returned by the
+<em>get_cpus_by_state()</em> function.  Finally, the metric is dispatched to collectd.</p>
+<div class="highlight"><pre><span class="k">def</span> <span class="nf">read_callback</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Callback function for dispatching data into collectd&quot;&quot;&quot;</span>
+
+    <span class="n">cores</span> <span class="o">=</span> <span class="n">get_cpus_by_state</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">cores</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c"># for each key in each partition output, put the value</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cores</span><span class="p">:</span>
+            <span class="n">metric</span> <span class="o">=</span> <span class="n">collectd</span><span class="o">.</span><span class="n">Values</span><span class="p">()</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="s">&#39;core_states&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s">&#39;slurm&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="mi">30</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&#39;gauge&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">type_instance</span> <span class="o">=</span> <span class="n">key</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">cores</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">dispatch</span><span class="p">()</span>
+</pre></div>
+
+
+<h3>Registering Functions</h3>
+<p>The final lines of the script registers two callbacks: an init function to
+restore the behavior of <em>SIGCHLD</em> and the other to periodically run the
+read_callback function, which in turn calls the get_cpus_by_state() function to
+gather metrics and dispatch the values to the daemon.</p>
+<div class="highlight"><pre><span class="n">collectd</span><span class="o">.</span><span class="n">register_init</span><span class="p">(</span><span class="n">restore_sigchld</span><span class="p">)</span>
+<span class="n">collectd</span><span class="o">.</span><span class="n">register_read</span><span class="p">(</span><span class="n">read_callback</span><span class="p">)</span>
+</pre></div>
+
+
+<p>Save all the bits in a file, such as <strong>slurm_core_states.py</strong> (available here
+as a <a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40">gist</a>).</p>
+<h2>Configuring the Python Plugin Section</h2>
+<p>Now that we have enabled the Python plugin in collectd and wrote a read plugin,
+the last thing needed is to configure the plugin in collectd's configuration
+file. Add the following configuration stanza to <strong>collectd.conf</strong>:</p>
+<div class="highlight"><pre><span class="o">&lt;</span><span class="n">Plugin</span> <span class="n">python</span><span class="o">&gt;</span>
+  <span class="n">ModulePath</span> <span class="s">&quot;/path/to/python/plugin&quot;</span>
+  <span class="n">LogTraces</span> <span class="n">true</span>
+  <span class="n">Interactive</span> <span class="n">false</span>
+  <span class="n">Import</span> <span class="s">&quot;slurm_core_states&quot;</span>
+<span class="o">&lt;/</span><span class="n">Plugin</span><span class="o">&gt;</span>
+</pre></div>
+
+
+<p>The <em>ModulePath</em> option prepends the path to <em>sys.path</em>, thus making your
+plugin available to Python when importing it.  Otherwise, you would get an
+<strong>ImportError</strong> exception.</p>
+<p>The <em>LogTraces</em> option will log any exceptions and the full stacktrace thrown
+by the plugin. This is good for debugging.</p>
+<p>The <em>Interactive</em> option will launch an interactive Python interpreter.  This
+script will not run interactively and is therefore set to <strong>false</strong>.</p>
+<p>The <em>Import</em> option imports our plugin into collectd's embedded Python
+interpreter.</p>
+<h2>Verifying</h2>
+<p>After restarting the collectd service, check the logs to make sure there are no
+issues with the plugin.  If there are no warning or errors in the logs, verify
+that the plugin is working by querying the metrics.</p>
+<p>This step will vary depending on where your metrics are stored.  For example,
+if the metrics are written to a Graphite instance, you could query the metrics
+using the Graphite URL API:</p>
+<div class="highlight"><pre>curl -s 
+<span class="s2">&quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;from=-1mins&amp;format=json&quot;</span>
+<span class="p">|</span> python -m json.tool
+</pre></div>
+
+
+<p>This fetches the cumulative number of allocated cores across all Slurm partitions, in json format. The last two datapoints are shown below:</p>
+<div class="highlight"><pre><span class="p">[</span>
+    <span class="p">{</span>
+        <span class="nt">&quot;datapoints&quot;</span><span class="p">:</span> <span class="p">[</span>
+            <span class="p">[</span>
+                <span class="mf">19488.0</span><span class="p">,</span>
+                <span class="mi">1435969380</span>
+            <span class="p">],</span>
+            <span class="p">[</span>
+                <span class="mf">19488.0</span><span class="p">,</span>
+                <span class="mi">1435969410</span>
+            <span class="p">]</span>
+        <span class="p">],</span>
+        <span class="nt">&quot;target&quot;</span><span class="p">:</span> <span class="s2">&quot;slurm.core_states.gauge-all-allocated&quot;</span>
+    <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+
+
+<p>And finally, here is what a Graphite graph would look like:</p>
+<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png" /></p>
+<h2>Conclusion</h2>
+<p>This is just one example of how to use Python and collectd to gather metrics
+and visualize them.  You could write a plugin with a similar structure to
+dispatch custom metrics to your metric collector, such as the Graphite suite or
+any other time-series database.</p>
+            </div>
+            <!-- /.entry-content -->
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+                    var disqus_identifier = 'using-collectd-python-and-graphite-to-graph-slurm-partitions';
+                var disqus_url = 'http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html';
+
+            var disqus_config = function () {
+                this.language = "en";
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+
+<section class="well well-sm">
+    <ul class="list-group list-group-flush">
+
+            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
+                <ul class="list-group" id="recentposts">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
+                            Using Collectd, Python and Graphite to Graph Slurm Partitions
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
+                            Enabling (Almost All) Collectd Plugins on CentOS 6
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">
+                            How to Setup an RPM Signing Key
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
+                <ul class="list-group" id="categories">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/collectd.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Collectd
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/linux.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Linux
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/rpm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> RPM
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
+                <ul class="list-group " id="tags">
+                </ul>
+            </li>
+
+
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
+    </li>
+    </ul>
+</section>
+            </aside>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 Giovanni Torres
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="http://giovannitorres.me/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://giovannitorres.me/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="http://giovannitorres.me/theme/js/respond.min.js"></script>
+
+    <!-- GitHub JS -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (!window.jXHR) {
+                var jxhr = document.createElement('script');
+                jxhr.type = 'text/javascript';
+                jxhr.src = 'http://giovannitorres.me/theme/js/jXHR.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(jxhr, s);
+            }
+
+            github.showRepos({
+                user: 'giovtorres',
+                count: 5,
+                skip_forks: true,
+                target: '#gh_repos'
+            });
+        });
+    </script>
+    <script src="http://giovannitorres.me/theme/js/github.js" type="text/javascript"></script>
+    <!-- End GitHub JS Code -->
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-54838714-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+</body>
+</html>

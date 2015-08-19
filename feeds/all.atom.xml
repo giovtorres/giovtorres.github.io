@@ -1,5 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-07-03T12:47:00-04:00</updated><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><updated>2015-07-03T12:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-08-15T00:00:00-04:00</updated><entry><title>Troubleshooting rsh slowness with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html" rel="alternate"></link><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-rsh-slowness-with-strace-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
+uses a much stronger authentication system.  While you should generally not use
+rsh for remote access, it does have some valid use cases.&lt;/p&gt;
+&lt;p&gt;In an HPC environment, for example, where the cluster is on a private network
+not connected to the internet, various MPI applications have the option to use
+rsh to launch parallel jobs onto multiple compute nodes and rsh conveniently
+offers password-less, host-based authentication to these remote nodes.&lt;/p&gt;
+&lt;p&gt;In this article, we will look at why rsh can be very slow and suggest a
+workaround for this slowness&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;In this example, the rsh client hostname is &lt;em&gt;client1&lt;/em&gt; with an IP address of
+192.168.122.200.  The rsh server hostname &lt;em&gt;server1&lt;/em&gt; with an IP address of
+192.168.122.202.  Make sure that each server has an entry in /etc/hosts for
+both servers if you are not using DNS for name resolution.&lt;/p&gt;
+&lt;h2&gt;Installing the rsh Client&lt;/h2&gt;
+&lt;p&gt;To install the rsh client on client1, install the &lt;strong&gt;rsh&lt;/strong&gt; package:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rsh
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Installing the rsh Server&lt;/h2&gt;
+&lt;p&gt;The rsh server runs under the xinetd superserver.  Install both packages on
+server1:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install xinetd rsh-server
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Configuring the rsh Server&lt;/h3&gt;
+&lt;p&gt;The configuration file for rsh is &lt;strong&gt;/etc/xinetd.d/rsh&lt;/strong&gt; and is disabled by
+default:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;service shell
+{
+    socket_type     = stream
+    wait            = no
+    user            = root
+    log_on_success  += USERID
+    log_on_failure  += USERID
+    server          = /usr/sbin/in.rshd
+    disable         = yes
+}
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;To enable rsh, change &lt;em&gt;disable&lt;/em&gt; from &lt;strong&gt;yes&lt;/strong&gt; to &lt;strong&gt;no&lt;/strong&gt;.  Then, start or
+restart the xinetd service:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo service xinetd restart
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Adjusting iptables&lt;/h2&gt;
+&lt;p&gt;rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
+rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Similarly, add the following iptables rule on the &lt;em&gt;server&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Restart the iptables service on both client and server after adding these
+rules, adjusting the IP addresses for ones that match your configuration.&lt;/p&gt;
+&lt;h2&gt;Configuring Host-Based Authentication&lt;/h2&gt;
+&lt;p&gt;The authentication mechanism for rsh is based on the contents of
+&lt;em&gt;/etc/hosts.equiv&lt;/em&gt; and or &lt;em&gt;$HOME/.rhosts&lt;/em&gt;. Both files include a list of
+hostnames that a remote user is allowed to access.&lt;/p&gt;
+&lt;p&gt;In this example, we only need the system-wide &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; for testing
+rsh.  On server1, &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; should have at least a single line for
+&lt;em&gt;client1&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ sudo cat /etc/hosts.equiv &lt;/span&gt;
+&lt;span class="go"&gt;client1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The permissions of this file should be &lt;strong&gt;0600&lt;/strong&gt;.&lt;/p&gt;
+&lt;h2&gt;Testing From the Command Line&lt;/h2&gt;
+&lt;p&gt;Test the rsh connection from client1 to server1.  Wrap the command around a
+pair of date commands to see the time it takes to complete the remote command:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;span class="go"&gt;1439740132.050&lt;/span&gt;
+&lt;span class="go"&gt; 11:48:52 up 15:40,  1 user,  load average: 0.00, 0.00, 0.00&lt;/span&gt;
+&lt;span class="go"&gt;1439740132.158&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;+%s&lt;/em&gt; format parameter of the date command outputs the current time in
+seconds since epoch.  The %3N outputs the first 3 digits of time in
+nanoseconds, or effectively milliseconds.&lt;/p&gt;
+&lt;p&gt;The latency to return the output from the uptime command on the remote server
+is great and typical, only 108ms.&lt;/p&gt;
+&lt;p&gt;In an HPC cluster environment, there may be hundreds, even thousands, of nodes in a
+given cluster.&lt;/p&gt;
+&lt;p&gt;Let us generate a set of fake hosts in /etc/hosts.equiv, starting with an empty
+file, then appending client1 to the end of the file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
+&lt;span class="go"&gt;for i in {001..099}; do sudo -i sh -c &amp;quot;echo node$i &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;; done&lt;/span&gt;
+&lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo client1 &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;There are now 100 hosts in the /etc/hosts.equiv file, with client1 being the
+last in the list.  Test the rsh connection again from client1 to server1, same
+as before:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;span class="go"&gt;1439740856.004&lt;/span&gt;
+&lt;span class="go"&gt; 12:01:00 up 15:52,  1 user,  load average: 0.00, 0.00, 0.00&lt;/span&gt;
+&lt;span class="go"&gt;1439740859.902&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;What just happened?  Now it takes almost 4 seconds to return the output from
+the remote server. There is no immediate indication of why this latency occurs.
+A great debugging tool for Linux is strace, which traces the system calls and
+signals an application makes from userspace to kernel space and the responses.
+We will now use strace on the server to capture system calls to see what the
+rshd daemon is doing.&lt;/p&gt;
+&lt;h2&gt;Testing with Strace&lt;/h2&gt;
+&lt;p&gt;First, make sure you have the strace package installed.  If not, installing it
+is easy:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install strace
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;In the xinetd rsh configuration file shown above, the server parameter
+specifies the path to the rsh daemon: &lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /usr/sbin/in.rshd
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;We will replace this server with a custom script that will use strace to launch
+the rsh daemon.  Replace the server parameter value with the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /tmp/rsh-strace.sh
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, create the &lt;em&gt;/tmp/rsh-strace.sh&lt;/em&gt; bash script with the following two lines:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c"&gt;#!/bin/bash&lt;/span&gt;
+/usr/bin/strace -f -tt -o /tmp/rsh-server.strace /usr/sbin/in.rshd
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The strace parameters used are:&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;-f&lt;/strong&gt;    trace child processes as they are created&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;-tt&lt;/strong&gt;   print timestamps with microsecond precision&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;-o&lt;/strong&gt;    write the output to a specified file instead of stderr&lt;/p&gt;
+&lt;p&gt;The script must be executable.  Change the permissions to at least &lt;em&gt;0755&lt;/em&gt;
+before restarting xinetd:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo chmod &lt;span class="m"&gt;0755&lt;/span&gt; /tmp/rsh-strace.sh
+sudo /sbin/service xinetd restart
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Be sure to check &lt;em&gt;/var/log/messages&lt;/em&gt; to make sure there were no errors
+restarting the xinetd service.&lt;/p&gt;
+&lt;p&gt;Now, every time the rsh server daemon in invoked, it will write the strace
+output to &lt;em&gt;/tmp/rsh-server.strace&lt;/em&gt;, overwriting it each time.&lt;/p&gt;
+&lt;p&gt;From client1, rsh to server1 and let us have a look at the resulting strace
+output to see if we can tell why the rsh command got slow after adding more
+nodes into the &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; file.&lt;/p&gt;
+&lt;p&gt;Buried in all the system calls is an open() and read() to /etc/hosts.equiv:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;11800 19:09:24.244476 open(&amp;quot;/etc/hosts.equiv&amp;quot;, O_RDONLY) = 4&lt;/span&gt;
+&lt;span class="go"&gt;[...]&lt;/span&gt;
+&lt;span class="go"&gt;11800 19:09:24.244559 read(4, &amp;quot;node001\nnode002\nnode003\nnode004\n&amp;quot;..., 4096) = 799&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The open() function returns a file descriptor (&lt;strong&gt;4&lt;/strong&gt;), which the
+read() function uses as its first argument.&lt;/p&gt;
+&lt;p&gt;Subsequently, there are many open() and read() calls to &lt;em&gt;/etc/hosts&lt;/em&gt; that return the same file
+descriptor, &lt;strong&gt;5&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;11800 19:09:24.283178 open(&amp;quot;/etc/hosts&amp;quot;, O_RDONLY|O_CLOEXEC) = 5&lt;/span&gt;
+&lt;span class="go"&gt;11800 19:09:24.283279 read(5, &amp;quot;127.0.0.1   localhost localhost.&amp;quot;..., 4096) = 253&lt;/span&gt;
+&lt;span class="go"&gt;11800 19:09:24.283327 read(5, &amp;quot;&amp;quot;, 4096) = 0&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;In fact, this pattern repeats itself many times.  Using grep, we can count how
+many times this occurs:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;span class="go"&gt;100&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;There were exactly 100 open() calls to /etc/hosts and client1, the rsh client,
+is at line 100 in /etc/hosts.equiv.  It appears the rsh daemon serially checks
+/etc/hosts for each host list in /etc/hosts.equiv, also checking for DNS
+mapping if the host is not in /etc/hosts.&lt;/p&gt;
+&lt;p&gt;Let's see what happens where there are 1000 hosts in /etc/hosts.equiv:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
+&lt;span class="go"&gt;for i in {001..999}; do sudo -i sh -c &amp;quot;echo node$i &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;; done&lt;/span&gt;
+&lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo client1 &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;From client1, rsh to server1 again:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;span class="go"&gt;1439946641.429&lt;/span&gt;
+&lt;span class="go"&gt; 21:11:16 up 3 days,  1:02,  1 user,  load average: 0.12, 0.04, 0.01&lt;/span&gt;
+&lt;span class="go"&gt;1439946675.667&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This time it takes over 30 seconds.  Using grep again, we can count how many
+times the rsh daemon opens and reads the /etc/hosts file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;span class="go"&gt;1000&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;It really does read the /etc/hosts once for every host in the /etc/hosts.equiv
+file.  So, if the rsh client is near the bottom of a very long hosts.equiv
+file, it can take 10s of seconds to return a command prompt or command output
+from the remote server.&lt;/p&gt;
+&lt;h2&gt;Workaround using Netgroups&lt;/h2&gt;
+&lt;p&gt;It's clear that this strategy will not work.  Either abandon rsh or try to fix
+the problem if you really must use rsh.&lt;/p&gt;
+&lt;p&gt;We can work around the problem using netgroups on the rsh server.  Netgroups
+are a very old way of specifying access control, seen a lot when NIS (Network
+Information System) was still heavily used. Nonetheless, it works well in this
+situation.&lt;/p&gt;
+&lt;p&gt;Netgroups are a tuple of the form &lt;strong&gt;(username, hostname, domain)&lt;/strong&gt; and are
+specified in &lt;strong&gt;/etc/netgroup&lt;/strong&gt;.  This file does not exist by default on CentOS
+6 and the system is not configured to use it by default, so we will need to
+configure our server to do so.&lt;/p&gt;
+&lt;p&gt;First, edit the &lt;em&gt;/etc/nsswitch.conf&lt;/em&gt; file.  The default nsswitch configuration
+file uses nisplus:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;netgroup:   nisplus&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Change this to &lt;em&gt;files&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;netgroup:   files&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Next, we'll construct the netgroup file with the first column in the file being
+the name of the netgroup.  The second column will be a list of netgroup tuples,
+one for each host.  The beauty about this solution is that we can list 100
+or 1000 hosts on the same line in the same netgroup.  Keep in mind, there may
+be a line size limit at some point.&lt;/p&gt;
+&lt;p&gt;We'll call the name of our netgroup &lt;strong&gt;nodes&lt;/strong&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo touch /etc/netgroup&lt;/span&gt;
+&lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo -n nodes &amp;gt;&amp;gt; /etc/netgroup&amp;quot;&lt;/span&gt;
+&lt;span class="go"&gt;for i in {001..999}; do sudo -i sh -c &amp;quot;echo -n &amp;#39; (node$i,-,-)&amp;#39; &amp;gt;&amp;gt; /etc/netgroup&amp;quot;; done&lt;/span&gt;
+&lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo -n &amp;#39; (client1,-,-)&amp;#39; &amp;gt;&amp;gt; /etc/netgroup&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;So, nodes 001 thru 999 plus client1 are in the &lt;em&gt;nodes&lt;/em&gt; netgroup.  Now, we need
+to adjust the &lt;em&gt;hosts.equiv&lt;/em&gt; file to use the new netgroup:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/netgroup&lt;/span&gt;
+&lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo +@nodes &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, let's retest rsh again from client1:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;span class="go"&gt;1439948137.505&lt;/span&gt;
+&lt;span class="go"&gt; 21:35:38 up 3 days,  1:27,  1 user,  load average: 0.00, 0.03, 0.00&lt;/span&gt;
+&lt;span class="go"&gt;1439948137.731&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Well, that was fast.  Let's see how many times rshd opened /etc/hosts file with
+the same file descriptor:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;span class="go"&gt;0&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;None, so let's check the /etc/netgroup file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*netgroup.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;span class="go"&gt;1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The per-line search behavior shifted from incessantly reading /etc/hosts to
+reading /etc/netgroup.  Except, reading a single line from /etc/netgroup speeds
+up the rsh server response significantly.&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Again, you are probably not using rsh and for good reason.  rsh should only be
+used in private networks that have no direct connection to the Internet.  However,
+if you are using it, say for launching parallel jobs in an HPC cluster, then
+hopefully this article explains why rsh is sometimes slow and how to
+workaround the slowness using netgroups.&lt;/p&gt;
+&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><updated>2015-07-03T12:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;&lt;a href="https://collectd.org/"&gt;Collectd&lt;/a&gt; comes with a long &lt;a href="https://collectd.org/wiki/index.php/Table_of_Plugins"&gt;list of
 plugins&lt;/a&gt;.  In a previous
 &lt;a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"&gt;article&lt;/a&gt;, we showed how to install the

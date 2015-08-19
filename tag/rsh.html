@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
 <head>
-    <title>How to Build RPMs - Giovanni Torres</title>
+    <title>rsh - Giovanni Torres</title>
     <!-- Using the latest rendering mode for IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
@@ -9,21 +9,16 @@
 
 
 
-<link rel="canonical" href="http://giovannitorres.me/drafts/how-to-build-rpms.html">
 
-        <meta name="author" content="Giovanni Torres" />
-        <meta name="keywords" content="rpm" />
-        <meta name="description" content="Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will walk through three different ways of building RPMs: using a spec file, rebuilding a source rpm and using mock. Prerequisites We installed the necessary packages in Part 1. These packages provide ..." />
+    <meta name="author" content="Giovanni Torres" />
+    <meta name="keywords" content="rsh" />
 
+    <!-- Open Graph tags -->
         <meta property="og:site_name" content="Giovanni Torres" />
-        <meta property="og:type" content="article"/>
-        <meta property="og:title" content="How to Build RPMs"/>
-        <meta property="og:url" content="http://giovannitorres.me/drafts/how-to-build-rpms.html"/>
-        <meta property="og:description" content="Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will walk through three different ways of building RPMs: using a spec file, rebuilding a source rpm and using mock. Prerequisites We installed the necessary packages in Part 1. These packages provide ..."/>
-        <meta property="article:published_time" content="2015-05-31" />
-            <meta property="article:section" content="RPM" />
-            <meta property="article:tag" content="rpm" />
-            <meta property="article:author" content="Giovanni Torres" />
+        <meta property="og:type" content="website"/>
+        <meta property="og:title" content="Giovanni Torres"/>
+        <meta property="og:url" content="http://giovannitorres.me"/>
+        <meta property="og:description" content="Giovanni Torres"/>
 
 
     <!-- Bootstrap -->
@@ -39,8 +34,6 @@
 
 
 
-        <link href="http://giovannitorres.me/feeds/rpm.atom.xml" type="application/atom+xml" rel="alternate"
-              title="Giovanni Torres RPM ATOM Feed"/>
 
 </head>
 <body>
@@ -72,96 +65,17 @@ Giovanni Torres            </a>
 <div class="container">
     <div class="row">
         <div class="col-sm-9">
-    <section id="content">
-        <article>
-            <header class="page-header">
-                <h1>
-                    <a href="http://giovannitorres.me/drafts/how-to-build-rpms.html"
-                       rel="bookmark"
-                       title="Permalink to How to Build RPMs">
-                        How to Build RPMs
-                    </a>
-                </h1>
-            </header>
-            <div class="entry-content">
-                <div class="panel">
-                    <div class="panel-body">
-<footer class="post-info">
-    <span class="label label-default">Date</span>
-    <span class="published">
-        <i class="fa fa-calendar"></i><time datetime="2015-05-31T12:47:00-04:00"> Sun 31 May 2015</time>
-    </span>
-
-            <span class="label label-default">Series</span>
-            Part <built-in method index of unicode object at 0x7f6db3fe3660> of 
-
-
-
-
-<span class="label label-default">Tags</span>
-	<a href="http://giovannitorres.me/tag/rpm.html">rpm</a>
-    
-</footer><!-- /.post-info -->                    </div>
+            <article>
+                <h2><a href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html">Troubleshooting rsh slowness with strace on CentOS 6</a></h2>
+                <div class="summary"><h2>Introduction</h2>
+<p>rsh is the remote shell "r command" that has long been superseded by SSH as it
+uses a much stronger authentication system.  While you should generally not use
+rsh for remote access, it does have some valid use cases.</p>
+<p>In an HPC environment, for example, where the cluster is ...</p>
+                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html">more ...</a>
                 </div>
-                <h2>Introduction</h2>
-<p>Now that we have an <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">rpm build
-environment</a>
-, we can build RPM packages.</p>
-<p>In this guide, we will walk through three different ways of building RPMs:
-using a spec file, rebuilding a source rpm and using
-<a href="https://fedoraproject.org/wiki/Mock?rd=Subprojects/Mock">mock</a>.</p>
-<h2>Prerequisites</h2>
-<p>We installed the necessary packages in <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part
-1</a>.  These
-packages provide the utilties that we will use to build rpms, namely rpmbuild,
-spectool, yum-builddep and mock.</p>
-<h2>Building RPMs from a SPEC file</h2>
-<p>A spec file includes all the information and steps the <strong>rpmbuild</strong> command
-needs to build an RPM package.  Among other things, it lists the name and
-version of your application, all package dependencies and how the application
-should be configured and built.  A spec file is written in plain text and, by
-convention, its name is formed by appending a <em>.spec</em> suffix to the application
-name, for example, <em>mypackage.spec</em>.</p>
-<h2>Rebuilding Source RPMs (SRPMs)</h2>
-<h2>Building RPMs using Mock</h2>
-<h2>Conclusion</h2>
-            </div>
-            <!-- /.entry-content -->
-<section class="well" id="related-posts">
-    <h4>Part <built-in method index of unicode object at 0x7f6db3fe3660> of the  series</h4>
-</section>
-    <hr/>
-    <section class="comments" id="comments">
-        <h2>Comments</h2>
-
-        <div id="disqus_thread"></div>
-        <script type="text/javascript">
-            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
-            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
-
-                    var disqus_identifier = 'how-to-build-rpms';
-                var disqus_url = 'http://giovannitorres.me/drafts/how-to-build-rpms.html';
-
-            var disqus_config = function () {
-                this.language = "en";
-            };
-
-            /* * * DON'T EDIT BELOW THIS LINE * * */
-            (function () {
-                var dsq = document.createElement('script');
-                dsq.type = 'text/javascript';
-                dsq.async = true;
-                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-            })();
-        </script>
-        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
-            Disqus.</a></noscript>
-        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
-
-    </section>
-        </article>
-    </section>
+            </article>
+            <hr/>
 
         </div>
         <div class="col-sm-3" id="sidebar">
@@ -175,16 +89,6 @@ name, for example, <em>mypackage.spec</em>.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html">
                             Troubleshooting rsh slowness with strace on CentOS 6
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
-                            Using Collectd, Python and Graphite to Graph Slurm Partitions
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
-                            Enabling (Almost All) Collectd Plugins on CentOS 6
                         </a>
                     </li>
                 </ul>

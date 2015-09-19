@@ -123,7 +123,7 @@ EPEL yum repository configured.</p>
 and the autotools suite.</p>
 <p>To install the required packages, run the following:</p>
 <div class="highlight"><pre>sudo yum groupinstall &#39;Development Tools&#39;
-sudo yum install yum install rpmdevtools mock yum-utils
+sudo yum install yum install rpmdevtools yum-utils
 </pre></div>
 
 
@@ -192,7 +192,7 @@ libraries as long as the libraries are put in the standard locations, such as
 /lib, /lib64, etc. or an appropriate config file is placed <em>/etc/ld.so.conf.d</em>
 for libraries in non-standard locations.</p>
 <p>For a more thorough explanation, see this Fedora Project link:
-<a href="https://fedoraproject.org/wiki/RPath_Packaging_Draft">https://fedoraproject.org/wiki/RPath_Packaging_Draft</a>.</p>
+<a href="https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath">https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath</a>.</p>
 <h2>Conclusion</h2>
 <p>You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
@@ -204,6 +204,7 @@ follow good practice and sign your RPM packages.</p>
        <h5>Next articles</h5>
        <ul>
            <li><a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">How to Setup an RPM Signing Key</a></li>
+           <li><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></li>
        </ul>
 </section>
     <hr/>
@@ -249,6 +250,11 @@ follow good practice and sign your RPM packages.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
+                            How to Build RPMs - Collectd Example
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html">
                             Troubleshooting rsh slowness with strace on CentOS 6
                         </a>
@@ -256,11 +262,6 @@ follow good practice and sign your RPM packages.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
                             Using Collectd, Python and Graphite to Graph Slurm Partitions
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
-                            Enabling (Almost All) Collectd Plugins on CentOS 6
                         </a>
                     </li>
                 </ul>

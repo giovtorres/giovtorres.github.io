@@ -123,6 +123,8 @@ you will need to make sure that the virtual machine has sufficient entropy.</p>
 <p>See this <a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html">post</a> on how to
 increase the entropy on your virtual machine using <em>rng-tools</em> before
 continuing.</p>
+<p>Additionally, the steps in this guide will be carried out by the <strong>makerpm</strong>
+user.</p>
 <h2>Install Packages</h2>
 <p>To install the GPG package, run the following:</p>
 <div class="highlight"><pre>sudo yum install gnupg2
@@ -147,7 +149,7 @@ Your selection? 1
 </pre></div>
 
 
-<p>Next, select the size.  The default <em>2048</em> bits is sufficient, but if you are
+<p>Next, select the size.  The default <em>2048</em> bits are sufficient, but if you are
 feeling particularly paranoid, go for <em>4096</em> bits.</p>
 <div class="highlight"><pre>RSA keys may be between 1024 and 4096 bits long.
 What keysize do you want? (2048) 2048
@@ -239,7 +241,7 @@ sub   2048R/D4F51F8B 2015-05-29
 
 
 <p>You will see a listing of all keys.  In this example, only a single key is listed, the one we just created from the above steps.</p>
-<div class="highlight"><pre>/home/giovanni/.gnupg/pubring.gpg
+<div class="highlight"><pre>/home/makerpm/.gnupg/pubring.gpg
 ---------------------------------
 pub   2048R/3D832D1E 2015-05-29
 uid                  Example Org Signing Key &lt;support@example.com&gt;
@@ -256,7 +258,7 @@ another user, a new pseudo-terminal is not opened for the switched user.</p>
 to the screen. Therefore, if you run the <strong>gpg --gen-key</strong> command after
 switching to a different user, you may see one of the following error messages:</p>
 <p>Without X11 Forwarding:</p>
-<div class="highlight"><pre>gpg-agent[5569]: directory `/home/giovanni/.gnupg/private-keys-v1.d&#39; created
+<div class="highlight"><pre>gpg-agent[5569]: directory `/home/makerpm/.gnupg/private-keys-v1.d&#39; created
 gpg-agent[5569]: command get_passphrase failed: Operation cancelled
 gpg: cancelled by user
 gpg: Key generation canceled.
@@ -314,7 +316,7 @@ binary-to-text encoding.  We need the <em>name</em> of the key in order to expor
 
 
 <p>The output, as seen above, should similar to the following:</p>
-<div class="highlight"><pre>/home/giovanni/.gnupg/pubring.gpg
+<div class="highlight"><pre>/home/makerpm/.gnupg/pubring.gpg
 ---------------------------------
 pub   2048R/3D832D1E 2015-05-29
 uid                  Example Org Signing Key &lt;support@example.com&gt;
@@ -406,6 +408,10 @@ Part 3 of this guide, we will look at various ways of building RPMs.</p>
        <ul>
            <li><a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">How to Setup an RPM Build Environment on CentOS 6</a></li>
        </ul>
+       <h5>Next articles</h5>
+       <ul>
+           <li><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></li>
+       </ul>
 </section>
     <hr/>
     <section class="comments" id="comments">
@@ -450,6 +456,11 @@ Part 3 of this guide, we will look at various ways of building RPMs.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
+                            How to Build RPMs - Collectd Example
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html">
                             Troubleshooting rsh slowness with strace on CentOS 6
                         </a>
@@ -457,11 +468,6 @@ Part 3 of this guide, we will look at various ways of building RPMs.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
                             Using Collectd, Python and Graphite to Graph Slurm Partitions
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
-                            Enabling (Almost All) Collectd Plugins on CentOS 6
                         </a>
                     </li>
                 </ul>

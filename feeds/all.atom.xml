@@ -414,7 +414,7 @@ collectd-mysql-5.5.0-1.el6.x86_64.rpm
 &lt;p&gt;Mock is a great tool for building RPMs.  You get a clean chroot environment in
 which to build RPMs.  Building from a source rpm or a spec file is slightly
 more involved.  In the last part of this guide, Part 4, we will look at signing
-our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting rsh slowness with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-rsh-slowness-with-strace-on-centos-6.html" rel="alternate"></link><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-rsh-slowness-with-strace-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
 uses a much stronger authentication system.  While you should generally not use
 rsh for remote access, it does have some valid use cases.&lt;/p&gt;

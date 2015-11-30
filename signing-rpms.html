@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Signing RPMs - Giovanni Torres</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="http://giovannitorres.me/signing-rpms.html">
+
+        <meta name="author" content="Giovanni Torres" />
+        <meta name="keywords" content="rpm" />
+        <meta name="description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs ..." />
+
+        <meta property="og:site_name" content="Giovanni Torres" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Signing RPMs"/>
+        <meta property="og:url" content="http://giovannitorres.me/signing-rpms.html"/>
+        <meta property="og:description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs ..."/>
+        <meta property="article:published_time" content="2015-11-29" />
+            <meta property="article:section" content="RPM" />
+            <meta property="article:tag" content="rpm" />
+            <meta property="article:author" content="Giovanni Torres" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="http://giovannitorres.me/theme/css/bootstrap.cosmo.min.css" type="text/css"/>
+    <link href="http://giovannitorres.me/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
+        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
+
+        <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres ATOM Feed"/>
+
+
+
+        <link href="http://giovannitorres.me/feeds/rpm.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres RPM ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="http://giovannitorres.me/" class="navbar-brand">
+Giovanni Torres            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="http://giovannitorres.me/signing-rpms.html"
+                       rel="bookmark"
+                       title="Permalink to Signing RPMs">
+                        Signing RPMs
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2015-11-29T00:00:00-05:00"> Sun 29 November 2015</time>
+    </span>
+
+            <span class="label label-default">Series</span>
+            Part 4 of Building RPMs
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="http://giovannitorres.me/tag/rpm.html">rpm</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>Introduction</h2>
+<p>So far, we have <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">setup an RPM build
+environment</a>
+, <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">setup our RPM signing key</a>,
+and <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">built RPMs</a>.  The last
+thing left to do is to use the rpm signing key to sign our newly built RPMs.</p>
+<p>In this last part of this guide, we will sign the collectd RPMs that we built
+in the <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">Part 3</a>.</p>
+<h2>Configure %_gpg_name in Macro File</h2>
+<p>Before we can sign RPMs, we need to tell the <strong>rpm</strong> command which gpg key to use.
+In <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part 1</a>,
+we saw the <code>.rpmmacros</code> file, which included some default rpm macros.</p>
+<p>We now need to add an additional macro, called <strong>%_gpg_name</strong>, along with our
+GPG key ID.  To find the GPG key id, run the following command:</p>
+<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="o">~</span><span class="p">]</span><span class="err">$</span> <span class="n">gpg</span> <span class="o">--</span><span class="n">list</span><span class="o">-</span><span class="n">public</span><span class="o">-</span><span class="n">keys</span>
+<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">makerpm</span><span class="o">/</span><span class="p">.</span><span class="n">gnupg</span><span class="o">/</span><span class="n">pubring</span><span class="p">.</span><span class="n">gpg</span>
+<span class="o">---------------------------------</span>
+<span class="n">pub</span>   <span class="mi">2048</span><span class="n">R</span><span class="o">/</span><span class="mi">512</span><span class="n">A2AA0</span> <span class="mi">2015</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span>
+<span class="n">uid</span>                  <span class="n">Example</span> <span class="n">Org</span> <span class="n">Signing</span> <span class="n">Key</span> <span class="o">&lt;</span><span class="n">support</span><span class="err">@</span><span class="n">example</span><span class="p">.</span><span class="n">com</span><span class="o">&gt;</span>
+<span class="n">sub</span>   <span class="mi">2048</span><span class="n">R</span><span class="o">/</span><span class="n">D97540C0</span> <span class="mi">2015</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span>
+</pre></div>
+
+
+<p>The GPG key ID is <strong>512A2AA0</strong>.</p>
+<p>Now, echo the macro and the GPG key ID to your ~/.rpmmacros file as follows:</p>
+<div class="highlight"><pre><span class="n">echo</span> <span class="s">&quot;%_gpg_name 512A2AA0&quot;</span> <span class="o">&gt;&gt;</span> <span class="o">~/</span><span class="p">.</span><span class="n">rpmmacros</span>
+</pre></div>
+
+
+<h2>Signing RPMs</h2>
+<p>Change to the directory where the RPMs were created.  Depending on the
+chosen method, the directory could be either of the following:</p>
+<ul>
+<li>$HOME/rpmbuild/RPMS/x86_64/ </li>
+<li>/var/lib/mock/centos-6-x86_64/result/</li>
+</ul>
+<p>Then, run the following <strong>rpm</strong> command to add a signature to a single RPM (you
+will be prompted for the GPG key passphrase):</p>
+<div class="highlight"><pre><span class="go">[makerpm@localhost ~]$ rpm --addsign -v collectd-5.5.0-1.el6.x86_64.rpm </span>
+<span class="go">Enter pass phrase: </span>
+<span class="go">Pass phrase is good.</span>
+<span class="go">collectd-5.5.0-1.el6.x86_64.rpm:</span>
+</pre></div>
+
+
+<p>You can sign all the RPMs at once using file globbing:</p>
+<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">addsign</span> <span class="o">-</span><span class="n">v</span> <span class="o">*</span><span class="err">\</span><span class="p">.</span><span class="n">rpm</span>
+<span class="n">Enter</span> <span class="n">pass</span> <span class="n">phrase</span><span class="o">:</span> 
+<span class="n">Pass</span> <span class="n">phrase</span> <span class="n">is</span> <span class="n">good</span><span class="p">.</span>
+<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">amqp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">apache</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">ascent</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">bind</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">ceph</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">collection3</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">contrib</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">curl</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">curl_json</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">curl_xml</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">dbi</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">debuginfo</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">disk</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">dns</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">email</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">gmond</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">hddtemp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">ipmi</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">iptables</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">java</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">log_logstash</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">lvm</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">memcachec</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">modbus</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">mysql</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">netlink</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">nginx</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">notify_desktop</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">notify_email</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">nut</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">openldap</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">perl</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">php</span><span class="o">-</span><span class="n">collection</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">pinba</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">ping</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">postgresql</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">python</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">redis</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">rrdtool</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">sensors</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">smart</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">snmp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">utils</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">varnish</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">virt</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">write_http</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">write_redis</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">collectd</span><span class="o">-</span><span class="n">write_riemann</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">libcollectdclient</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<span class="n">libcollectdclient</span><span class="o">-</span><span class="n">devel</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+</pre></div>
+
+
+<h2>Verifying RPMs</h2>
+<p>To verify the signature, use the <code>--checksig</code> rpm flag:</p>
+<div class="highlight"><pre><span class="go">[makerpm@localhost x86_64]$ rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm </span>
+<span class="go">collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK</span>
+</pre></div>
+
+
+<p>For a more verbose output, add the <code>-v</code> flag:</p>
+<div class="highlight"><pre><span class="go">[makerpm@localhost x86_64]$ rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm </span>
+<span class="go">collectd-5.5.0-1.el6.x86_64.rpm:</span>
+<span class="go">    Header V4 RSA/SHA1 Signature, key ID 512a2aa0: OK</span>
+<span class="go">    Header SHA1 digest: OK (f62c64dc9938b6d86c91d4f430b293dbb4f4cad3)</span>
+<span class="go">    V4 RSA/SHA1 Signature, key ID 512a2aa0: OK</span>
+<span class="go">    MD5 digest: OK (53a3f30fffd28e5bfba65a7f2608e8a2)</span>
+</pre></div>
+
+
+<p>Remember in Part 1, we exported the gpg key from the keyring and imported the
+key into the RPM database.  If you forgot to import the key into the RPM
+database, you would see <strong>MISSING KEYS</strong> and <strong>NOKEY</strong> in the output instead:</p>
+<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">checksig</span> <span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span> 
+<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span> <span class="n">RSA</span> <span class="n">sha1</span> <span class="p">((</span><span class="n">MD5</span><span class="p">)</span> <span class="n">PGP</span><span class="p">)</span> <span class="n">md5</span> <span class="n">NOT</span> <span class="n">OK</span> <span class="p">(</span><span class="n">MISSING</span> <span class="n">KEYS</span><span class="o">:</span> <span class="p">(</span><span class="n">MD5</span><span class="p">)</span> <span class="n">PGP</span><span class="err">#</span><span class="mi">512</span><span class="n">a2aa0</span><span class="p">)</span>
+</pre></div>
+
+
+<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">checksig</span> <span class="o">-</span><span class="n">v</span> <span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span> 
+<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+    <span class="n">Header</span> <span class="n">V4</span> <span class="n">RSA</span><span class="o">/</span><span class="n">SHA1</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">key</span> <span class="n">ID</span> <span class="mi">512</span><span class="n">a2aa0</span><span class="o">:</span> <span class="n">NOKEY</span>
+    <span class="n">Header</span> <span class="n">SHA1</span> <span class="n">digest</span><span class="o">:</span> <span class="n">OK</span> <span class="p">(</span><span class="n">f62c64dc9938b6d86c91d4f430b293dbb4f4cad3</span><span class="p">)</span>
+    <span class="n">V4</span> <span class="n">RSA</span><span class="o">/</span><span class="n">SHA1</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">key</span> <span class="n">ID</span> <span class="mi">512</span><span class="n">a2aa0</span><span class="o">:</span> <span class="n">NOKEY</span>
+    <span class="n">MD5</span> <span class="n">digest</span><span class="o">:</span> <span class="n">OK</span> <span class="p">(</span><span class="mi">53</span><span class="n">a3f30fffd28e5bfba65a7f2608e8a2</span><span class="p">)</span>
+</pre></div>
+
+
+<h2>RPM Distribution</h2>
+<p>Now that we have signed RPMs, we are ready to distribute them to other servers
+within the infrastructure.  There are various ways to do this, so use a method
+that fits your workflow.</p>
+<p>For example, you could use a configuration management tool, like Puppet,
+Ansible or Salt, to distribute the RPM GPG key to all machines and then
+install the RPM.  Alternatively, if you are using Spacewalk, for example, to
+manage custom YUM repositories, you could add the RPM GPG key to Spacewalk and
+also add the signed RPMs to a custom repository.</p>
+            </div>
+            <!-- /.entry-content -->
+<section class="well" id="related-posts">
+    <h4>Part 4 of the Building RPMs series</h4>
+       <h5>Previous articles</h5>
+       <ul>
+           <li><a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">How to Setup an RPM Build Environment on CentOS 6</a></li>
+           <li><a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">How to Setup an RPM Signing Key</a></li>
+           <li><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></li>
+       </ul>
+</section>
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+                    var disqus_identifier = 'signing-rpms';
+                var disqus_url = 'http://giovannitorres.me/signing-rpms.html';
+
+            var disqus_config = function () {
+                this.language = "en";
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+
+<section class="well well-sm">
+    <ul class="list-group list-group-flush">
+
+            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
+                <ul class="list-group" id="recentposts">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/signing-rpms.html">
+                            Signing RPMs
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
+                            How to Build RPMs - Collectd Example
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">
+                            Troubleshooting slow rsh logins with strace on CentOS 6
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
+                <ul class="list-group" id="categories">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/collectd.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Collectd
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/linux.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Linux
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/rpm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> RPM
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
+                <ul class="list-group " id="tags">
+                </ul>
+            </li>
+
+
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
+    </li>
+    </ul>
+</section>
+            </aside>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2015 Giovanni Torres
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="http://giovannitorres.me/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://giovannitorres.me/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="http://giovannitorres.me/theme/js/respond.min.js"></script>
+
+    <!-- GitHub JS -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (!window.jXHR) {
+                var jxhr = document.createElement('script');
+                jxhr.type = 'text/javascript';
+                jxhr.src = 'http://giovannitorres.me/theme/js/jXHR.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(jxhr, s);
+            }
+
+            github.showRepos({
+                user: 'giovtorres',
+                count: 5,
+                skip_forks: true,
+                target: '#gh_repos'
+            });
+        });
+    </script>
+    <script src="http://giovannitorres.me/theme/js/github.js" type="text/javascript"></script>
+    <!-- End GitHub JS Code -->
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-54838714-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+</body>
+</html>

@@ -16,48 +16,48 @@ workaround for this slowness&lt;/p&gt;
 both servers if you are not using DNS for name resolution.&lt;/p&gt;
 &lt;h2&gt;Installing the rsh Client&lt;/h2&gt;
 &lt;p&gt;To install the rsh client on client1, install the &lt;strong&gt;rsh&lt;/strong&gt; package:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rsh
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;rsh&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Installing the rsh Server&lt;/h2&gt;
 &lt;p&gt;The rsh server runs under the xinetd superserver.  Install both packages on
 server1:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install xinetd rsh-server
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;xinetd&lt;/span&gt; &lt;span class="n"&gt;rsh&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;server&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Configuring the rsh Server&lt;/h3&gt;
 &lt;p&gt;The configuration file for rsh is &lt;strong&gt;/etc/xinetd.d/rsh&lt;/strong&gt; and is disabled by
 default:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;service shell
-{
-    socket_type     = stream
-    wait            = no
-    user            = root
-    log_on_success  += USERID
-    log_on_failure  += USERID
-    server          = /usr/sbin/in.rshd
-    disable         = yes
-}
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;service&lt;/span&gt; &lt;span class="n"&gt;shell&lt;/span&gt;
+&lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="n"&gt;socket_type&lt;/span&gt;     &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;stream&lt;/span&gt;
+    &lt;span class="n"&gt;wait&lt;/span&gt;            &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;no&lt;/span&gt;
+    &lt;span class="n"&gt;user&lt;/span&gt;            &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;root&lt;/span&gt;
+    &lt;span class="n"&gt;log_on_success&lt;/span&gt;  &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;USERID&lt;/span&gt;
+    &lt;span class="n"&gt;log_on_failure&lt;/span&gt;  &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="n"&gt;USERID&lt;/span&gt;
+    &lt;span class="n"&gt;server&lt;/span&gt;          &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;usr&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;sbin&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;in&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;rshd&lt;/span&gt;
+    &lt;span class="n"&gt;disable&lt;/span&gt;         &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;yes&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;To enable rsh, change &lt;em&gt;disable&lt;/em&gt; from &lt;strong&gt;yes&lt;/strong&gt; to &lt;strong&gt;no&lt;/strong&gt;.  Then, start or
 restart the xinetd service:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo service xinetd restart
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;service&lt;/span&gt; &lt;span class="n"&gt;xinetd&lt;/span&gt; &lt;span class="n"&gt;restart&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Adjusting iptables&lt;/h2&gt;
 &lt;p&gt;rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="n"&gt;INPUT&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;state&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;state&lt;/span&gt; &lt;span class="n"&gt;NEW&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;tcp&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt; &lt;span class="n"&gt;tcp&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="mf"&gt;192.168.122.202&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;dport&lt;/span&gt; &lt;span class="mi"&gt;514&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;1023&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="n"&gt;ACCEPT&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Similarly, add the following iptables rule on the &lt;em&gt;server&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;A&lt;/span&gt; &lt;span class="n"&gt;INPUT&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;state&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;state&lt;/span&gt; &lt;span class="n"&gt;NEW&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;tcp&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt; &lt;span class="n"&gt;tcp&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="mf"&gt;192.168.122.200&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;dport&lt;/span&gt; &lt;span class="mi"&gt;514&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="mi"&gt;1023&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;j&lt;/span&gt; &lt;span class="n"&gt;ACCEPT&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -120,19 +120,19 @@ rshd daemon is doing.&lt;/p&gt;
 &lt;h2&gt;Testing with Strace&lt;/h2&gt;
 &lt;p&gt;First, make sure you have the strace package installed.  If not, installing it
 is easy:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install strace
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;strace&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;In the xinetd rsh configuration file shown above, the server parameter
 specifies the path to the rsh daemon: &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /usr/sbin/in.rshd
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="n"&gt;server&lt;/span&gt;          &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;usr&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;sbin&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;in&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;rshd&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;We will replace this server with a custom script that will use strace to launch
 the rsh daemon.  Replace the server parameter value with the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /tmp/rsh-strace.sh
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="n"&gt;server&lt;/span&gt;          &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;tmp&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;rsh&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;strace&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sh&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -148,7 +148,7 @@ the rsh daemon.  Replace the server parameter value with the following:&lt;/p&gt
 &lt;p&gt;&lt;strong&gt;-o&lt;/strong&gt;    write the output to a specified file instead of stderr&lt;/p&gt;
 &lt;p&gt;The script must be executable.  Change the permissions to at least &lt;em&gt;0755&lt;/em&gt;
 before restarting xinetd:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo chmod &lt;span class="m"&gt;0755&lt;/span&gt; /tmp/rsh-strace.sh
+&lt;div class="highlight"&gt;&lt;pre&gt;sudo chmod 0755 /tmp/rsh-strace.sh
 sudo /sbin/service xinetd restart
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -289,10 +289,10 @@ workaround the slowness using netgroups.&lt;/p&gt;
 &lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
 waiting for kernel to gather sufficient entropy in order to sufficiently
 randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
-some other action (type on the keyboard, move the mouse, utilize the
-disks) during the prime generation; this gives the random number
-generator a better chance to gain enough entropy.
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;We&lt;/span&gt; &lt;span class="n"&gt;need&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;generate&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;lot&lt;/span&gt; &lt;span class="n"&gt;of&lt;/span&gt; &lt;span class="n"&gt;random&lt;/span&gt; &lt;span class="n"&gt;bytes&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt; &lt;span class="n"&gt;It&lt;/span&gt; &lt;span class="n"&gt;is&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;good&lt;/span&gt; &lt;span class="n"&gt;idea&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;perform&lt;/span&gt;
+&lt;span class="n"&gt;some&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt; &lt;span class="n"&gt;action&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="n"&gt;on&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;keyboard&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;move&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;mouse&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;utilize&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt;
+&lt;span class="n"&gt;disks&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="n"&gt;during&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;prime&lt;/span&gt; &lt;span class="n"&gt;generation&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="n"&gt;this&lt;/span&gt; &lt;span class="n"&gt;gives&lt;/span&gt; &lt;span class="n"&gt;the&lt;/span&gt; &lt;span class="n"&gt;random&lt;/span&gt; &lt;span class="n"&gt;number&lt;/span&gt;
+&lt;span class="n"&gt;generator&lt;/span&gt; &lt;span class="n"&gt;a&lt;/span&gt; &lt;span class="n"&gt;better&lt;/span&gt; &lt;span class="n"&gt;chance&lt;/span&gt; &lt;span class="n"&gt;to&lt;/span&gt; &lt;span class="n"&gt;gain&lt;/span&gt; &lt;span class="n"&gt;enough&lt;/span&gt; &lt;span class="n"&gt;entropy&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -305,32 +305,32 @@ with this.  Until this becomes ubiquitous, you can use
 to gather entropy inside your virtual machine. In fact, rngd is enabled by
 default since Fedora 18.&lt;/p&gt;
 &lt;p&gt;Install the rng-tools package using YUM:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rng-tools
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;rng&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;tools&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Edit the rng-tools configuration file and configure the kernel device used for
 random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pseudorandom number generator:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo perl -p -i -e &amp;#39;s/EXTRAOPTIONS=&amp;quot;&amp;quot;/EXTRAOPTIONS=&amp;quot;-r \/dev\/urandom&amp;quot;/&amp;#39; /etc/sysconfig/rngd
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;perl&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;p&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;i&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;e&lt;/span&gt; &lt;span class="err"&gt;&amp;#39;&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;EXTRAOPTIONS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;EXTRAOPTIONS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;-r \/dev\/urandom&amp;quot;&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="err"&gt;&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;etc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;sysconfig&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;rngd&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Start rngd&lt;/h3&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo chkconfig rngd on
-sudo service rngd start
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;chkconfig&lt;/span&gt; &lt;span class="n"&gt;rngd&lt;/span&gt; &lt;span class="n"&gt;on&lt;/span&gt;
+&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;service&lt;/span&gt; &lt;span class="n"&gt;rngd&lt;/span&gt; &lt;span class="n"&gt;start&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Verify available kernel entropy (higher is better)&lt;/h3&gt;
 &lt;p&gt;Before:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
-173
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;cat&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;proc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;kernel&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;random&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;entropy_avail&lt;/span&gt; 
+&lt;span class="mi"&gt;173&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;After:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
-4096
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;cat&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;proc&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;kernel&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;random&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;entropy_avail&lt;/span&gt; 
+&lt;span class="mi"&gt;4096&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 

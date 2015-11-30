@@ -127,12 +127,12 @@ found in the CentOS Base and EPEL repositories.</p>
 <h2>Prerequisites</h2>
 <p>Compiling any package from source requires a compiler.  If you don't already
 have one installed, go ahead and install the GNU GCC compiler:</p>
-<div class="highlight"><pre>sudo yum install gcc
+<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">gcc</span>
 </pre></div>
 
 
 <p>For this exercise, you will also need kernel and the C library header files:</p>
-<div class="highlight"><pre>sudo yum install kernel-headers glibc-headers
+<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">kernel</span><span class="o">-</span><span class="n">headers</span> <span class="n">glibc</span><span class="o">-</span><span class="n">headers</span>
 </pre></div>
 
 
@@ -141,13 +141,13 @@ have one installed, go ahead and install the GNU GCC compiler:</p>
 website</a>.  Download and untar the
 the latest source tarball.  At the time of this writing, version 5.5.0 is the
 latest stable version.</p>
-<div class="highlight"><pre>curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
+<div class="highlight"><pre><span class="n">curl</span> <span class="o">--</span><span class="n">progress</span> <span class="n">https</span><span class="o">:</span><span class="c1">//collectd.org/files/collectd-5.5.0.tar.gz | tar xz</span>
 </pre></div>
 
 
 <h2>Configuring collectd</h2>
 <p>After downloading and extracting the source files, change to that directory:</p>
-<div class="highlight"><pre>cd collect-5.5.0
+<div class="highlight"><pre><span class="n">cd</span> <span class="n">collect</span><span class="o">-</span><span class="mf">5.5.0</span>
 </pre></div>
 
 
@@ -155,7 +155,7 @@ latest stable version.</p>
 install</strong> sequence of commands.</p>
 <p>Start by running the configure step so that we can have a look at the
 available plugins:</p>
-<div class="highlight"><pre>./configure
+<div class="highlight"><pre><span class="p">.</span><span class="o">/</span><span class="n">configure</span>
 </pre></div>
 
 
@@ -190,7 +190,7 @@ configure step was able to locate the necessary prerequisites to build each plug
 <p>Even though the configure step was not able to find many libraries or modules,
 collectd will still compile successfully, albeit without these plugins.  Often,
 you would like to enable several plugins at compile time, for example:</p>
-<div class="highlight"><pre>./configure --enable-java --enable-python
+<div class="highlight"><pre><span class="p">.</span><span class="o">/</span><span class="n">configure</span> <span class="o">--</span><span class="n">enable</span><span class="o">-</span><span class="n">java</span> <span class="o">--</span><span class="n">enable</span><span class="o">-</span><span class="n">python</span>
 </pre></div>
 
 
@@ -576,6 +576,11 @@ build the collectd RPMs using the latest available version. </p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/signing-rpms.html">
+                            Signing RPMs
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
                             How to Build RPMs - Collectd Example
                         </a>
@@ -583,11 +588,6 @@ build the collectd RPMs using the latest available version. </p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">
                             Troubleshooting slow rsh logins with strace on CentOS 6
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
-                            Using Collectd, Python and Graphite to Graph Slurm Partitions
                         </a>
                     </li>
                 </ul>

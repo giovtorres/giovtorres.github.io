@@ -24,7 +24,7 @@ used as an real-world example.&lt;/p&gt;
 &lt;p&gt;Lastly, of the python modules used in the example below, the 
 &lt;a href="https://pypi.python.org/pypi/pyparsing/2.0.3"&gt;PyParsing&lt;/a&gt; module is not a core
 Python module.  You can, however, install it easily with Pip:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo pip install pyparsing
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;pip&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;pyparsing&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -209,9 +209,9 @@ that the plugin is working by querying the metrics.&lt;/p&gt;
 &lt;p&gt;This step will vary depending on where your metrics are stored.  For example,
 if the metrics are written to a Graphite instance, you could query the metrics
 using the Graphite URL API:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;curl -s 
-&lt;span class="s2"&gt;&amp;quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;amp;from=-1mins&amp;amp;format=json&amp;quot;&lt;/span&gt;
-&lt;span class="p"&gt;|&lt;/span&gt; python -m json.tool
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;curl&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;s&lt;/span&gt; 
+&lt;span class="s"&gt;&amp;quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;amp;from=-1mins&amp;amp;format=json&amp;quot;&lt;/span&gt;
+&lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;m&lt;/span&gt; &lt;span class="n"&gt;json&lt;/span&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="n"&gt;tool&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -266,12 +266,12 @@ found in the CentOS Base and EPEL repositories.&lt;/p&gt;
 &lt;h2&gt;Prerequisites&lt;/h2&gt;
 &lt;p&gt;Compiling any package from source requires a compiler.  If you don't already
 have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install gcc
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;gcc&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;For this exercise, you will also need kernel and the C library header files:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install kernel-headers glibc-headers
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;sudo&lt;/span&gt; &lt;span class="n"&gt;yum&lt;/span&gt; &lt;span class="n"&gt;install&lt;/span&gt; &lt;span class="n"&gt;kernel&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt; &lt;span class="n"&gt;glibc&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;headers&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -280,13 +280,13 @@ have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
 website&lt;/a&gt;.  Download and untar the
 the latest source tarball.  At the time of this writing, version 5.5.0 is the
 latest stable version.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;curl&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;progress&lt;/span&gt; &lt;span class="n"&gt;https&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt;&lt;span class="c1"&gt;//collectd.org/files/collectd-5.5.0.tar.gz | tar xz&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Configuring collectd&lt;/h2&gt;
 &lt;p&gt;After downloading and extracting the source files, change to that directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cd collect-5.5.0
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;cd&lt;/span&gt; &lt;span class="n"&gt;collect&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="mf"&gt;5.5.0&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -294,7 +294,7 @@ latest stable version.&lt;/p&gt;
 install&lt;/strong&gt; sequence of commands.&lt;/p&gt;
 &lt;p&gt;Start by running the configure step so that we can have a look at the
 available plugins:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;./configure
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;configure&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -329,7 +329,7 @@ configure step was able to locate the necessary prerequisites to build each plug
 &lt;p&gt;Even though the configure step was not able to find many libraries or modules,
 collectd will still compile successfully, albeit without these plugins.  Often,
 you would like to enable several plugins at compile time, for example:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;./configure --enable-java --enable-python
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="p"&gt;.&lt;/span&gt;&lt;span class="o"&gt;/&lt;/span&gt;&lt;span class="n"&gt;configure&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;enable&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;java&lt;/span&gt; &lt;span class="o"&gt;--&lt;/span&gt;&lt;span class="n"&gt;enable&lt;/span&gt;&lt;span class="o"&gt;-&lt;/span&gt;&lt;span class="n"&gt;python&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 

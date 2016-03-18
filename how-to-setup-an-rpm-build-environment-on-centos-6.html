@@ -122,8 +122,8 @@ EPEL yum repository configured.</p>
 <p>Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.</p>
 <p>To install the required packages, run the following:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">groupinstall</span> <span class="err">&#39;</span><span class="n">Development</span> <span class="n">Tools</span><span class="err">&#39;</span>
-<span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">rpmdevtools</span> <span class="n">yum</span><span class="o">-</span><span class="n">utils</span>
+<div class="highlight"><pre>sudo yum groupinstall &#39;Development Tools&#39;
+sudo yum install yum install rpmdevtools yum-utils
 </pre></div>
 
 
@@ -136,7 +136,7 @@ a dedicated user for this process. This way, if the RPM build environment is
 setup on a shared virtual machine, other users can switch to the dedicated user
 and use the same environment.</p>
 <p>Create a dedicated user:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">useradd</span> <span class="n">makerpm</span>
+<div class="highlight"><pre>sudo useradd makerpm
 </pre></div>
 
 
@@ -144,23 +144,23 @@ and use the same environment.</p>
 <p>This process is trivial when using the <em>rpmdevtools</em> package. This package
 contains several scripts that help with building RPM packages. </p>
 <p>As the <em>makerpm</em> user, run the <em>rpmdev-setuptree</em> command:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">su</span> <span class="o">-</span> <span class="n">makerpm</span>
-<span class="n">rpmdev</span><span class="o">-</span><span class="n">setuptree</span>
+<div class="highlight"><pre>sudo su - makerpm
+rpmdev-setuptree
 </pre></div>
 
 
 <p>The <em>rpmdev-setuptree</em> will create the <em>~/rpmbuild</em> directory and also create a
 <em>.rpmmacros</em> file in the home directory.  The needed subdirectories are
 created under the rpmbuild directory:</p>
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="o">~</span><span class="p">]</span><span class="err">$</span> <span class="n">tree</span> <span class="n">rpmbuild</span><span class="o">/</span>
-<span class="n">rpmbuild</span><span class="o">/</span>
-<span class="err">├──</span> <span class="n">BUILD</span>
-<span class="err">├──</span> <span class="n">RPMS</span>
-<span class="err">├──</span> <span class="n">SOURCES</span>
-<span class="err">├──</span> <span class="n">SPECS</span>
-<span class="err">└──</span> <span class="n">SRPMS</span>
+<div class="highlight"><pre>[makerpm@localhost ~]$ tree rpmbuild/
+rpmbuild/
+├── BUILD
+├── RPMS
+├── SOURCES
+├── SPECS
+└── SRPMS
 
-<span class="mi">5</span> <span class="n">directories</span><span class="p">,</span> <span class="mi">0</span> <span class="n">files</span>
+5 directories, 0 files
 </pre></div>
 
 
@@ -179,8 +179,8 @@ It refers to the root directory of the RPM build environment.</p>
 <em>make</em> step in building the package.  On a dedicated machine, you can set this
 to the number of available processors.</p>
 <p>Use the nproc command to determine the number of available processors:</p>
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="o">~</span><span class="p">]</span><span class="err">$</span> <span class="n">nproc</span>
-<span class="mi">4</span>
+<div class="highlight"><pre>[makerpm@localhost ~]$ nproc
+4
 </pre></div>
 
 

@@ -124,48 +124,48 @@ workaround for this slowness</p>
 both servers if you are not using DNS for name resolution.</p>
 <h2>Installing the rsh Client</h2>
 <p>To install the rsh client on client1, install the <strong>rsh</strong> package:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">rsh</span>
+<div class="highlight"><pre>sudo yum install rsh
 </pre></div>
 
 
 <h2>Installing the rsh Server</h2>
 <p>The rsh server runs under the xinetd superserver.  Install both packages on
 server1:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">xinetd</span> <span class="n">rsh</span><span class="o">-</span><span class="n">server</span>
+<div class="highlight"><pre>sudo yum install xinetd rsh-server
 </pre></div>
 
 
 <h3>Configuring the rsh Server</h3>
 <p>The configuration file for rsh is <strong>/etc/xinetd.d/rsh</strong> and is disabled by
 default:</p>
-<div class="highlight"><pre><span class="n">service</span> <span class="n">shell</span>
-<span class="p">{</span>
-    <span class="n">socket_type</span>     <span class="o">=</span> <span class="n">stream</span>
-    <span class="n">wait</span>            <span class="o">=</span> <span class="n">no</span>
-    <span class="n">user</span>            <span class="o">=</span> <span class="n">root</span>
-    <span class="n">log_on_success</span>  <span class="o">+=</span> <span class="n">USERID</span>
-    <span class="n">log_on_failure</span>  <span class="o">+=</span> <span class="n">USERID</span>
-    <span class="n">server</span>          <span class="o">=</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">in</span><span class="p">.</span><span class="n">rshd</span>
-    <span class="n">disable</span>         <span class="o">=</span> <span class="n">yes</span>
-<span class="p">}</span>
+<div class="highlight"><pre>service shell
+{
+    socket_type     = stream
+    wait            = no
+    user            = root
+    log_on_success  += USERID
+    log_on_failure  += USERID
+    server          = /usr/sbin/in.rshd
+    disable         = yes
+}
 </pre></div>
 
 
 <p>To enable rsh, change <em>disable</em> from <strong>yes</strong> to <strong>no</strong>.  Then, start or
 restart the xinetd service:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">service</span> <span class="n">xinetd</span> <span class="n">restart</span>
+<div class="highlight"><pre>sudo service xinetd restart
 </pre></div>
 
 
 <h2>Adjusting iptables</h2>
 <p>rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the <em>client</em>:</p>
-<div class="highlight"><pre><span class="o">-</span><span class="n">A</span> <span class="n">INPUT</span> <span class="o">-</span><span class="n">m</span> <span class="n">state</span> <span class="o">--</span><span class="n">state</span> <span class="n">NEW</span> <span class="o">-</span><span class="n">m</span> <span class="n">tcp</span> <span class="o">-</span><span class="n">p</span> <span class="n">tcp</span> <span class="o">-</span><span class="n">s</span> <span class="mf">192.168.122.202</span> <span class="o">--</span><span class="n">dport</span> <span class="mi">514</span><span class="o">:</span><span class="mi">1023</span> <span class="o">-</span><span class="n">j</span> <span class="n">ACCEPT</span>
+<div class="highlight"><pre>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
 </pre></div>
 
 
 <p>Similarly, add the following iptables rule on the <em>server</em>:</p>
-<div class="highlight"><pre><span class="o">-</span><span class="n">A</span> <span class="n">INPUT</span> <span class="o">-</span><span class="n">m</span> <span class="n">state</span> <span class="o">--</span><span class="n">state</span> <span class="n">NEW</span> <span class="o">-</span><span class="n">m</span> <span class="n">tcp</span> <span class="o">-</span><span class="n">p</span> <span class="n">tcp</span> <span class="o">-</span><span class="n">s</span> <span class="mf">192.168.122.200</span> <span class="o">--</span><span class="n">dport</span> <span class="mi">514</span><span class="o">:</span><span class="mi">1023</span> <span class="o">-</span><span class="n">j</span> <span class="n">ACCEPT</span>
+<div class="highlight"><pre>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
 </pre></div>
 
 
@@ -228,19 +228,19 @@ rshd daemon is doing.</p>
 <h2>Testing with Strace</h2>
 <p>First, make sure you have the strace package installed.  If not, installing it
 is easy:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">strace</span>
+<div class="highlight"><pre>sudo yum install strace
 </pre></div>
 
 
 <p>In the xinetd rsh configuration file shown above, the server parameter
 specifies the path to the rsh daemon: </p>
-<div class="highlight"><pre>    <span class="n">server</span>          <span class="o">=</span> <span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">sbin</span><span class="o">/</span><span class="n">in</span><span class="p">.</span><span class="n">rshd</span>
+<div class="highlight"><pre>    server          = /usr/sbin/in.rshd
 </pre></div>
 
 
 <p>We will replace this server with a custom script that will use strace to launch
 the rsh daemon.  Replace the server parameter value with the following:</p>
-<div class="highlight"><pre>    <span class="n">server</span>          <span class="o">=</span> <span class="o">/</span><span class="n">tmp</span><span class="o">/</span><span class="n">rsh</span><span class="o">-</span><span class="n">strace</span><span class="p">.</span><span class="n">sh</span>
+<div class="highlight"><pre>    server          = /tmp/rsh-strace.sh
 </pre></div>
 
 
@@ -256,7 +256,7 @@ the rsh daemon.  Replace the server parameter value with the following:</p>
 <p><strong>-o</strong>    write the output to a specified file instead of stderr</p>
 <p>The script must be executable.  Change the permissions to at least <em>0755</em>
 before restarting xinetd:</p>
-<div class="highlight"><pre>sudo chmod 0755 /tmp/rsh-strace.sh
+<div class="highlight"><pre>sudo chmod <span class="m">0755</span> /tmp/rsh-strace.sh
 sudo /sbin/service xinetd restart
 </pre></div>
 

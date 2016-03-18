@@ -104,10 +104,10 @@ Giovanni Torres            </a>
                 <p>Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
 waiting for kernel to gather sufficient entropy in order to sufficiently
 randomize the encrypted output?  You have probably seen a message such as:</p>
-<div class="highlight"><pre><span class="n">We</span> <span class="n">need</span> <span class="n">to</span> <span class="n">generate</span> <span class="n">a</span> <span class="n">lot</span> <span class="n">of</span> <span class="n">random</span> <span class="n">bytes</span><span class="p">.</span> <span class="n">It</span> <span class="n">is</span> <span class="n">a</span> <span class="n">good</span> <span class="n">idea</span> <span class="n">to</span> <span class="n">perform</span>
-<span class="n">some</span> <span class="n">other</span> <span class="n">action</span> <span class="p">(</span><span class="n">type</span> <span class="n">on</span> <span class="n">the</span> <span class="n">keyboard</span><span class="p">,</span> <span class="n">move</span> <span class="n">the</span> <span class="n">mouse</span><span class="p">,</span> <span class="n">utilize</span> <span class="n">the</span>
-<span class="n">disks</span><span class="p">)</span> <span class="n">during</span> <span class="n">the</span> <span class="n">prime</span> <span class="n">generation</span><span class="p">;</span> <span class="n">this</span> <span class="n">gives</span> <span class="n">the</span> <span class="n">random</span> <span class="n">number</span>
-<span class="n">generator</span> <span class="n">a</span> <span class="n">better</span> <span class="n">chance</span> <span class="n">to</span> <span class="n">gain</span> <span class="n">enough</span> <span class="n">entropy</span><span class="p">.</span>
+<div class="highlight"><pre>We need to generate a lot of random bytes. It is a good idea to perform
+some other action (type on the keyboard, move the mouse, utilize the
+disks) during the prime generation; this gives the random number
+generator a better chance to gain enough entropy.
 </pre></div>
 
 
@@ -120,32 +120,32 @@ with this.  Until this becomes ubiquitous, you can use
 to gather entropy inside your virtual machine. In fact, rngd is enabled by
 default since Fedora 18.</p>
 <p>Install the rng-tools package using YUM:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">yum</span> <span class="n">install</span> <span class="n">rng</span><span class="o">-</span><span class="n">tools</span>
+<div class="highlight"><pre>sudo yum install rng-tools
 </pre></div>
 
 
 <p>Edit the rng-tools configuration file and configure the kernel device used for
 random number input.  We will use the <code>/dev/urandrom</code> pseudorandom number generator:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">perl</span> <span class="o">-</span><span class="n">p</span> <span class="o">-</span><span class="n">i</span> <span class="o">-</span><span class="n">e</span> <span class="err">&#39;</span><span class="n">s</span><span class="o">/</span><span class="n">EXTRAOPTIONS</span><span class="o">=</span><span class="s">&quot;&quot;</span><span class="o">/</span><span class="n">EXTRAOPTIONS</span><span class="o">=</span><span class="s">&quot;-r \/dev\/urandom&quot;</span><span class="o">/</span><span class="err">&#39;</span> <span class="o">/</span><span class="n">etc</span><span class="o">/</span><span class="n">sysconfig</span><span class="o">/</span><span class="n">rngd</span>
+<div class="highlight"><pre>sudo perl -p -i -e &#39;s/EXTRAOPTIONS=&quot;&quot;/EXTRAOPTIONS=&quot;-r \/dev\/urandom&quot;/&#39; /etc/sysconfig/rngd
 </pre></div>
 
 
 <h3>Start rngd</h3>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">chkconfig</span> <span class="n">rngd</span> <span class="n">on</span>
-<span class="n">sudo</span> <span class="n">service</span> <span class="n">rngd</span> <span class="n">start</span>
+<div class="highlight"><pre>sudo chkconfig rngd on
+sudo service rngd start
 </pre></div>
 
 
 <h3>Verify available kernel entropy (higher is better)</h3>
 <p>Before:</p>
-<div class="highlight"><pre><span class="n">cat</span> <span class="o">/</span><span class="n">proc</span><span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">kernel</span><span class="o">/</span><span class="n">random</span><span class="o">/</span><span class="n">entropy_avail</span> 
-<span class="mi">173</span>
+<div class="highlight"><pre>cat /proc/sys/kernel/random/entropy_avail 
+173
 </pre></div>
 
 
 <p>After:</p>
-<div class="highlight"><pre><span class="n">cat</span> <span class="o">/</span><span class="n">proc</span><span class="o">/</span><span class="n">sys</span><span class="o">/</span><span class="n">kernel</span><span class="o">/</span><span class="n">random</span><span class="o">/</span><span class="n">entropy_avail</span> 
-<span class="mi">4096</span>
+<div class="highlight"><pre>cat /proc/sys/kernel/random/entropy_avail 
+4096
 </pre></div>
 
 

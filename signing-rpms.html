@@ -117,18 +117,18 @@ In <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-ce
 we saw the <code>.rpmmacros</code> file, which included some default rpm macros.</p>
 <p>We now need to add an additional macro, called <strong>%_gpg_name</strong>, along with our
 GPG key ID.  To find the GPG key id, run the following command:</p>
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="o">~</span><span class="p">]</span><span class="err">$</span> <span class="n">gpg</span> <span class="o">--</span><span class="n">list</span><span class="o">-</span><span class="n">public</span><span class="o">-</span><span class="n">keys</span>
-<span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">makerpm</span><span class="o">/</span><span class="p">.</span><span class="n">gnupg</span><span class="o">/</span><span class="n">pubring</span><span class="p">.</span><span class="n">gpg</span>
-<span class="o">---------------------------------</span>
-<span class="n">pub</span>   <span class="mi">2048</span><span class="n">R</span><span class="o">/</span><span class="mi">512</span><span class="n">A2AA0</span> <span class="mi">2015</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span>
-<span class="n">uid</span>                  <span class="n">Example</span> <span class="n">Org</span> <span class="n">Signing</span> <span class="n">Key</span> <span class="o">&lt;</span><span class="n">support</span><span class="err">@</span><span class="n">example</span><span class="p">.</span><span class="n">com</span><span class="o">&gt;</span>
-<span class="n">sub</span>   <span class="mi">2048</span><span class="n">R</span><span class="o">/</span><span class="n">D97540C0</span> <span class="mi">2015</span><span class="o">-</span><span class="mi">11</span><span class="o">-</span><span class="mi">30</span>
+<div class="highlight"><pre>[makerpm@localhost ~]$ gpg --list-public-keys
+/home/makerpm/.gnupg/pubring.gpg
+---------------------------------
+pub   2048R/512A2AA0 2015-11-30
+uid                  Example Org Signing Key &lt;support@example.com&gt;
+sub   2048R/D97540C0 2015-11-30
 </pre></div>
 
 
 <p>The GPG key ID is <strong>512A2AA0</strong>.</p>
 <p>Now, echo the macro and the GPG key ID to your ~/.rpmmacros file as follows:</p>
-<div class="highlight"><pre><span class="n">echo</span> <span class="s">&quot;%_gpg_name 512A2AA0&quot;</span> <span class="o">&gt;&gt;</span> <span class="o">~/</span><span class="p">.</span><span class="n">rpmmacros</span>
+<div class="highlight"><pre>echo &quot;%_gpg_name 512A2AA0&quot; &gt;&gt; ~/.rpmmacros
 </pre></div>
 
 
@@ -149,60 +149,60 @@ will be prompted for the GPG key passphrase):</p>
 
 
 <p>You can sign all the RPMs at once using file globbing:</p>
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">addsign</span> <span class="o">-</span><span class="n">v</span> <span class="o">*</span><span class="err">\</span><span class="p">.</span><span class="n">rpm</span>
-<span class="n">Enter</span> <span class="n">pass</span> <span class="n">phrase</span><span class="o">:</span> 
-<span class="n">Pass</span> <span class="n">phrase</span> <span class="n">is</span> <span class="n">good</span><span class="p">.</span>
-<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">amqp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">apache</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">ascent</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">bind</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">ceph</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">collection3</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">contrib</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">curl</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">curl_json</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">curl_xml</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">dbi</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">debuginfo</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">disk</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">dns</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">email</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">gmond</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">hddtemp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">ipmi</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">iptables</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">java</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">log_logstash</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">lvm</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">memcachec</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">modbus</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">mysql</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">netlink</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">nginx</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">notify_desktop</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">notify_email</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">nut</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">openldap</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">perl</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">php</span><span class="o">-</span><span class="n">collection</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">pinba</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">ping</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">postgresql</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">python</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">redis</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">rrdtool</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">sensors</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">smart</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">snmp</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">utils</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">varnish</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">virt</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">write_http</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">write_redis</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">collectd</span><span class="o">-</span><span class="n">write_riemann</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">libcollectdclient</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-<span class="n">libcollectdclient</span><span class="o">-</span><span class="n">devel</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
+<div class="highlight"><pre>[makerpm@localhost x86_64]$ rpm --addsign -v *\.rpm
+Enter pass phrase: 
+Pass phrase is good.
+collectd-5.5.0-1.el6.x86_64.rpm:
+collectd-amqp-5.5.0-1.el6.x86_64.rpm:
+collectd-apache-5.5.0-1.el6.x86_64.rpm:
+collectd-ascent-5.5.0-1.el6.x86_64.rpm:
+collectd-bind-5.5.0-1.el6.x86_64.rpm:
+collectd-ceph-5.5.0-1.el6.x86_64.rpm:
+collectd-collection3-5.5.0-1.el6.x86_64.rpm:
+collectd-contrib-5.5.0-1.el6.x86_64.rpm:
+collectd-curl-5.5.0-1.el6.x86_64.rpm:
+collectd-curl_json-5.5.0-1.el6.x86_64.rpm:
+collectd-curl_xml-5.5.0-1.el6.x86_64.rpm:
+collectd-dbi-5.5.0-1.el6.x86_64.rpm:
+collectd-debuginfo-5.5.0-1.el6.x86_64.rpm:
+collectd-disk-5.5.0-1.el6.x86_64.rpm:
+collectd-dns-5.5.0-1.el6.x86_64.rpm:
+collectd-email-5.5.0-1.el6.x86_64.rpm:
+collectd-gmond-5.5.0-1.el6.x86_64.rpm:
+collectd-hddtemp-5.5.0-1.el6.x86_64.rpm:
+collectd-ipmi-5.5.0-1.el6.x86_64.rpm:
+collectd-iptables-5.5.0-1.el6.x86_64.rpm:
+collectd-java-5.5.0-1.el6.x86_64.rpm:
+collectd-log_logstash-5.5.0-1.el6.x86_64.rpm:
+collectd-lvm-5.5.0-1.el6.x86_64.rpm:
+collectd-memcachec-5.5.0-1.el6.x86_64.rpm:
+collectd-modbus-5.5.0-1.el6.x86_64.rpm:
+collectd-mysql-5.5.0-1.el6.x86_64.rpm:
+collectd-netlink-5.5.0-1.el6.x86_64.rpm:
+collectd-nginx-5.5.0-1.el6.x86_64.rpm:
+collectd-notify_desktop-5.5.0-1.el6.x86_64.rpm:
+collectd-notify_email-5.5.0-1.el6.x86_64.rpm:
+collectd-nut-5.5.0-1.el6.x86_64.rpm:
+collectd-openldap-5.5.0-1.el6.x86_64.rpm:
+collectd-perl-5.5.0-1.el6.x86_64.rpm:
+collectd-php-collection-5.5.0-1.el6.x86_64.rpm:
+collectd-pinba-5.5.0-1.el6.x86_64.rpm:
+collectd-ping-5.5.0-1.el6.x86_64.rpm:
+collectd-postgresql-5.5.0-1.el6.x86_64.rpm:
+collectd-python-5.5.0-1.el6.x86_64.rpm:
+collectd-redis-5.5.0-1.el6.x86_64.rpm:
+collectd-rrdtool-5.5.0-1.el6.x86_64.rpm:
+collectd-sensors-5.5.0-1.el6.x86_64.rpm:
+collectd-smart-5.5.0-1.el6.x86_64.rpm:
+collectd-snmp-5.5.0-1.el6.x86_64.rpm:
+collectd-utils-5.5.0-1.el6.x86_64.rpm:
+collectd-varnish-5.5.0-1.el6.x86_64.rpm:
+collectd-virt-5.5.0-1.el6.x86_64.rpm:
+collectd-write_http-5.5.0-1.el6.x86_64.rpm:
+collectd-write_redis-5.5.0-1.el6.x86_64.rpm:
+collectd-write_riemann-5.5.0-1.el6.x86_64.rpm:
+libcollectdclient-5.5.0-1.el6.x86_64.rpm:
+libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 </pre></div>
 
 
@@ -226,17 +226,17 @@ will be prompted for the GPG key passphrase):</p>
 <p>Remember in Part 1, we exported the gpg key from the keyring and imported the
 key into the RPM database.  If you forgot to import the key into the RPM
 database, you would see <strong>MISSING KEYS</strong> and <strong>NOKEY</strong> in the output instead:</p>
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">checksig</span> <span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span> 
-<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span> <span class="n">RSA</span> <span class="n">sha1</span> <span class="p">((</span><span class="n">MD5</span><span class="p">)</span> <span class="n">PGP</span><span class="p">)</span> <span class="n">md5</span> <span class="n">NOT</span> <span class="n">OK</span> <span class="p">(</span><span class="n">MISSING</span> <span class="n">KEYS</span><span class="o">:</span> <span class="p">(</span><span class="n">MD5</span><span class="p">)</span> <span class="n">PGP</span><span class="err">#</span><span class="mi">512</span><span class="n">a2aa0</span><span class="p">)</span>
+<div class="highlight"><pre>[makerpm@localhost x86_64]$ rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
+collectd-5.5.0-1.el6.x86_64.rpm: RSA sha1 ((MD5) PGP) md5 NOT OK (MISSING KEYS: (MD5) PGP#512a2aa0)
 </pre></div>
 
 
-<div class="highlight"><pre><span class="p">[</span><span class="n">makerpm</span><span class="err">@</span><span class="n">localhost</span> <span class="n">x86_64</span><span class="p">]</span><span class="err">$</span> <span class="n">rpm</span> <span class="o">--</span><span class="n">checksig</span> <span class="o">-</span><span class="n">v</span> <span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span> 
-<span class="n">collectd</span><span class="o">-</span><span class="mf">5.5.0</span><span class="o">-</span><span class="mf">1.</span><span class="n">el6</span><span class="p">.</span><span class="n">x86_64</span><span class="p">.</span><span class="n">rpm</span><span class="o">:</span>
-    <span class="n">Header</span> <span class="n">V4</span> <span class="n">RSA</span><span class="o">/</span><span class="n">SHA1</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">key</span> <span class="n">ID</span> <span class="mi">512</span><span class="n">a2aa0</span><span class="o">:</span> <span class="n">NOKEY</span>
-    <span class="n">Header</span> <span class="n">SHA1</span> <span class="n">digest</span><span class="o">:</span> <span class="n">OK</span> <span class="p">(</span><span class="n">f62c64dc9938b6d86c91d4f430b293dbb4f4cad3</span><span class="p">)</span>
-    <span class="n">V4</span> <span class="n">RSA</span><span class="o">/</span><span class="n">SHA1</span> <span class="n">Signature</span><span class="p">,</span> <span class="n">key</span> <span class="n">ID</span> <span class="mi">512</span><span class="n">a2aa0</span><span class="o">:</span> <span class="n">NOKEY</span>
-    <span class="n">MD5</span> <span class="n">digest</span><span class="o">:</span> <span class="n">OK</span> <span class="p">(</span><span class="mi">53</span><span class="n">a3f30fffd28e5bfba65a7f2608e8a2</span><span class="p">)</span>
+<div class="highlight"><pre>[makerpm@localhost x86_64]$ rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm 
+collectd-5.5.0-1.el6.x86_64.rpm:
+    Header V4 RSA/SHA1 Signature, key ID 512a2aa0: NOKEY
+    Header SHA1 digest: OK (f62c64dc9938b6d86c91d4f430b293dbb4f4cad3)
+    V4 RSA/SHA1 Signature, key ID 512a2aa0: NOKEY
+    MD5 digest: OK (53a3f30fffd28e5bfba65a7f2608e8a2)
 </pre></div>
 
 

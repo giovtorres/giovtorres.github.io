@@ -132,7 +132,7 @@ used as an real-world example.</p>
 <p>Lastly, of the python modules used in the example below, the 
 <a href="https://pypi.python.org/pypi/pyparsing/2.0.3">PyParsing</a> module is not a core
 Python module.  You can, however, install it easily with Pip:</p>
-<div class="highlight"><pre><span class="n">sudo</span> <span class="n">pip</span> <span class="n">install</span> <span class="n">pyparsing</span>
+<div class="highlight"><pre>sudo pip install pyparsing
 </pre></div>
 
 
@@ -317,9 +317,9 @@ that the plugin is working by querying the metrics.</p>
 <p>This step will vary depending on where your metrics are stored.  For example,
 if the metrics are written to a Graphite instance, you could query the metrics
 using the Graphite URL API:</p>
-<div class="highlight"><pre><span class="n">curl</span> <span class="o">-</span><span class="n">s</span> 
-<span class="s">&quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;from=-1mins&amp;format=json&quot;</span>
-<span class="o">|</span> <span class="n">python</span> <span class="o">-</span><span class="n">m</span> <span class="n">json</span><span class="p">.</span><span class="n">tool</span>
+<div class="highlight"><pre>curl -s 
+<span class="s2">&quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;from=-1mins&amp;format=json&quot;</span>
+<span class="p">|</span> python -m json.tool
 </pre></div>
 
 

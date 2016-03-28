@@ -1,5 +1,341 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-11-29T00:00:00-05:00</updated><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><updated>2015-11-29T00:00:00-05:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><updated>2016-03-16T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
+resulting in significant performance boosts, especially in numerical for loops.
+Cython also allows you to wrap C libraries and create Python C extensions.
+This means you don't have to know much C, if any, to get access to C functions
+and expose the results to Python.&lt;/p&gt;
+&lt;p&gt;In this guide, we will use Cython to wrap some C functions in Slurm's sdiag
+program and make the statistics available to Python.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;This guide assumes you are using Slurm, an HPC workload manager.  This guide
+uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.&lt;/p&gt;
+&lt;p&gt;This should also work in Python 3.5.1.&lt;/p&gt;
+&lt;h2&gt;Looking at sdiag Output&lt;/h2&gt;
+&lt;p&gt;sdiag shows diagnostics for Slurm job scheduling and other information about
+the Slurm controller. Run the &lt;code&gt;sdiag&lt;/code&gt; command and you should see similar output:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;*******************************************************
+sdiag output at Sun Mar 27 14:21:29 2016
+Data since      Sun Mar 27 14:09:09 2016
+*******************************************************
+Server thread count: 3
+Agent queue size:    0
+
+Jobs submitted: 0
+Jobs started:   0
+Jobs completed: 0
+Jobs canceled:  0
+Jobs failed:    0
+
+Main schedule statistics (microseconds):
+    Last cycle:   20
+    Max cycle:    45
+    Total cycles: 13
+    Mean cycle:   26
+    Mean depth cycle:  0
+    Cycles per minute: 1
+    Last queue length: 0
+
+Backfilling stats
+    Total backfilled jobs (since last slurm start): 0
+    Total backfilled jobs (since last stats cycle start): 0
+    Total cycles: 0
+    Last cycle when: Thu Jan  1 00:00:00 1970
+    Last cycle: 0
+    Max cycle:  0
+    Last depth cycle: 0
+    Last depth cycle (try sched): 0
+    Last queue length: 0
+    [...]
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;We want to use Cython to wrap the necessary Slurm API functions to get access
+to these statistics via Python.&lt;/p&gt;
+&lt;h2&gt;Looking at the C API&lt;/h2&gt;
+&lt;p&gt;Normally, we would start with Slurm's [API
+page](http://slurm.schedmd.com/api.html], which lists various functions to get
+direct access to Slurm data structures.  This page, however, does not have any
+functions related to statistics.  Next, we could check the man pages, which has
+details on the APIs and some examples.  Again, no man pages exist at the moment
+for any statistics APIs.  Therefore, we have to dig into the source code for
+this example.&lt;/p&gt;
+&lt;p&gt;Go to &lt;a href="https://github.com/SchedMD/slurm"&gt;Slurm's GitHub page&lt;/a&gt; and set the tag
+to your running version of Slurm.  Go to the &lt;strong&gt;slurm/src/sdiag&lt;/strong&gt; directory.
+The &lt;strong&gt;sdiag.c&lt;/strong&gt; file is the source code for the sdiag program. We need to
+replicate a portion of this program in order to get access to the statistics.&lt;/p&gt;
+&lt;p&gt;Looking at the program, we need to wrap the &lt;strong&gt;slurm_get_statistics&lt;/strong&gt;,
+&lt;strong&gt;slurm_reset_statistics&lt;/strong&gt;, and the &lt;strong&gt;slurm_free_stats_response_msg&lt;/strong&gt; functions.&lt;/p&gt;
+&lt;h2&gt;Organizing the Cython code&lt;/h2&gt;
+&lt;p&gt;We need two files for this project: an implementation (.pyx) file and a
+definition file (.pxd).&lt;/p&gt;
+&lt;p&gt;We put the C function and variable declarations in the in the definition file.
+The Cython code for wrapping the functions goes in the implementation file.&lt;/p&gt;
+&lt;h2&gt;Slurm Header Files&lt;/h2&gt;
+&lt;p&gt;We need to declare the C functions and variables, and we get those from the
+Slurm header files.  The header file is in the include directory of your Slurm
+installation path, &lt;strong&gt;/path/to/slurm/include/slurm/slurm.h&lt;/strong&gt;&lt;/p&gt;
+&lt;p&gt;Open the &lt;strong&gt;slurm.h&lt;/strong&gt; header file and search for &lt;em&gt;slurm_get_statistics&lt;/em&gt;, one of
+the functions we want to wrap.  There, we see its declaration and signature:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt; &lt;span class="nf"&gt;PARAMS&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                    &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The signature for &lt;em&gt;slurm_get_statistics&lt;/em&gt; has two structs:
+&lt;em&gt;stats_info_response_msg_t&lt;/em&gt; and &lt;em&gt;stats_info_request_msg_t&lt;/em&gt;.  We will also have
+to declare both structs in the definition file.&lt;/p&gt;
+&lt;h2&gt;Wrapping C Code&lt;/h2&gt;
+&lt;p&gt;Let's start by declaring the structs.  The C code for the
+&lt;em&gt;stats_info_request_msg&lt;/em&gt; struct looks like:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+    &lt;span class="kt"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;command_id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Create a file called &lt;em&gt;sdiag.pxd&lt;/em&gt; and start with the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;
+
+&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;command_id&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;cimport&lt;/em&gt; statement is used to access the uint16_t type declared in libc's
+stdint.h.  The &lt;em&gt;cdef extern from&lt;/em&gt; syntax tells Cython where the following
+declarations are located.  The &lt;em&gt;nogil&lt;/em&gt; annotation declares that this block of code
+can be used without Python's GIL.&lt;/p&gt;
+&lt;p&gt;Cython's declaration for the struct is almost cut and paste from the header
+file.  The &lt;em&gt;typedef&lt;/em&gt; in C becomes a &lt;em&gt;ctypedef&lt;/em&gt; in Cython.&lt;/p&gt;
+&lt;p&gt;For more information on struct and enum declaration, see &lt;a href="http://docs.cython.org/src/userguide/external_C_code.html#styles-of-struct-union-and-enum-declaration"&gt;Cython's documentation&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;Next, add the &lt;em&gt;stats_info_response_msg_t&lt;/em&gt; struct to the .pxd file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_response_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;parts_packed&lt;/span&gt;
+        &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time&lt;/span&gt;
+        &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time_start&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;server_thread_count&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;agent_queue_size&lt;/span&gt;
+
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_cycle_max&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_cycle_last&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_cycle_sum&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_cycle_counter&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_cycle_depth&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;schedule_queue_len&lt;/span&gt;
+        &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Note some of the types in this struct.  We need to import these as well into
+the .pxd file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint64_t&lt;/span&gt;
+
+&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;sys/types.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="nb"&gt;long&lt;/span&gt; &lt;span class="n"&gt;time_t&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, we can declare the two functions:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                             &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_reset_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;There are some C macros that we also need to declare:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_RESET&lt;/span&gt;
+    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;We now need to declare some functions and macros from &lt;em&gt;slurm_errno.h&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm_errno.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;SLURM_SUCCESS&lt;/span&gt;
+
+    &lt;span class="n"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;slurm_strerror&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;errnum&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_errno&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The above declarations are for checking return codes and printing errors.&lt;/p&gt;
+&lt;p&gt;There's one more declaration we need, but it is not in the &lt;em&gt;slurm.h&lt;/em&gt; header
+file.  In this case, since the function is externalized, we can declare it
+directly:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This API function is for freeing memory allocated by the stats response buffer.&lt;/p&gt;
+&lt;h2&gt;Writing the Implementation File&lt;/h2&gt;
+&lt;p&gt;The implementation file (.pyx) is where the Cython code goes.  This is where we
+need to look at the &lt;em&gt;sdiag.c&lt;/em&gt; file and recreate the needed portions in Cython.&lt;/p&gt;
+&lt;p&gt;We will expose two functions to Python: get_stats() and reset_stats().
+Therefore, these need to use the &lt;em&gt;cpdef&lt;/em&gt; function declaration, since &lt;em&gt;cpdef&lt;/em&gt;
+functions have access to both C and Python.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="k"&gt;pass&lt;/span&gt;
+
+&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="k"&gt;pass&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;In the &lt;em&gt;get_stats&lt;/em&gt; function, we need to statically type some variables that
+will get used in the function.  This is done with &lt;em&gt;cdef&lt;/em&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="n"&gt;cdef&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rc&lt;/span&gt;
+        &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;
+        &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="n"&gt;rpc_type_stats&lt;/span&gt;
+        &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="n"&gt;rpc_user_stats&lt;/span&gt;
+        &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="n"&gt;stat_dict&lt;/span&gt;
+        &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="n"&gt;req&lt;/span&gt;
+        &lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Next, follow through &lt;em&gt;sdiag.c&lt;/em&gt; and write the necessary Cython to call the
+&lt;em&gt;slurm_get_statistics&lt;/em&gt; function, populate the buffer, and copy the buffer
+into a dictionary.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+    &lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;command_id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
+    &lt;span class="n"&gt;rc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;rc&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="n"&gt;SLURM_SUCCESS&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;parts_packed&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;parts_packed&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;req_time&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;req_time&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;req_time_start&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;req_time_start&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;server_thread_count&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;server_thread_count&lt;/span&gt;
+        &lt;span class="n"&gt;stat_dict&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;quot;agent_queue_size&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;agent_queue_size&lt;/span&gt;
+        &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Part of this block of code requires the &lt;em&gt;rpc_num2string&lt;/em&gt; function.
+Unfortunately, it is not externalized and we cannot simply declare it in the
+.pxd file and use it.  We have to recreate it in the implementation file as a
+separate function.  Since this function does not need to be exposed to Python,
+we can use a &lt;em&gt;cdef&lt;/em&gt; function:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;num2string&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+        &lt;span class="mf"&gt;1001&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="mf"&gt;1002&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MESSAGE_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="mf"&gt;1003&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_RECONFIGURE&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="mf"&gt;1004&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;RESPONSE_RECONFIGURE&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="mf"&gt;1005&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_SHUTDOWN&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+        &lt;span class="mf"&gt;1006&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_SHUTDOWN_IMMEDIATE&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;At the end of the &lt;em&gt;get_stats&lt;/em&gt; function, we need to free the response message
+buffer and return the dictionary back to the caller:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="n"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="n"&gt;buf&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;NULL&lt;/span&gt;
+    &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;stat_dict&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Pay attention to the types required in the implementation file, they need to be
+imported, similarly to the definition file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;
+&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pwd&lt;/span&gt; &lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="n"&gt;getpwuid&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Lastly, the functions we created in the implementation file can be declared in
+the definition file, using the same signature as in the implementation file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The end result should look something like this
+&lt;a href="https://gist.github.com/giovtorres/274b32c8ded1a46e416c"&gt;gist&lt;/a&gt;.&lt;/p&gt;
+&lt;h2&gt;Compiling with Cython&lt;/h2&gt;
+&lt;p&gt;Once we have the .pyx file ready, we can use the Cython compiler to convert it
+to a C file.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;cython sdiag.pyx
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This process will not produce any output to stdout or stderr if there are no
+errors or warnings.  This is the beauty of Cython.  It did all the hard work of
+compiling the Cython source to C code.  The resulting file will be &lt;strong&gt;sdiag.c&lt;/strong&gt;.
+Have a look and see what Cython had done for us.&lt;/p&gt;
+&lt;h2&gt;Creating the Python Extension Module&lt;/h2&gt;
+&lt;p&gt;The resulting C output file can now be converted to a Python extension module.
+The standard way of creating an extension module is through the use of
+&lt;em&gt;distutils&lt;/em&gt; in a setup.py file.&lt;/p&gt;
+&lt;p&gt;We can, as an exercise, compile by the extension module by hand to get an
+understanding of how the module is generated with the compiler and linker.&lt;/p&gt;
+&lt;p&gt;Our next step is to compile &lt;em&gt;sdiag.c&lt;/em&gt; into an object file.  Use Python's &lt;strong&gt;python-config&lt;/strong&gt; to get the appropriate CFLAGS to pass to the compiler:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc -c sdiag.c $(python-config --cflags) -fPIC&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This step produces the &lt;em&gt;sdiag.o&lt;/em&gt; object file.&lt;/p&gt;
+&lt;p&gt;Now, compile &lt;em&gt;sdiag.o&lt;/em&gt; into a shared library.  We will need to add the linker
+flags that point to Slurm's libslurm.so:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \&lt;/span&gt;
+&lt;span class="go"&gt;  -L/usr/local/slurm/15.08.8/lib -lslurm&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Testing the module&lt;/h2&gt;
+&lt;p&gt;Create a directory for the module:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
+&lt;span class="go"&gt;cd ${HOME}/local&lt;/span&gt;
+&lt;span class="go"&gt;mkdir sdiag&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Copy the &lt;strong&gt;sdiag.so&lt;/strong&gt; module to the &lt;code&gt;${HOME}/local/sdiag&lt;/code&gt; directory.  Next,
+create an &lt;code&gt;__init__.py&lt;/code&gt; file.  Since Slurm makes heavy use of dlopen() calls,
+we need to set the flags in &lt;code&gt;__init__.py&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;__future__&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;absolute_import&lt;/span&gt;
+
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sys&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ctypes&lt;/span&gt;
+
+&lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;setdlopenflags&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;getdlopenflags&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt; &lt;span class="n"&gt;ctypes&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;RTLD_GLOBAL&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;.sdiag&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;                                         
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Now, we can test the module.  Make sure you are in the &lt;code&gt;${HOME}/local&lt;/code&gt;
+directory before running the Python interpreter.  Otherwise, be sure to adjust
+your PYTHONPATH.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sdiag&lt;/span&gt;
+&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pprint&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;pprint&lt;/span&gt;
+&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="n"&gt;pprint&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+&lt;span class="go"&gt;{u&amp;#39;agent_queue_size&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_active&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_backfilled_jobs&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_cycle_counter&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_cycle_last&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_cycle_max&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_cycle_sum&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_depth_sum&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_depth_try_sum&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; u&amp;#39;bf_last_backfilled_jobs&amp;#39;: 0,&lt;/span&gt;
+&lt;span class="go"&gt; [...]&lt;/span&gt;
+&lt;span class="go"&gt;}&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;em&gt;get_stats()&lt;/em&gt; function returns a dictionary of key value pairs of information produced by the sdiag command.&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;With Cython, we are able to easily wrap C code and make it available to Python.
+We now have tighter integration with Slurm and don't have to run Slurm commands
+and parse the output.  For more examples of using Cython to wrap the Slurm C
+API, have a look at the &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; project
+on GitHub.&lt;/p&gt;</summary><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><updated>2015-11-29T00:00:00-05:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;So far, we have &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;setup an RPM build
 environment&lt;/a&gt;
 , &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"&gt;setup our RPM signing key&lt;/a&gt;,

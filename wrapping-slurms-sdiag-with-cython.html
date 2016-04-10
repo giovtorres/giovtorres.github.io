@@ -122,7 +122,7 @@ uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.</p>
 <h2>Looking at sdiag Output</h2>
 <p>sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the <code>sdiag</code> command and you should see similar output:</p>
-<div class="highlight"><pre>*******************************************************
+<div class="highlight"><pre><span></span>*******************************************************
 sdiag output at Sun Mar 27 14:21:29 2016
 Data since      Sun Mar 27 14:09:09 2016
 *******************************************************
@@ -185,8 +185,8 @@ Slurm header files.  The header file is in the include directory of your Slurm
 installation path, <strong>/path/to/slurm/include/slurm/slurm.h</strong></p>
 <p>Open the <strong>slurm.h</strong> header file and search for <em>slurm_get_statistics</em>, one of
 the functions we want to wrap.  There, we see its declaration and signature:</p>
-<div class="highlight"><pre><span class="k">extern</span> <span class="kt">int</span> <span class="n">slurm_get_statistics</span> <span class="nf">PARAMS</span><span class="p">((</span><span class="kt">stats_info_response_msg_t</span> <span class="o">**</span><span class="n">buf</span><span class="p">,</span>
-                    <span class="kt">stats_info_request_msg_t</span> <span class="o">*</span><span class="n">req</span><span class="p">));</span>
+<div class="highlight"><pre><span></span><span class="k">extern</span> <span class="kt">int</span> <span class="n">slurm_get_statistics</span> <span class="nf">PARAMS</span><span class="p">((</span><span class="n">stats_info_response_msg_t</span> <span class="o">**</span><span class="n">buf</span><span class="p">,</span>
+                    <span class="n">stats_info_request_msg_t</span> <span class="o">*</span><span class="n">req</span><span class="p">));</span>
 </pre></div>
 
 
@@ -196,14 +196,14 @@ to declare both structs in the definition file.</p>
 <h2>Wrapping C Code</h2>
 <p>Let's start by declaring the structs.  The C code for the
 <em>stats_info_request_msg</em> struct looks like:</p>
-<div class="highlight"><pre><span class="k">typedef</span> <span class="k">struct</span> <span class="n">stats_info_request_msg</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">stats_info_request_msg</span> <span class="p">{</span>
     <span class="kt">uint16_t</span> <span class="n">command_id</span><span class="p">;</span>
-<span class="p">}</span> <span class="kt">stats_info_request_msg_t</span><span class="p">;</span>
+<span class="p">}</span> <span class="n">stats_info_request_msg_t</span><span class="p">;</span>
 </pre></div>
 
 
 <p>Create a file called <em>sdiag.pxd</em> and start with the following:</p>
-<div class="highlight"><pre><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span>
+<div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span>
 
 <span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;slurm/slurm.h&quot;</span> <span class="k">nogil</span><span class="p">:</span>
     <span class="k">ctypedef</span> <span class="k">struct</span> <span class="nc">stats_info_request_msg_t</span><span class="p">:</span>
@@ -219,7 +219,7 @@ can be used without Python's GIL.</p>
 file.  The <em>typedef</em> in C becomes a <em>ctypedef</em> in Cython.</p>
 <p>For more information on struct and enum declaration, see <a href="http://docs.cython.org/src/userguide/external_C_code.html#styles-of-struct-union-and-enum-declaration">Cython's documentation</a>.</p>
 <p>Next, add the <em>stats_info_response_msg_t</em> struct to the .pxd file:</p>
-<div class="highlight"><pre>    <span class="k">ctypedef</span> <span class="k">struct</span> <span class="nc">stats_info_response_msg_t</span><span class="p">:</span>
+<div class="highlight"><pre><span></span>    <span class="k">ctypedef</span> <span class="k">struct</span> <span class="nc">stats_info_response_msg_t</span><span class="p">:</span>
         <span class="n">uint32_t</span> <span class="n">parts_packed</span>
         <span class="n">time_t</span> <span class="n">req_time</span>
         <span class="n">time_t</span> <span class="n">req_time_start</span>
@@ -238,7 +238,7 @@ file.  The <em>typedef</em> in C becomes a <em>ctypedef</em> in Cython.</p>
 
 <p>Note some of the types in this struct.  We need to import these as well into
 the .pxd file:</p>
-<div class="highlight"><pre><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint64_t</span>
+<div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint32_t</span><span class="p">,</span> <span class="n">uint64_t</span>
 
 <span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;sys/types.h&quot;</span> <span class="k">nogil</span><span class="p">:</span>
     <span class="k">ctypedef</span> <span class="nb">long</span> <span class="n">time_t</span>
@@ -246,20 +246,20 @@ the .pxd file:</p>
 
 
 <p>Now, we can declare the two functions:</p>
-<div class="highlight"><pre>    <span class="nb">int</span> <span class="n">slurm_get_statistics</span><span class="p">(</span><span class="n">stats_info_response_msg_t</span> <span class="o">**</span><span class="n">buf</span><span class="p">,</span>
+<div class="highlight"><pre><span></span>    <span class="nb">int</span> <span class="n">slurm_get_statistics</span><span class="p">(</span><span class="n">stats_info_response_msg_t</span> <span class="o">**</span><span class="n">buf</span><span class="p">,</span>
                              <span class="n">stats_info_request_msg_t</span> <span class="o">*</span><span class="n">req</span><span class="p">)</span>
     <span class="nb">int</span> <span class="n">slurm_reset_statistics</span><span class="p">(</span><span class="n">stats_info_request_msg_t</span> <span class="o">*</span><span class="n">req</span><span class="p">)</span>
 </pre></div>
 
 
 <p>There are some C macros that we also need to declare:</p>
-<div class="highlight"><pre>    <span class="nb">int</span> <span class="n">STAT_COMMAND_RESET</span>
+<div class="highlight"><pre><span></span>    <span class="nb">int</span> <span class="n">STAT_COMMAND_RESET</span>
     <span class="nb">int</span> <span class="n">STAT_COMMAND_GET</span>
 </pre></div>
 
 
 <p>We now need to declare some functions and macros from <em>slurm_errno.h</em>:</p>
-<div class="highlight"><pre><span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;slurm/slurm_errno.h&quot;</span> <span class="k">nogil</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">extern</span> <span class="k">from</span> <span class="s">&quot;slurm/slurm_errno.h&quot;</span> <span class="k">nogil</span><span class="p">:</span>
     <span class="nb">int</span> <span class="n">SLURM_SUCCESS</span>
 
     <span class="n">char</span> <span class="o">*</span><span class="n">slurm_strerror</span><span class="p">(</span><span class="nb">int</span> <span class="n">errnum</span><span class="p">)</span>
@@ -271,7 +271,7 @@ the .pxd file:</p>
 <p>There's one more declaration we need, but it is not in the <em>slurm.h</em> header
 file.  In this case, since the function is externalized, we can declare it
 directly:</p>
-<div class="highlight"><pre><span class="k">cdef</span> <span class="kr">extern</span> <span class="kt">void</span> <span class="nf">slurm_free_stats_response_msg</span><span class="p">(</span><span class="n">stats_info_response_msg_t</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="kr">extern</span> <span class="kt">void</span> <span class="nf">slurm_free_stats_response_msg</span><span class="p">(</span><span class="n">stats_info_response_msg_t</span> <span class="o">*</span><span class="n">msg</span><span class="p">)</span>
 </pre></div>
 
 
@@ -282,7 +282,7 @@ need to look at the <em>sdiag.c</em> file and recreate the needed portions in Cy
 <p>We will expose two functions to Python: get_stats() and reset_stats().
 Therefore, these need to use the <em>cpdef</em> function declaration, since <em>cpdef</em>
 functions have access to both C and Python.</p>
-<div class="highlight"><pre><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">():</span>
+<div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">():</span>
     <span class="k">pass</span>
 
 <span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">reset_stats</span><span class="p">():</span>
@@ -292,8 +292,8 @@ functions have access to both C and Python.</p>
 
 <p>In the <em>get_stats</em> function, we need to statically type some variables that
 will get used in the function.  This is done with <em>cdef</em>:</p>
-<div class="highlight"><pre><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">():</span>
-    <span class="n">cdef</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">():</span>
+    <span class="k">cdef</span><span class="p">:</span>
         <span class="nb">int</span> <span class="n">rc</span>
         <span class="n">uint32_t</span> <span class="n">i</span>
         <span class="nb">dict</span> <span class="n">rpc_type_stats</span>
@@ -307,7 +307,7 @@ will get used in the function.  This is done with <em>cdef</em>:</p>
 <p>Next, follow through <em>sdiag.c</em> and write the necessary Cython to call the
 <em>slurm_get_statistics</em> function, populate the buffer, and copy the buffer
 into a dictionary.</p>
-<div class="highlight"><pre>    <span class="p">[</span><span class="o">...</span><span class="p">]</span>
+<div class="highlight"><pre><span></span>    <span class="p">[</span><span class="o">...</span><span class="p">]</span>
     <span class="n">req</span><span class="o">.</span><span class="n">command_id</span> <span class="o">=</span> <span class="n">STAT_COMMAND_GET</span>
     <span class="n">rc</span> <span class="o">=</span> <span class="n">slurm_get_statistics</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">,</span> <span class="o">&lt;</span><span class="n">stats_info_request_msg_t</span><span class="o">*&gt;&amp;</span><span class="n">req</span><span class="p">)</span>
 
@@ -327,7 +327,7 @@ Unfortunately, it is not externalized and we cannot simply declare it in the
 .pxd file and use it.  We have to recreate it in the implementation file as a
 separate function.  Since this function does not need to be exposed to Python,
 we can use a <em>cdef</em> function:</p>
-<div class="highlight"><pre><span class="k">cdef</span> <span class="nf">rpc_num2string</span><span class="p">(</span><span class="n">uint16_t</span> <span class="n">opcode</span><span class="p">):</span>
+<div class="highlight"><pre><span></span><span class="k">cdef</span> <span class="nf">rpc_num2string</span><span class="p">(</span><span class="n">uint16_t</span> <span class="n">opcode</span><span class="p">):</span>
     <span class="n">num2string</span> <span class="o">=</span> <span class="p">{</span>
         <span class="mf">1001</span><span class="p">:</span> <span class="s">&quot;REQUEST_NODE_REGISTRATION_STATUS&quot;</span><span class="p">,</span>
         <span class="mf">1002</span><span class="p">:</span> <span class="s">&quot;MESSAGE_NODE_REGISTRATION_STATUS&quot;</span><span class="p">,</span>
@@ -341,7 +341,7 @@ we can use a <em>cdef</em> function:</p>
 
 <p>At the end of the <em>get_stats</em> function, we need to free the response message
 buffer and return the dictionary back to the caller:</p>
-<div class="highlight"><pre>    <span class="n">slurm_free_stats_response_msg</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+<div class="highlight"><pre><span></span>    <span class="n">slurm_free_stats_response_msg</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
     <span class="n">buf</span> <span class="o">=</span> <span class="bp">NULL</span>
     <span class="k">return</span> <span class="n">stat_dict</span>
 </pre></div>
@@ -349,14 +349,14 @@ buffer and return the dictionary back to the caller:</p>
 
 <p>Pay attention to the types required in the implementation file, they need to be
 imported, similarly to the definition file:</p>
-<div class="highlight"><pre><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint32_t</span>
+<div class="highlight"><pre><span></span><span class="k">from</span> <span class="nn">libc.stdint</span> <span class="k">cimport</span> <span class="n">uint16_t</span><span class="p">,</span> <span class="n">uint32_t</span>
 <span class="k">from</span> <span class="nn">pwd</span> <span class="k">import</span> <span class="n">getpwuid</span>
 </pre></div>
 
 
 <p>Lastly, the functions we created in the implementation file can be declared in
 the definition file, using the same signature as in the implementation file:</p>
-<div class="highlight"><pre><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="k">cpdef</span> <span class="kt">dict</span> <span class="nf">get_stats</span><span class="p">()</span>
 <span class="k">cpdef</span> <span class="kt">int</span> <span class="nf">reset_stats</span><span class="p">()</span>
 <span class="k">cdef</span> <span class="nf">rpc_num2string</span><span class="p">(</span><span class="n">uint16_t</span> <span class="n">opcode</span><span class="p">)</span>
 </pre></div>
@@ -367,7 +367,7 @@ the definition file, using the same signature as in the implementation file:</p>
 <h2>Compiling with Cython</h2>
 <p>Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.</p>
-<div class="highlight"><pre>cython sdiag.pyx
+<div class="highlight"><pre><span></span>cython sdiag.pyx
 </pre></div>
 
 
@@ -382,21 +382,21 @@ The standard way of creating an extension module is through the use of
 <p>We can, as an exercise, compile by the extension module by hand to get an
 understanding of how the module is generated with the compiler and linker.</p>
 <p>Our next step is to compile <em>sdiag.c</em> into an object file.  Use Python's <strong>python-config</strong> to get the appropriate CFLAGS to pass to the compiler:</p>
-<div class="highlight"><pre><span class="go">gcc -c sdiag.c $(python-config --cflags) -fPIC</span>
+<div class="highlight"><pre><span></span><span class="go">gcc -c sdiag.c $(python-config --cflags) -fPIC</span>
 </pre></div>
 
 
 <p>This step produces the <em>sdiag.o</em> object file.</p>
 <p>Now, compile <em>sdiag.o</em> into a shared library.  We will need to add the linker
 flags that point to Slurm's libslurm.so:</p>
-<div class="highlight"><pre><span class="go">gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \</span>
+<div class="highlight"><pre><span></span><span class="go">gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \</span>
 <span class="go">  -L/usr/local/slurm/15.08.8/lib -lslurm</span>
 </pre></div>
 
 
 <h2>Testing the module</h2>
 <p>Create a directory for the module:</p>
-<div class="highlight"><pre><span class="go">mkdir ${HOME}/local</span>
+<div class="highlight"><pre><span></span><span class="go">mkdir ${HOME}/local</span>
 <span class="go">cd ${HOME}/local</span>
 <span class="go">mkdir sdiag</span>
 </pre></div>
@@ -405,7 +405,7 @@ flags that point to Slurm's libslurm.so:</p>
 <p>Copy the <strong>sdiag.so</strong> module to the <code>${HOME}/local/sdiag</code> directory.  Next,
 create an <code>__init__.py</code> file.  Since Slurm makes heavy use of dlopen() calls,
 we need to set the flags in <code>__init__.py</code>:</p>
-<div class="highlight"><pre><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+<div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
 
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">ctypes</span>
@@ -419,7 +419,7 @@ we need to set the flags in <code>__init__.py</code>:</p>
 <p>Now, we can test the module.  Make sure you are in the <code>${HOME}/local</code>
 directory before running the Python interpreter.  Otherwise, be sure to adjust
 your PYTHONPATH.</p>
-<div class="highlight"><pre><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sdiag</span>
+<div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">sdiag</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">pprint</span> <span class="kn">import</span> <span class="n">pprint</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">pprint</span><span class="p">(</span><span class="n">sdiag</span><span class="o">.</span><span class="n">get_stats</span><span class="p">())</span>
 <span class="go">{u&#39;agent_queue_size&#39;: 0,</span>
@@ -489,6 +489,11 @@ on GitHub.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
                             Wrapping Slurm's sdiag with Cython
                         </a>
@@ -496,11 +501,6 @@ on GitHub.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/signing-rpms.html">
                             Signing RPMs
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
                         </a>
                     </li>
                 </ul>
@@ -528,13 +528,14 @@ on GitHub.</p>
                             <i class="fa fa-folder-open fa-lg"></i> RPM
                         </a>
                     </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
-                <ul class="list-group " id="tags">
-                </ul>
-            </li>
 
 
 

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Graphing sdiag with Graphite - Giovanni Torres</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+
+        <meta name="author" content="Giovanni Torres" />
+        <meta name="keywords" content="python,slurm,pyslurm,graphite,grafana" />
+        <meta name="description" content="Introduction In a previous post, I demonstrated how to use Cython to wrap C functions in Slurm&#39;s sdiag utility and expose the metrics to Python. In this guide, we will use PySlurm to graph the output from sdiag. Prerequisites This guide assumes you are using Slurm, an HPC workload ..." />
+
+        <meta property="og:site_name" content="Giovanni Torres" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Graphing sdiag with Graphite"/>
+        <meta property="og:url" content="http://giovannitorres.me/graphing-sdiag-with-graphite.html"/>
+        <meta property="og:description" content="Introduction In a previous post, I demonstrated how to use Cython to wrap C functions in Slurm&#39;s sdiag utility and expose the metrics to Python. In this guide, we will use PySlurm to graph the output from sdiag. Prerequisites This guide assumes you are using Slurm, an HPC workload ..."/>
+        <meta property="article:published_time" content="2016-04-09" />
+            <meta property="article:section" content="Slurm" />
+            <meta property="article:tag" content="python" />
+            <meta property="article:tag" content="slurm" />
+            <meta property="article:tag" content="pyslurm" />
+            <meta property="article:tag" content="graphite" />
+            <meta property="article:tag" content="grafana" />
+            <meta property="article:author" content="Giovanni Torres" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="http://giovannitorres.me/theme/css/bootstrap.cosmo.min.css" type="text/css"/>
+    <link href="http://giovannitorres.me/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
+        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
+
+        <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres ATOM Feed"/>
+
+
+
+        <link href="http://giovannitorres.me/feeds/slurm.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres Slurm ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a href="http://giovannitorres.me/" class="navbar-brand">
+Giovanni Torres            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html"
+                       rel="bookmark"
+                       title="Permalink to Graphing sdiag with Graphite">
+                        Graphing sdiag with Graphite
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2016-04-09T19:52:00-04:00"> Sat 09 April 2016</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="http://giovannitorres.me/tag/python.html">python</a>
+        /
+	<a href="http://giovannitorres.me/tag/slurm.html">slurm</a>
+        /
+	<a href="http://giovannitorres.me/tag/pyslurm.html">pyslurm</a>
+        /
+	<a href="http://giovannitorres.me/tag/graphite.html">graphite</a>
+        /
+	<a href="http://giovannitorres.me/tag/grafana.html">grafana</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>Introduction</h2>
+<p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.</p>
+<p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
+graph the output from sdiag.</p>
+<h2>Prerequisites</h2>
+<p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
+workload manager, and the
+<a href="http://graphite.readthedocs.org/en/latest/">Graphite</a> suite.</p>
+<h2>Getting the Statistics</h2>
+<p>The sdiag utility is a diagnostic tool that keeps statistics on the Slurm
+controller, the Main scheduler and the Backfill scheduler.  You can run this
+utility periodically, or as you make changes to the scheduler in <code>slurm.conf</code>.
+However, if you want a historical view of these statistics, you could save them
+in a time-series database and graph them over time.</p>
+<p>Let's start by writing a function to get the various stats and store them in a
+dictionary:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pyslurm</span>
+
+<span class="k">def</span> <span class="nf">get_sched_stats</span><span class="p">():</span>
+    <span class="n">stats</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sdiag</span> <span class="o">=</span> <span class="n">pyslurm</span><span class="o">.</span><span class="n">statistics</span><span class="p">()</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Slurmctld Stats</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;server_thread_count&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;server_thread_count&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;agent_queue_size&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;agent_queue_size&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Jobs Stats</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;jobs_submitted&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jobs_submitted&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;jobs_started&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jobs_started&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;jobs_completed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jobs_completed&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;jobs_canceled&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jobs_canceled&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;jobs_failed&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;jobs_failed&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Main Scheduler Stats</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_last_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_last&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_max_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_max&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_total_cycles&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_counter&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_counter&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_mean_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_sum&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_mean_depth_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_depth&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;req_time&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;req_time_start&quot;</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">60</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_cycles_per_minute&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_cycle_counter&quot;</span><span class="p">)</span> <span class="o">/</span>
+                <span class="p">((</span><span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;req_time&quot;</span><span class="p">)</span> <span class="o">-</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;req_time_start&quot;</span><span class="p">))</span> <span class="o">/</span> <span class="mi">60</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;main_last_queue_length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;schedule_queue_len&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Backfilling stats</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_total_jobs_since_slurm_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_backfilled_jobs&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_total_jobs_since_cycle_start&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_last_backfilled_jobs&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_total_cycles&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_last_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_last&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_max_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_max&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_queue_length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_queue_len&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_mean_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_sum&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_depth_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_depth_sum&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_depth_mean_try&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_depth_try_sum&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_queue_length_mean&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_queue_len_sum&quot;</span><span class="p">)</span> <span class="o">/</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_cycle_counter&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_last_depth_cycle&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_last_depth&quot;</span><span class="p">)</span>
+        <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;bf_last_depth_cycle_try&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sdiag</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bf_last_depth_try&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stats</span>
+</pre></div>
+
+
+<h2>Sending to Graphite</h2>
+<p>Graphite is suite of three components: Carbon, Whisper and Graphite-web.
+Carbon is the metric collector.  Our script needs to send the statistics to
+Carbon, which will store the values in whisper time-series databases.  The
+graphs can then be visualized using Graphite-web.</p>
+<p>The next part of our script is defining a function to send the metrics using
+the pickle protocol.</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">time</span>
+
+<span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">delay</span><span class="p">):</span>
+    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="n">now</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+        <span class="n">tuples</span> <span class="o">=</span> <span class="p">([])</span>
+
+        <span class="n">stats</span> <span class="o">=</span> <span class="n">get_sched_stats</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">stats</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">prefix</span> <span class="o">=</span> <span class="s2">&quot;cluster.slurm_sched_stats.gauge-&quot;</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stats</span><span class="p">:</span>
+                <span class="n">tuples</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">prefix</span> <span class="o">+</span> <span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">now</span><span class="p">,</span> <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">])))</span>
+            <span class="n">package</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">tuples</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">struct</span><span class="o">.</span><span class="n">pack</span><span class="p">(</span><span class="s1">&#39;!L&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">package</span><span class="p">))</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">size</span><span class="p">)</span>
+                <span class="n">sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">package</span><span class="p">)</span>
+            <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+</pre></div>
+
+
+<p>The <code>run</code> function takes two arguments: the socket connection to the Carbon
+port and a delay value in seconds.  This function will pack the statistics in
+tuples, send it to Carbon, sleep for a while, and start the whole process
+again.  The <strong>delay</strong> value determines your graphs resolution.</p>
+<p>The <strong>prefix</strong> value is the location to store the various metrics.  Therefore,
+Carbon will create the whisper databases in
+<code>/path/to/graphite/storage/whisper/cluster/slurm_sched_stats/</code>.  Each metric will be
+prefixed with <code>gauge-</code> to signify that each value is a gauge.</p>
+<p>Some of the values are actually counters, but we will use Graphite's Function
+API to take the derivative of the series to generate per-second values.</p>
+<h2>Bringing It Together</h2>
+<p>Now, we can wrap up these two functions in a <code>main</code> function to bring
+everything together.</p>
+<div class="highlight"><pre><span></span><span class="n">CARBON_SERVER</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
+<span class="n">CARBON_PICKLE_PORT</span> <span class="o">=</span> <span class="mi">2004</span>
+<span class="n">DELAY</span><span class="o">=</span><span class="mi">30</span>
+
+<span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+    <span class="n">sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">CARBON_SERVER</span><span class="p">,</span> <span class="n">CARBON_PICKLE_PORT</span><span class="p">))</span>
+    <span class="k">except</span> <span class="n">socket</span><span class="o">.</span><span class="n">error</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t connect to </span><span class="si">%s</span><span class="s2"> on port </span><span class="si">%d</span><span class="s2">.  Is carbon-cache </span><span class="se">\</span>
+<span class="s2">                         running&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">CARBON_SERVER</span><span class="p">,</span> <span class="n">CARBON_PICKLE_PORT</span><span class="p">))</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">run</span><span class="p">(</span><span class="n">sock</span><span class="p">,</span> <span class="n">DELAY</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">KeyboardInterrupt</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Exiting on CTRL-c</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">exit</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s2">&quot;__main__&quot;</span><span class="p">:</span>
+    <span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+
+<p>You will need to make sure that Carbon is configured with the Pickle receiver
+port.  This can be found in <code>carbon.conf</code>.</p>
+<div class="highlight"><pre><span></span>PICKLE_RECEIVER_INTERFACE = 0.0.0.0
+PICKLE_RECEIVER_PORT = 2004
+</pre></div>
+
+
+<p>Additionally, and preferably before you create any graphs, you should also set
+the schema for this metric. Set its retention to match your desired
+resolution.  This is done in the <code>storage-schemas.conf</code> file.  In this example,
+since we set the <strong>DELAY</strong> to 30 seconds, we need to set the retention to 30s,
+otherwise the default of 10s will take effect and we will end up with gaps in
+the graphs.</p>
+<p>Since the prefix is <code>cluster.slurm_sched_stats.gauge-</code>, we create the following
+schema definition in <code>storage-schemas.conf</code>:</p>
+<div class="highlight"><pre><span></span><span class="k">[cluster]</span>
+<span class="na">pattern</span> <span class="o">=</span> <span class="s">^cluster\.</span>
+<span class="na">retentions</span> <span class="o">=</span> <span class="s">30s:1d, 5m:1y</span>
+</pre></div>
+
+
+<p>The first line is a regex that matches any metric beginning with <strong>cluster</strong>.
+The second line tells Carbon to create a whisper database for each metric where
+30 second values are kept for 1 day and then those values are aggregated into 5
+minute averages and kept for 1 year.  Adjust accordingly.</p>
+<p>Carbon re-reads this file once a minute, so there's no need to restart anything
+here.</p>
+<h2>Daemonizing the Script with Supervisor</h2>
+<p>The script runs in an infinite while loop, making it easy to daemonize.  We
+will daemonize this script with <a href="http://supervisord.org/">Supervisor</a>.</p>
+<p>The easiest way to install Supervisor is with <code>pip</code>:</p>
+<div class="highlight"><pre><span></span>pip install supervisor
+</pre></div>
+
+
+<p>You will have to <a href="http://supervisord.org/installing.html#creating-a-configuration-file">generate a configuration
+file</a> if
+you are not already using Supervisor.  When the configuration file is ready,
+append the following definition for our script:</p>
+<div class="highlight"><pre><span></span><span class="k">[program:slurm-sched-stats]</span>
+<span class="na">command</span><span class="o">=</span><span class="s">/usr/bin/python /usr/local/libexec/slurm_sched_stats.py</span>
+<span class="na">directory</span><span class="o">=</span><span class="s">/usr/local/libexec/</span>
+<span class="na">stdout_logfile</span><span class="o">=</span><span class="s">/var/log/slurm-sched-stats.log</span>
+<span class="na">stdout_logfile_maxbytes</span><span class="o">=</span><span class="s">1MB</span>
+<span class="na">stdout_logfile_backups</span><span class="o">=</span><span class="s">3</span>
+<span class="na">redirect_stderr</span><span class="o">=</span><span class="s">true</span>
+<span class="na">loglevel</span><span class="o">=</span><span class="s">warn</span>
+<span class="na">user</span><span class="o">=</span><span class="s">somebody</span>
+</pre></div>
+
+
+<p>Lastly, grab one of the user-contributed
+<a href="http://supervisord.org/running.html#running-supervisord-automatically-on-startup">initscripts</a>
+so that you can start and stop Supervisor easily.  Once you have an initscript
+installed and added to chkconfig, you can then start Supervisor which will in
+turn start the script:</p>
+<div class="highlight"><pre><span></span>service supervisord start
+</pre></div>
+
+
+<h2>Creating a Dashboard in Grafana</h2>
+<p>If you are using Graphite, chances are you use a different frontend for
+creating graphs and dashboards.  <a href="http://grafana.org/">Grafana</a> is an excellent
+frontend for visualizing Graphite metrics, among other data sources.</p>
+<p>I mentioned earlier that all the metrics would be created as gauges and not
+counters.  Let's take a look at one metric, Jobs Submitted.  If we graph it
+normally, the graph continuously grows until it gets reset by Slurm, typically at
+midnight UTC.  The graphs end up taking a sawtooth shape as the values drop
+back to zero and start growing again.</p>
+<p>To get a <em>Jobs Submitted per second</em> metric, add the same metric to the graph,
+except, apply the <strong>NonNegativeDerivative</strong> function to this series in order to
+calculate the deltas between the datapoints.</p>
+<p>You may want to do this for the following graphs:</p>
+<ul>
+<li>Jobs Submitted</li>
+<li>Jobs Started</li>
+<li>Jobs Completed</li>
+<li>Jobs Canceled</li>
+<li>Jobs Failed</li>
+<li>Total Cycles</li>
+<li>Total Backfilled Jobs</li>
+</ul>
+<p>Here are what the graphs would look like:</p>
+<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png" /></p>
+<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png" /></p>
+<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png" /></p>
+<h2>Conclusion</h2>
+<p>Using PySlurm and Graphite/Grafana, we can keep historical data for sdiag.  The
+backfill scheduler in particular has many options that are used to tweak the
+behavior of the algorithm.  These graphs could help to provide feedback after
+changing values to the scheduler.</p>
+<p>This gist contains the full
+<a href="https://gist.github.com/giovtorres/a26bcd754bf0eaa4b4e10b8e48bdfa22">slurm_sched_stats.py</a>
+script.</p>
+<p>This gist 
+contains the full <a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870">Grafana dashboard in JSON format</a>, which can be imported into Grafana.</p>
+            </div>
+            <!-- /.entry-content -->
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+                    var disqus_identifier = 'graphing-sdiag-with-graphite';
+                var disqus_url = 'http://giovannitorres.me/graphing-sdiag-with-graphite.html';
+
+            var disqus_config = function () {
+                this.language = "en";
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+
+<section class="well well-sm">
+    <ul class="list-group list-group-flush">
+
+            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
+                <ul class="list-group" id="recentposts">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
+                            Wrapping Slurm's sdiag with Cython
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/signing-rpms.html">
+                            Signing RPMs
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
+                <ul class="list-group" id="categories">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/collectd.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Collectd
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/cython.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Cython
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/linux.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Linux
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/rpm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> RPM
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
+    </li>
+    </ul>
+</section>
+            </aside>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2016 Giovanni Torres
+            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="http://giovannitorres.me/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://giovannitorres.me/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="http://giovannitorres.me/theme/js/respond.min.js"></script>
+
+    <!-- GitHub JS -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (!window.jXHR) {
+                var jxhr = document.createElement('script');
+                jxhr.type = 'text/javascript';
+                jxhr.src = 'http://giovannitorres.me/theme/js/jXHR.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(jxhr, s);
+            }
+
+            github.showRepos({
+                user: 'giovtorres',
+                count: 5,
+                skip_forks: true,
+                target: '#gh_repos'
+            });
+        });
+    </script>
+    <script src="http://giovannitorres.me/theme/js/github.js" type="text/javascript"></script>
+    <!-- End GitHub JS Code -->
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-54838714-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+</body>
+</html>

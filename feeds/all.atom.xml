@@ -1,5 +1,261 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><updated>2016-03-16T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-04-09T19:52:00-04:00</updated><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.&lt;/p&gt;
+&lt;p&gt;In this guide, we will use &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; to
+graph the output from sdiag.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;This guide assumes you are using &lt;a href="http://slurm.schedmd.com/"&gt;Slurm&lt;/a&gt;, an HPC
+workload manager, and the
+&lt;a href="http://graphite.readthedocs.org/en/latest/"&gt;Graphite&lt;/a&gt; suite.&lt;/p&gt;
+&lt;h2&gt;Getting the Statistics&lt;/h2&gt;
+&lt;p&gt;The sdiag utility is a diagnostic tool that keeps statistics on the Slurm
+controller, the Main scheduler and the Backfill scheduler.  You can run this
+utility periodically, or as you make changes to the scheduler in &lt;code&gt;slurm.conf&lt;/code&gt;.
+However, if you want a historical view of these statistics, you could save them
+in a time-series database and graph them over time.&lt;/p&gt;
+&lt;p&gt;Let's start by writing a function to get the various stats and store them in a
+dictionary:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;pyslurm&lt;/span&gt;
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;get_sched_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="n"&gt;stats&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
+
+    &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sdiag&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;pyslurm&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;statistics&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="k"&gt;except&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="k"&gt;return&lt;/span&gt;
+    &lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="c1"&gt;# Slurmctld Stats&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;server_thread_count&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;server_thread_count&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;agent_queue_size&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;agent_queue_size&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="c1"&gt;# Jobs Stats&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_submitted&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_submitted&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_started&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_started&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_completed&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_completed&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_canceled&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_canceled&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_failed&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;jobs_failed&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="c1"&gt;# Main Scheduler Stats&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_last_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_last&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_max_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_max&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_total_cycles&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_mean_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_sum&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_mean_depth_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_depth&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;req_time&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;req_time_start&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;60&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_cycles_per_minute&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt;
+                &lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;req_time&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;-&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;req_time_start&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="mi"&gt;60&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;main_last_queue_length&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;schedule_queue_len&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="c1"&gt;# Backfilling stats&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_total_jobs_since_slurm_start&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_backfilled_jobs&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_total_jobs_since_cycle_start&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_backfilled_jobs&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_total_cycles&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_last&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_max_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_max&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_queue_length&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_queue_len&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;&amp;gt;&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_mean_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_sum&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_depth_mean&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_depth_sum&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_depth_mean_try&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_depth_try_sum&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_queue_length_mean&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;
+                &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_queue_len_sum&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;/&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_cycle_counter&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_depth_cycle&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_depth&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_depth_cycle_try&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;bf_last_depth_try&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+        &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;stats&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Sending to Graphite&lt;/h2&gt;
+&lt;p&gt;Graphite is suite of three components: Carbon, Whisper and Graphite-web.
+Carbon is the metric collector.  Our script needs to send the statistics to
+Carbon, which will store the values in whisper time-series databases.  The
+graphs can then be visualized using Graphite-web.&lt;/p&gt;
+&lt;p&gt;The next part of our script is defining a function to send the metrics using
+the pickle protocol.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;pickle&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;socket&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;struct&lt;/span&gt;
+&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;time&lt;/span&gt;
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;run&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;delay&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="bp"&gt;True&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;now&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
+        &lt;span class="n"&gt;tuples&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;([])&lt;/span&gt;
+
+        &lt;span class="n"&gt;stats&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_sched_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;stats&lt;/span&gt; &lt;span class="ow"&gt;is&lt;/span&gt; &lt;span class="ow"&gt;not&lt;/span&gt; &lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+            &lt;span class="n"&gt;prefix&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;cluster.slurm_sched_stats.gauge-&amp;quot;&lt;/span&gt;
+            &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                &lt;span class="n"&gt;tuples&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;append&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;prefix&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;now&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;stats&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;])))&lt;/span&gt;
+            &lt;span class="n"&gt;package&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;pickle&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dumps&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;tuples&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;size&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;struct&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;pack&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;!L&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="nb"&gt;len&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+            &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                &lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sendall&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;size&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+                &lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sendall&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;package&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="n"&gt;socket&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;error&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+                &lt;span class="k"&gt;pass&lt;/span&gt;
+
+        &lt;span class="n"&gt;time&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;sleep&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;delay&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The &lt;code&gt;run&lt;/code&gt; function takes two arguments: the socket connection to the Carbon
+port and a delay value in seconds.  This function will pack the statistics in
+tuples, send it to Carbon, sleep for a while, and start the whole process
+again.  The &lt;strong&gt;delay&lt;/strong&gt; value determines your graphs resolution.&lt;/p&gt;
+&lt;p&gt;The &lt;strong&gt;prefix&lt;/strong&gt; value is the location to store the various metrics.  Therefore,
+Carbon will create the whisper databases in
+&lt;code&gt;/path/to/graphite/storage/whisper/cluster/slurm_sched_stats/&lt;/code&gt;.  Each metric will be
+prefixed with &lt;code&gt;gauge-&lt;/code&gt; to signify that each value is a gauge.&lt;/p&gt;
+&lt;p&gt;Some of the values are actually counters, but we will use Graphite's Function
+API to take the derivative of the series to generate per-second values.&lt;/p&gt;
+&lt;h2&gt;Bringing It Together&lt;/h2&gt;
+&lt;p&gt;Now, we can wrap up these two functions in a &lt;code&gt;main&lt;/code&gt; function to bring
+everything together.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;CARBON_SERVER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;127.0.0.1&amp;quot;&lt;/span&gt;
+&lt;span class="n"&gt;CARBON_PICKLE_PORT&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;2004&lt;/span&gt;
+&lt;span class="n"&gt;DELAY&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="mi"&gt;30&lt;/span&gt;
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;main&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="n"&gt;sock&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;socket&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;socket&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+    &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;connect&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;CARBON_SERVER&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;CARBON_PICKLE_PORT&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+    &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="n"&gt;socket&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;error&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="k"&gt;raise&lt;/span&gt; &lt;span class="ne"&gt;SystemExit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;Couldn&amp;#39;t connect to &lt;/span&gt;&lt;span class="si"&gt;%s&lt;/span&gt;&lt;span class="s2"&gt; on port &lt;/span&gt;&lt;span class="si"&gt;%d&lt;/span&gt;&lt;span class="s2"&gt;.  Is carbon-cache &lt;/span&gt;&lt;span class="se"&gt;\&lt;/span&gt;
+&lt;span class="s2"&gt;                         running&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;%&lt;/span&gt; &lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;CARBON_SERVER&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;CARBON_PICKLE_PORT&lt;/span&gt;&lt;span class="p"&gt;))&lt;/span&gt;
+
+    &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;run&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sock&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;DELAY&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;except&lt;/span&gt; &lt;span class="ne"&gt;KeyboardInterrupt&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;stderr&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;write&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s2"&gt;Exiting on CTRL-c&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;exit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;__main__&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+    &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;You will need to make sure that Carbon is configured with the Pickle receiver
+port.  This can be found in &lt;code&gt;carbon.conf&lt;/code&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;PICKLE_RECEIVER_INTERFACE = 0.0.0.0
+PICKLE_RECEIVER_PORT = 2004
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Additionally, and preferably before you create any graphs, you should also set
+the schema for this metric. Set its retention to match your desired
+resolution.  This is done in the &lt;code&gt;storage-schemas.conf&lt;/code&gt; file.  In this example,
+since we set the &lt;strong&gt;DELAY&lt;/strong&gt; to 30 seconds, we need to set the retention to 30s,
+otherwise the default of 10s will take effect and we will end up with gaps in
+the graphs.&lt;/p&gt;
+&lt;p&gt;Since the prefix is &lt;code&gt;cluster.slurm_sched_stats.gauge-&lt;/code&gt;, we create the following
+schema definition in &lt;code&gt;storage-schemas.conf&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;[cluster]&lt;/span&gt;
+&lt;span class="na"&gt;pattern&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;^cluster\.&lt;/span&gt;
+&lt;span class="na"&gt;retentions&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;30s:1d, 5m:1y&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The first line is a regex that matches any metric beginning with &lt;strong&gt;cluster&lt;/strong&gt;.
+The second line tells Carbon to create a whisper database for each metric where
+30 second values are kept for 1 day and then those values are aggregated into 5
+minute averages and kept for 1 year.  Adjust accordingly.&lt;/p&gt;
+&lt;p&gt;Carbon re-reads this file once a minute, so there's no need to restart anything
+here.&lt;/p&gt;
+&lt;h2&gt;Daemonizing the Script with Supervisor&lt;/h2&gt;
+&lt;p&gt;The script runs in an infinite while loop, making it easy to daemonize.  We
+will daemonize this script with &lt;a href="http://supervisord.org/"&gt;Supervisor&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;The easiest way to install Supervisor is with &lt;code&gt;pip&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip install supervisor
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;You will have to &lt;a href="http://supervisord.org/installing.html#creating-a-configuration-file"&gt;generate a configuration
+file&lt;/a&gt; if
+you are not already using Supervisor.  When the configuration file is ready,
+append the following definition for our script:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;[program:slurm-sched-stats]&lt;/span&gt;
+&lt;span class="na"&gt;command&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;/usr/bin/python /usr/local/libexec/slurm_sched_stats.py&lt;/span&gt;
+&lt;span class="na"&gt;directory&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;/usr/local/libexec/&lt;/span&gt;
+&lt;span class="na"&gt;stdout_logfile&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;/var/log/slurm-sched-stats.log&lt;/span&gt;
+&lt;span class="na"&gt;stdout_logfile_maxbytes&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;1MB&lt;/span&gt;
+&lt;span class="na"&gt;stdout_logfile_backups&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;3&lt;/span&gt;
+&lt;span class="na"&gt;redirect_stderr&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;true&lt;/span&gt;
+&lt;span class="na"&gt;loglevel&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;warn&lt;/span&gt;
+&lt;span class="na"&gt;user&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="s"&gt;somebody&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Lastly, grab one of the user-contributed
+&lt;a href="http://supervisord.org/running.html#running-supervisord-automatically-on-startup"&gt;initscripts&lt;/a&gt;
+so that you can start and stop Supervisor easily.  Once you have an initscript
+installed and added to chkconfig, you can then start Supervisor which will in
+turn start the script:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;service supervisord start
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Creating a Dashboard in Grafana&lt;/h2&gt;
+&lt;p&gt;If you are using Graphite, chances are you use a different frontend for
+creating graphs and dashboards.  &lt;a href="http://grafana.org/"&gt;Grafana&lt;/a&gt; is an excellent
+frontend for visualizing Graphite metrics, among other data sources.&lt;/p&gt;
+&lt;p&gt;I mentioned earlier that all the metrics would be created as gauges and not
+counters.  Let's take a look at one metric, Jobs Submitted.  If we graph it
+normally, the graph continuously grows until it gets reset by Slurm, typically at
+midnight UTC.  The graphs end up taking a sawtooth shape as the values drop
+back to zero and start growing again.&lt;/p&gt;
+&lt;p&gt;To get a &lt;em&gt;Jobs Submitted per second&lt;/em&gt; metric, add the same metric to the graph,
+except, apply the &lt;strong&gt;NonNegativeDerivative&lt;/strong&gt; function to this series in order to
+calculate the deltas between the datapoints.&lt;/p&gt;
+&lt;p&gt;You may want to do this for the following graphs:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Jobs Submitted&lt;/li&gt;
+&lt;li&gt;Jobs Started&lt;/li&gt;
+&lt;li&gt;Jobs Completed&lt;/li&gt;
+&lt;li&gt;Jobs Canceled&lt;/li&gt;
+&lt;li&gt;Jobs Failed&lt;/li&gt;
+&lt;li&gt;Total Cycles&lt;/li&gt;
+&lt;li&gt;Total Backfilled Jobs&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;Here are what the graphs would look like:&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png" /&gt;&lt;/p&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Using PySlurm and Graphite/Grafana, we can keep historical data for sdiag.  The
+backfill scheduler in particular has many options that are used to tweak the
+behavior of the algorithm.  These graphs could help to provide feedback after
+changing values to the scheduler.&lt;/p&gt;
+&lt;p&gt;This gist contains the full
+&lt;a href="https://gist.github.com/giovtorres/a26bcd754bf0eaa4b4e10b8e48bdfa22"&gt;slurm_sched_stats.py&lt;/a&gt;
+script.&lt;/p&gt;
+&lt;p&gt;This gist 
+contains the full &lt;a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870"&gt;Grafana dashboard in JSON format&lt;/a&gt;, which can be imported into Grafana.&lt;/p&gt;</summary><category term="python"></category><category term="slurm"></category><category term="pyslurm"></category><category term="graphite"></category><category term="grafana"></category></entry><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -14,7 +270,7 @@ uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.&lt;/p&gt;
 &lt;h2&gt;Looking at sdiag Output&lt;/h2&gt;
 &lt;p&gt;sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the &lt;code&gt;sdiag&lt;/code&gt; command and you should see similar output:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;*******************************************************
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;*******************************************************
 sdiag output at Sun Mar 27 14:21:29 2016
 Data since      Sun Mar 27 14:09:09 2016
 *******************************************************
@@ -77,8 +333,8 @@ Slurm header files.  The header file is in the include directory of your Slurm
 installation path, &lt;strong&gt;/path/to/slurm/include/slurm/slurm.h&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;Open the &lt;strong&gt;slurm.h&lt;/strong&gt; header file and search for &lt;em&gt;slurm_get_statistics&lt;/em&gt;, one of
 the functions we want to wrap.  There, we see its declaration and signature:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt; &lt;span class="nf"&gt;PARAMS&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-                    &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt; &lt;span class="nf"&gt;PARAMS&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                    &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -88,14 +344,14 @@ to declare both structs in the definition file.&lt;/p&gt;
 &lt;h2&gt;Wrapping C Code&lt;/h2&gt;
 &lt;p&gt;Let's start by declaring the structs.  The C code for the
 &lt;em&gt;stats_info_request_msg&lt;/em&gt; struct looks like:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="kt"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;command_id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Create a file called &lt;em&gt;sdiag.pxd&lt;/em&gt; and start with the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;
 
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
@@ -111,7 +367,7 @@ can be used without Python's GIL.&lt;/p&gt;
 file.  The &lt;em&gt;typedef&lt;/em&gt; in C becomes a &lt;em&gt;ctypedef&lt;/em&gt; in Cython.&lt;/p&gt;
 &lt;p&gt;For more information on struct and enum declaration, see &lt;a href="http://docs.cython.org/src/userguide/external_C_code.html#styles-of-struct-union-and-enum-declaration"&gt;Cython's documentation&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Next, add the &lt;em&gt;stats_info_response_msg_t&lt;/em&gt; struct to the .pxd file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_response_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_response_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
         &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;parts_packed&lt;/span&gt;
         &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time&lt;/span&gt;
         &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time_start&lt;/span&gt;
@@ -130,7 +386,7 @@ file.  The &lt;em&gt;typedef&lt;/em&gt; in C becomes a &lt;em&gt;ctypedef&lt;/em
 
 &lt;p&gt;Note some of the types in this struct.  We need to import these as well into
 the .pxd file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint64_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint64_t&lt;/span&gt;
 
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;sys/types.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="nb"&gt;long&lt;/span&gt; &lt;span class="n"&gt;time_t&lt;/span&gt;
@@ -138,20 +394,20 @@ the .pxd file:&lt;/p&gt;
 
 
 &lt;p&gt;Now, we can declare the two functions:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
                              &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_reset_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;There are some C macros that we also need to declare:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_RESET&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_RESET&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;We now need to declare some functions and macros from &lt;em&gt;slurm_errno.h&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm_errno.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm_errno.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;SLURM_SUCCESS&lt;/span&gt;
 
     &lt;span class="n"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;slurm_strerror&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;errnum&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
@@ -163,7 +419,7 @@ the .pxd file:&lt;/p&gt;
 &lt;p&gt;There's one more declaration we need, but it is not in the &lt;em&gt;slurm.h&lt;/em&gt; header
 file.  In this case, since the function is externalized, we can declare it
 directly:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -174,7 +430,7 @@ need to look at the &lt;em&gt;sdiag.c&lt;/em&gt; file and recreate the needed po
 &lt;p&gt;We will expose two functions to Python: get_stats() and reset_stats().
 Therefore, these need to use the &lt;em&gt;cpdef&lt;/em&gt; function declaration, since &lt;em&gt;cpdef&lt;/em&gt;
 functions have access to both C and Python.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
     &lt;span class="k"&gt;pass&lt;/span&gt;
 
 &lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
@@ -184,8 +440,8 @@ functions have access to both C and Python.&lt;/p&gt;
 
 &lt;p&gt;In the &lt;em&gt;get_stats&lt;/em&gt; function, we need to statically type some variables that
 will get used in the function.  This is done with &lt;em&gt;cdef&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
-    &lt;span class="n"&gt;cdef&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="k"&gt;cdef&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
         &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rc&lt;/span&gt;
         &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;
         &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="n"&gt;rpc_type_stats&lt;/span&gt;
@@ -199,7 +455,7 @@ will get used in the function.  This is done with &lt;em&gt;cdef&lt;/em&gt;:&lt;
 &lt;p&gt;Next, follow through &lt;em&gt;sdiag.c&lt;/em&gt; and write the necessary Cython to call the
 &lt;em&gt;slurm_get_statistics&lt;/em&gt; function, populate the buffer, and copy the buffer
 into a dictionary.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
     &lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;command_id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
     &lt;span class="n"&gt;rc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
@@ -219,7 +475,7 @@ Unfortunately, it is not externalized and we cannot simply declare it in the
 .pxd file and use it.  We have to recreate it in the implementation file as a
 separate function.  Since this function does not need to be exposed to Python,
 we can use a &lt;em&gt;cdef&lt;/em&gt; function:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
     &lt;span class="n"&gt;num2string&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
         &lt;span class="mf"&gt;1001&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
         &lt;span class="mf"&gt;1002&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MESSAGE_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -233,7 +489,7 @@ we can use a &lt;em&gt;cdef&lt;/em&gt; function:&lt;/p&gt;
 
 &lt;p&gt;At the end of the &lt;em&gt;get_stats&lt;/em&gt; function, we need to free the response message
 buffer and return the dictionary back to the caller:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="n"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="n"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
     &lt;span class="n"&gt;buf&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;NULL&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;stat_dict&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -241,14 +497,14 @@ buffer and return the dictionary back to the caller:&lt;/p&gt;
 
 &lt;p&gt;Pay attention to the types required in the implementation file, they need to be
 imported, similarly to the definition file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;
 &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pwd&lt;/span&gt; &lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="n"&gt;getpwuid&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Lastly, the functions we created in the implementation file can be declared in
 the definition file, using the same signature as in the implementation file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -259,7 +515,7 @@ the definition file, using the same signature as in the implementation file:&lt;
 &lt;h2&gt;Compiling with Cython&lt;/h2&gt;
 &lt;p&gt;Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cython sdiag.pyx
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cython sdiag.pyx
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -274,21 +530,21 @@ The standard way of creating an extension module is through the use of
 &lt;p&gt;We can, as an exercise, compile by the extension module by hand to get an
 understanding of how the module is generated with the compiler and linker.&lt;/p&gt;
 &lt;p&gt;Our next step is to compile &lt;em&gt;sdiag.c&lt;/em&gt; into an object file.  Use Python's &lt;strong&gt;python-config&lt;/strong&gt; to get the appropriate CFLAGS to pass to the compiler:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc -c sdiag.c $(python-config --cflags) -fPIC&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;gcc -c sdiag.c $(python-config --cflags) -fPIC&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This step produces the &lt;em&gt;sdiag.o&lt;/em&gt; object file.&lt;/p&gt;
 &lt;p&gt;Now, compile &lt;em&gt;sdiag.o&lt;/em&gt; into a shared library.  We will need to add the linker
 flags that point to Slurm's libslurm.so:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \&lt;/span&gt;
 &lt;span class="go"&gt;  -L/usr/local/slurm/15.08.8/lib -lslurm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Testing the module&lt;/h2&gt;
 &lt;p&gt;Create a directory for the module:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;cd ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;mkdir sdiag&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -297,7 +553,7 @@ flags that point to Slurm's libslurm.so:&lt;/p&gt;
 &lt;p&gt;Copy the &lt;strong&gt;sdiag.so&lt;/strong&gt; module to the &lt;code&gt;${HOME}/local/sdiag&lt;/code&gt; directory.  Next,
 create an &lt;code&gt;__init__.py&lt;/code&gt; file.  Since Slurm makes heavy use of dlopen() calls,
 we need to set the flags in &lt;code&gt;__init__.py&lt;/code&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;__future__&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;absolute_import&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;__future__&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;absolute_import&lt;/span&gt;
 
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sys&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ctypes&lt;/span&gt;
@@ -311,7 +567,7 @@ we need to set the flags in &lt;code&gt;__init__.py&lt;/code&gt;:&lt;/p&gt;
 &lt;p&gt;Now, we can test the module.  Make sure you are in the &lt;code&gt;${HOME}/local&lt;/code&gt;
 directory before running the Python interpreter.  Otherwise, be sure to adjust
 your PYTHONPATH.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sdiag&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sdiag&lt;/span&gt;
 &lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pprint&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;pprint&lt;/span&gt;
 &lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="n"&gt;pprint&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
 &lt;span class="go"&gt;{u&amp;#39;agent_queue_size&amp;#39;: 0,&lt;/span&gt;
@@ -335,7 +591,7 @@ your PYTHONPATH.&lt;/p&gt;
 We now have tighter integration with Slurm and don't have to run Slurm commands
 and parse the output.  For more examples of using Cython to wrap the Slurm C
 API, have a look at the &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; project
-on GitHub.&lt;/p&gt;</summary><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><updated>2015-11-29T00:00:00-05:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+on GitHub.&lt;/p&gt;</summary><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><published>2015-11-29T00:00:00-05:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;So far, we have &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;setup an RPM build
 environment&lt;/a&gt;
 , &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"&gt;setup our RPM signing key&lt;/a&gt;,
@@ -349,7 +605,7 @@ In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on
 we saw the &lt;code&gt;.rpmmacros&lt;/code&gt; file, which included some default rpm macros.&lt;/p&gt;
 &lt;p&gt;We now need to add an additional macro, called &lt;strong&gt;%_gpg_name&lt;/strong&gt;, along with our
 GPG key ID.  To find the GPG key id, run the following command:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost ~]$ gpg --list-public-keys
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost ~]$ gpg --list-public-keys
 /home/makerpm/.gnupg/pubring.gpg
 ---------------------------------
 pub   2048R/512A2AA0 2015-11-30
@@ -360,7 +616,7 @@ sub   2048R/D97540C0 2015-11-30
 
 &lt;p&gt;The GPG key ID is &lt;strong&gt;512A2AA0&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;Now, echo the macro and the GPG key ID to your ~/.rpmmacros file as follows:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;echo &amp;quot;%_gpg_name 512A2AA0&amp;quot; &amp;gt;&amp;gt; ~/.rpmmacros
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;echo &amp;quot;%_gpg_name 512A2AA0&amp;quot; &amp;gt;&amp;gt; ~/.rpmmacros
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -373,7 +629,7 @@ chosen method, the directory could be either of the following:&lt;/p&gt;
 &lt;/ul&gt;
 &lt;p&gt;Then, run the following &lt;strong&gt;rpm&lt;/strong&gt; command to add a signature to a single RPM (you
 will be prompted for the GPG key passphrase):&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[makerpm@localhost ~]$ rpm --addsign -v collectd-5.5.0-1.el6.x86_64.rpm &lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[makerpm@localhost ~]$&lt;/span&gt; rpm --addsign -v collectd-5.5.0-1.el6.x86_64.rpm 
 &lt;span class="go"&gt;Enter pass phrase: &lt;/span&gt;
 &lt;span class="go"&gt;Pass phrase is good.&lt;/span&gt;
 &lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm:&lt;/span&gt;
@@ -381,7 +637,7 @@ will be prompted for the GPG key passphrase):&lt;/p&gt;
 
 
 &lt;p&gt;You can sign all the RPMs at once using file globbing:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost x86_64]$ rpm --addsign -v *\.rpm
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost x86_64]$ rpm --addsign -v *\.rpm
 Enter pass phrase: 
 Pass phrase is good.
 collectd-5.5.0-1.el6.x86_64.rpm:
@@ -440,13 +696,13 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 
 &lt;h2&gt;Verifying RPMs&lt;/h2&gt;
 &lt;p&gt;To verify the signature, use the &lt;code&gt;--checksig&lt;/code&gt; rpm flag:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[makerpm@localhost x86_64]$ rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm &lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[makerpm@localhost x86_64]$&lt;/span&gt; rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 &lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;For a more verbose output, add the &lt;code&gt;-v&lt;/code&gt; flag:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[makerpm@localhost x86_64]$ rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm &lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[makerpm@localhost x86_64]$&lt;/span&gt; rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm 
 &lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm:&lt;/span&gt;
 &lt;span class="go"&gt;    Header V4 RSA/SHA1 Signature, key ID 512a2aa0: OK&lt;/span&gt;
 &lt;span class="go"&gt;    Header SHA1 digest: OK (f62c64dc9938b6d86c91d4f430b293dbb4f4cad3)&lt;/span&gt;
@@ -458,12 +714,12 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 &lt;p&gt;Remember in Part 1, we exported the gpg key from the keyring and imported the
 key into the RPM database.  If you forgot to import the key into the RPM
 database, you would see &lt;strong&gt;MISSING KEYS&lt;/strong&gt; and &lt;strong&gt;NOKEY&lt;/strong&gt; in the output instead:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost x86_64]$ rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost x86_64]$ rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 collectd-5.5.0-1.el6.x86_64.rpm: RSA sha1 ((MD5) PGP) md5 NOT OK (MISSING KEYS: (MD5) PGP#512a2aa0)
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost x86_64]$ rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost x86_64]$ rpm --checksig -v collectd-5.5.0-1.el6.x86_64.rpm 
 collectd-5.5.0-1.el6.x86_64.rpm:
     Header V4 RSA/SHA1 Signature, key ID 512a2aa0: NOKEY
     Header SHA1 digest: OK (f62c64dc9938b6d86c91d4f430b293dbb4f4cad3)
@@ -480,7 +736,7 @@ that fits your workflow.&lt;/p&gt;
 Ansible or Salt, to distribute the RPM GPG key to all machines and then
 install the RPM.  Alternatively, if you are using Spacewalk, for example, to
 manage custom YUM repositories, you could add the RPM GPG key to Spacewalk and
-also add the signed RPMs to a custom repository.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><updated>2015-09-19T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+also add the signed RPMs to a custom repository.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><published>2015-09-19T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Now that we have an &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;rpm build
 environment&lt;/a&gt;
 , we can build RPM packages.&lt;/p&gt;
@@ -495,7 +751,7 @@ packages provide the utilities that we will use to build RPMs, namely rpmbuild,
 spectool, and yum-builddep.&lt;/p&gt;
 &lt;p&gt;The steps in this guide will be carried out by the &lt;strong&gt;makerpm&lt;/strong&gt; user.&lt;/p&gt;
 &lt;p&gt;Additionally, we will need the source for collectd:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;cd $HOME&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cd $HOME&lt;/span&gt;
 &lt;span class="go"&gt;mkdir src &amp;amp;&amp;amp; cd src&lt;/span&gt;
 &lt;span class="go"&gt;curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -513,20 +769,20 @@ contains custom macros for the many built-in plugins as well as subpackage
 definitions for each configured plugin.&lt;/p&gt;
 &lt;p&gt;Have a look at the spec file and then copy it to the SPECS directory in your
 rpmbuild directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/src/collectd-5.5.0/contrib/redhat&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/src/collectd-5.5.0/contrib/redhat&lt;/span&gt;
 &lt;span class="x"&gt;cp collectd.spec &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Change to the SPECS directory inside your rpmbuild directory and use the
 &lt;strong&gt;spectool&lt;/strong&gt; command to download the sources listed inside the spec file.  &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
 &lt;span class="x"&gt;spectool -g -R collectd.spec&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The &lt;strong&gt;-g&lt;/strong&gt; flag tells spectool to download the &lt;em&gt;Source&lt;/em&gt; listed in the spec file.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gh"&gt;Name&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;           collectd
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gh"&gt;Name&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;           collectd
 &lt;span class="gh"&gt;Version&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;        5.5.0
 &lt;span class="gh"&gt;Source&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;         http://collectd.org/files/&lt;span class="kc"&gt;%{name}&lt;/span&gt;-&lt;span class="kc"&gt;%{version}&lt;/span&gt;.tar.bz2
 &lt;/pre&gt;&lt;/div&gt;
@@ -534,17 +790,17 @@ rpmbuild directory:&lt;/p&gt;
 
 &lt;p&gt;The &lt;strong&gt;-R&lt;/strong&gt; flag downloads the &lt;em&gt;Source&lt;/em&gt; to the rpm's %{_sourcedir}, which
 translates to &lt;strong&gt;$HOME/rpmbuild/SOURCES&lt;/strong&gt; directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="nv"&gt;$ &lt;/span&gt;rpm --eval &lt;span class="s2"&gt;&amp;quot;%{_sourcedir}&amp;quot;&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;$ rpm --eval &lt;span class="s2"&gt;&amp;quot;%{_sourcedir}&amp;quot;&lt;/span&gt;
 /home/makerpm/rpmbuild/SOURCES
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now, run the &lt;strong&gt;rpmbuild&lt;/strong&gt; command to build the RPM from the spec file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;rpmbuild -bb collectd.spec 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;rpmbuild -bb collectd.spec 
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;error: Failed build dependencies:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;error: Failed build dependencies:&lt;/span&gt;
 &lt;span class="go"&gt;    libtool-ltdl-devel is needed by collectd-5.5.0-1.el6.x86_64&lt;/span&gt;
 &lt;span class="go"&gt;    libcap-devel is needed by collectd-5.5.0-1.el6.x86_64&lt;/span&gt;
 &lt;span class="go"&gt;    librabbitmq-devel is needed by collectd-5.5.0-1.el6.x86_64&lt;/span&gt;
@@ -581,17 +837,17 @@ in the &lt;em&gt;Requires&lt;/em&gt; and &lt;em&gt;BuildRequires&lt;/em&gt; tags
 &lt;p&gt;Thankfully, these dependencies are easy to satisfy with the &lt;strong&gt;yum-builddep&lt;/strong&gt;
 command found in the &lt;strong&gt;yum-utils&lt;/strong&gt; package.  Run the following to download the
 necessary dependencies:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum-builddep collectd.spec
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum-builddep collectd.spec
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now that all dependencies are installed, re-run &lt;strong&gt;rpmbuild&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;rpmbuild -bb collectd.spec
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;rpmbuild -bb collectd.spec
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This gets to the very end and throws an error when checking rpaths:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;+ /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;+ /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot&lt;/span&gt;
 &lt;span class="go"&gt;*******************************************************************************&lt;/span&gt;
 &lt;span class="go"&gt;*&lt;/span&gt;
 &lt;span class="go"&gt;* WARNING: &amp;#39;check-rpaths&amp;#39; detected a broken RPATH and will cause &amp;#39;rpmbuild&amp;#39;&lt;/span&gt;
@@ -645,22 +901,22 @@ in the library is redundant.&lt;/p&gt;
 &lt;strong&gt;/usr/lib/rpm/check-rpaths&lt;/strong&gt; line from the &lt;strong&gt;$HOME/.rpmmacros&lt;/strong&gt; and then rerun the
 rpmbuild command.  The second option is to tell rpmbuild to ignore standard
 RPATHs by running rpmbuild as follows:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;QA_RPATHS=0x0001 rpmbuild -bb collectd.spec
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;QA_RPATHS=0x0001 rpmbuild -bb collectd.spec
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;After you rerun rpmbuild and it finishes successfully, you will see the last
 line as:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt; **+ exit 0**&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt; **+ exit 0**&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The built RPMs will be in the &lt;strong&gt;$HOME/rpmbuild/RPMS/x86_64&lt;/strong&gt; directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;ls $HOME/rpmbuild/RPMS/x86_64/&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;ls $HOME/rpmbuild/RPMS/x86_64/&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm&lt;/span&gt;
 &lt;span class="go"&gt;collectd-netlink-5.5.0-1.el6.x86_64.rpm&lt;/span&gt;
 &lt;span class="go"&gt;collectd-amqp-5.5.0-1.el6.x86_64.rpm&lt;/span&gt;
 &lt;span class="go"&gt;collectd-nginx-5.5.0-1.el6.x86_64.rpm&lt;/span&gt;
@@ -729,7 +985,7 @@ an RPM.  &lt;/p&gt;
 &lt;p&gt;Grab the src rpm for collectd from the EPEL repository.  It is an
 outdated version of collectd but serves the purpose of this guide.  Download
 and save the file somewhere in your home directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;cd $HOME&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cd $HOME&lt;/span&gt;
 &lt;span class="go"&gt;mkdir local &amp;amp;&amp;amp; cd local&lt;/span&gt;
 &lt;span class="go"&gt;wget http://dl.fedoraproject.org/pub/epel/6/SRPMS/collectd-4.10.9-1.el6.src.rpm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -737,12 +993,12 @@ and save the file somewhere in your home directory:&lt;/p&gt;
 
 &lt;p&gt;Before using &lt;strong&gt;rpmbuild&lt;/strong&gt;, run &lt;strong&gt;yum-builddep&lt;/strong&gt; on the src rpm to
 download any missing dependencies.  &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo yum-builddep collectd-4.10.9-1.el6.src.rpm&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo yum-builddep collectd-4.10.9-1.el6.src.rpm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now, use &lt;em&gt;rpmbuild&lt;/em&gt; to rebuild the src rpm:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;QA_RPATHS=0x0001 rpmbuild --rebuild collectd-4.10.9-1.el6.src.rpm&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;QA_RPATHS=0x0001 rpmbuild --rebuild collectd-4.10.9-1.el6.src.rpm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -755,7 +1011,7 @@ avoid issues with rpaths during the build.&lt;/p&gt;
 them.  It comes with default configurations, but it is easy to adapt and
 customize a configuration.&lt;/p&gt;
 &lt;p&gt;First, download mock:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install mock
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install mock
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -763,7 +1019,7 @@ customize a configuration.&lt;/p&gt;
 directory and copy the &lt;strong&gt;epel-6-x86_64.cfg&lt;/strong&gt;, since that configuration file
 includes the repositories for CentOS and EPEL, which is exactly the repos
 needed for satisfying dependencies for collectd.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;cd /etc/mock&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cd /etc/mock&lt;/span&gt;
 &lt;span class="go"&gt;sudo cp epel-6-x86_64.cfg centos-6-x86_64.cfg&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -781,30 +1037,30 @@ make the following changes:&lt;/p&gt;
 &lt;/ul&gt;
 &lt;p&gt;The mock utility should be run as non-root.  Any user using mock should be a
 member of the mock group:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo usermod -a -G mock makerpm&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo usermod -a -G mock makerpm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Next, use the &lt;strong&gt;newgrp&lt;/strong&gt; command to change groups during the current login
 session:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;newgrp mock&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;newgrp mock&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Mock needs the spec file to first build the SRPM.  Copy the spec file to the
 SPECS directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;cp collectd-5.5.0/contrib/redhat/collectd.spec $HOME/rpmbuild/SPECS/&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cp collectd-5.5.0/contrib/redhat/collectd.spec $HOME/rpmbuild/SPECS/&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;As before, use &lt;strong&gt;spectool&lt;/strong&gt; to download the sources specified in the spec file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;spectool -R -g collectd.spec&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;spectool -R -g collectd.spec&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now, instruct mock to use our custom &lt;em&gt;centos-6-x86_64&lt;/em&gt; configuration and build
 a source rpm from the spec file and sources:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;mock -r centos-6-x86_64 --buildsrpm \&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mock -r centos-6-x86_64 --buildsrpm \&lt;/span&gt;
 &lt;span class="go"&gt;--spec $HOME/rpmbuild/SPECS/collectd.spec \&lt;/span&gt;
 &lt;span class="go"&gt;--sources $HOME/rpmbuild/SOURCES&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -813,7 +1069,7 @@ a source rpm from the spec file and sources:&lt;/p&gt;
 &lt;p&gt;By default, all builds are written in the &lt;strong&gt;/var/lib/mock&lt;/strong&gt; directory.  After
 building the SRPM in the previous command, the output shows where the results
 are written:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;INFO&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Results&lt;/span&gt; &lt;span class="n"&gt;and&lt;/span&gt;&lt;span class="sr"&gt;/or logs in: /var/lib/mock/centos-6-x86_64/&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;INFO&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;Results&lt;/span&gt; &lt;span class="n"&gt;and&lt;/span&gt;&lt;span class="sr"&gt;/or logs in: /var/lib/mock/centos-6-x86_64/&lt;/span&gt;&lt;span class="n"&gt;result&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -822,21 +1078,21 @@ all the necessary packages.  Therefore, there is no need to run
 &lt;strong&gt;yum-builddep&lt;/strong&gt;. Mock will take care of them.&lt;/p&gt;
 &lt;p&gt;Lastly, instruct mock to build the collectd RPMs using the source RPM built in
 the previous step:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;mock -r centos-6-x86_64 --no-clean --rebuild /var/lib/mock/centos-6-x86_64/result/collectd-5.5.0-1.el6.src.rpm&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mock -r centos-6-x86_64 --no-clean --rebuild /var/lib/mock/centos-6-x86_64/result/collectd-5.5.0-1.el6.src.rpm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Again, the output will show where the built RPMs are written:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;INFO: Results and/or logs in: /var/lib/mock/centos-6-x86_64/result&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;INFO: Results and/or logs in: /var/lib/mock/centos-6-x86_64/result&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;cd /var/lib/mock/centos-6-x86_64/result/
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd /var/lib/mock/centos-6-x86_64/result/
 ls *rpm
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;div class="highlight"&gt;&lt;pre&gt;collectd-netlink-5.5.0-1.el6.x86_64.rpm
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;collectd-netlink-5.5.0-1.el6.x86_64.rpm
 collectd-5.5.0-1.el6.src.rpm
 collectd-nginx-5.5.0-1.el6.x86_64.rpm
 collectd-5.5.0-1.el6.x86_64.rpm
@@ -895,7 +1151,7 @@ collectd-mysql-5.5.0-1.el6.x86_64.rpm
 &lt;p&gt;Mock is a great tool for building RPMs.  You get a clean chroot environment in
 which to build RPMs.  Building from a source rpm or a spec file is slightly
 more involved.  In the last part of this guide, Part 4, we will look at signing
-our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><published>2015-08-15T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
 uses a much stronger authentication system.  While you should generally not use
 rsh for remote access, it does have some valid use cases.&lt;/p&gt;
@@ -912,21 +1168,21 @@ workaround for this slowness&lt;/p&gt;
 both servers if you are not using DNS for name resolution.&lt;/p&gt;
 &lt;h2&gt;Installing the rsh Client&lt;/h2&gt;
 &lt;p&gt;To install the rsh client on client1, install the &lt;strong&gt;rsh&lt;/strong&gt; package:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rsh
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install rsh
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Installing the rsh Server&lt;/h2&gt;
 &lt;p&gt;The rsh server runs under the xinetd superserver.  Install both packages on
 server1:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install xinetd rsh-server
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install xinetd rsh-server
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Configuring the rsh Server&lt;/h3&gt;
 &lt;p&gt;The configuration file for rsh is &lt;strong&gt;/etc/xinetd.d/rsh&lt;/strong&gt; and is disabled by
 default:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;service shell
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;service shell
 {
     socket_type     = stream
     wait            = no
@@ -941,19 +1197,19 @@ default:&lt;/p&gt;
 
 &lt;p&gt;To enable rsh, change &lt;em&gt;disable&lt;/em&gt; from &lt;strong&gt;yes&lt;/strong&gt; to &lt;strong&gt;no&lt;/strong&gt;.  Then, start or
 restart the xinetd service:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo service xinetd restart
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo service xinetd restart
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Adjusting iptables&lt;/h2&gt;
 &lt;p&gt;rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Similarly, add the following iptables rule on the &lt;em&gt;server&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -966,7 +1222,7 @@ hostnames that a remote user is allowed to access.&lt;/p&gt;
 &lt;p&gt;In this example, we only need the system-wide &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; for testing
 rsh.  On server1, &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; should have at least a single line for
 &lt;em&gt;client1&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ sudo cat /etc/hosts.equiv &lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@server1 ~]$&lt;/span&gt; sudo cat /etc/hosts.equiv 
 &lt;span class="go"&gt;client1&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -975,7 +1231,7 @@ rsh.  On server1, &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; should have at least a s
 &lt;h2&gt;Testing From the Command Line&lt;/h2&gt;
 &lt;p&gt;Test the rsh connection from client1 to server1.  Wrap the command around a
 pair of date commands to see the time it takes to complete the remote command:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
 &lt;span class="go"&gt;1439740132.050&lt;/span&gt;
 &lt;span class="go"&gt; 11:48:52 up 15:40,  1 user,  load average: 0.00, 0.00, 0.00&lt;/span&gt;
 &lt;span class="go"&gt;1439740132.158&lt;/span&gt;
@@ -991,7 +1247,7 @@ is great and typical, only 108ms.&lt;/p&gt;
 given cluster.&lt;/p&gt;
 &lt;p&gt;Let us generate a set of fake hosts in /etc/hosts.equiv, starting with an empty
 file, then appending client1 to the end of the file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
 &lt;span class="go"&gt;for i in {001..099}; do sudo -i sh -c &amp;quot;echo node$i &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;; done&lt;/span&gt;
 &lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo client1 &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -1000,7 +1256,7 @@ file, then appending client1 to the end of the file:&lt;/p&gt;
 &lt;p&gt;There are now 100 hosts in the /etc/hosts.equiv file, with client1 being the
 last in the list.  Test the rsh connection again from client1 to server1, same
 as before:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
 &lt;span class="go"&gt;1439740856.004&lt;/span&gt;
 &lt;span class="go"&gt; 12:01:00 up 15:52,  1 user,  load average: 0.00, 0.00, 0.00&lt;/span&gt;
 &lt;span class="go"&gt;1439740859.902&lt;/span&gt;
@@ -1016,24 +1272,24 @@ rshd daemon is doing.&lt;/p&gt;
 &lt;h2&gt;Testing with Strace&lt;/h2&gt;
 &lt;p&gt;First, make sure you have the strace package installed.  If not, installing it
 is easy:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install strace
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install strace
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;In the xinetd rsh configuration file shown above, the server parameter
 specifies the path to the rsh daemon: &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /usr/sbin/in.rshd
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    server          = /usr/sbin/in.rshd
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;We will replace this server with a custom script that will use strace to launch
 the rsh daemon.  Replace the server parameter value with the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    server          = /tmp/rsh-strace.sh
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    server          = /tmp/rsh-strace.sh
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now, create the &lt;em&gt;/tmp/rsh-strace.sh&lt;/em&gt; bash script with the following two lines:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="c"&gt;#!/bin/bash&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="ch"&gt;#!/bin/bash&lt;/span&gt;
 /usr/bin/strace -f -tt -o /tmp/rsh-server.strace /usr/sbin/in.rshd
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1044,7 +1300,7 @@ the rsh daemon.  Replace the server parameter value with the following:&lt;/p&gt
 &lt;p&gt;&lt;strong&gt;-o&lt;/strong&gt;    write the output to a specified file instead of stderr&lt;/p&gt;
 &lt;p&gt;The script must be executable.  Change the permissions to at least &lt;em&gt;0755&lt;/em&gt;
 before restarting xinetd:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo chmod &lt;span class="m"&gt;0755&lt;/span&gt; /tmp/rsh-strace.sh
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo chmod &lt;span class="m"&gt;0755&lt;/span&gt; /tmp/rsh-strace.sh
 sudo /sbin/service xinetd restart
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1057,7 +1313,7 @@ output to &lt;em&gt;/tmp/rsh-server.strace&lt;/em&gt;, overwriting it each time.
 output to see if we can tell why the rsh command got slow after adding more
 nodes into the &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; file.&lt;/p&gt;
 &lt;p&gt;Buried in all the system calls is an open() and read() to /etc/hosts.equiv:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;11800 19:09:24.244476 open(&amp;quot;/etc/hosts.equiv&amp;quot;, O_RDONLY) = 4&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;11800 19:09:24.244476 open(&amp;quot;/etc/hosts.equiv&amp;quot;, O_RDONLY) = 4&lt;/span&gt;
 &lt;span class="go"&gt;[...]&lt;/span&gt;
 &lt;span class="go"&gt;11800 19:09:24.244559 read(4, &amp;quot;node001\nnode002\nnode003\nnode004\n&amp;quot;..., 4096) = 799&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -1067,7 +1323,7 @@ nodes into the &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; file.&lt;/p&gt;
 read() function uses as its first argument.&lt;/p&gt;
 &lt;p&gt;Subsequently, there are many open() and read() calls to &lt;em&gt;/etc/hosts&lt;/em&gt; that return the same file
 descriptor, &lt;strong&gt;5&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;11800 19:09:24.283178 open(&amp;quot;/etc/hosts&amp;quot;, O_RDONLY|O_CLOEXEC) = 5&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;11800 19:09:24.283178 open(&amp;quot;/etc/hosts&amp;quot;, O_RDONLY|O_CLOEXEC) = 5&lt;/span&gt;
 &lt;span class="go"&gt;11800 19:09:24.283279 read(5, &amp;quot;127.0.0.1   localhost localhost.&amp;quot;..., 4096) = 253&lt;/span&gt;
 &lt;span class="go"&gt;11800 19:09:24.283327 read(5, &amp;quot;&amp;quot;, 4096) = 0&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -1075,7 +1331,7 @@ descriptor, &lt;strong&gt;5&lt;/strong&gt;:&lt;/p&gt;
 
 &lt;p&gt;In fact, this pattern repeats itself many times.  Using grep, we can count how
 many times this occurs:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@server1 ~]$&lt;/span&gt; grep open.*etc.*hosts.*5 /tmp/rsh-server.strace &lt;span class="p"&gt;|&lt;/span&gt; wc -l
 &lt;span class="go"&gt;100&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1085,14 +1341,14 @@ is at line 100 in /etc/hosts.equiv.  It appears the rsh daemon serially checks
 /etc/hosts for each host list in /etc/hosts.equiv, also checking for DNS
 mapping if the host is not in /etc/hosts.&lt;/p&gt;
 &lt;p&gt;Let's see what happens where there are 1000 hosts in /etc/hosts.equiv:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/hosts.equiv&lt;/span&gt;
 &lt;span class="go"&gt;for i in {001..999}; do sudo -i sh -c &amp;quot;echo node$i &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;; done&lt;/span&gt;
 &lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo client1 &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;From client1, rsh to server1 again:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
 &lt;span class="go"&gt;1439946641.429&lt;/span&gt;
 &lt;span class="go"&gt; 21:11:16 up 3 days,  1:02,  1 user,  load average: 0.12, 0.04, 0.01&lt;/span&gt;
 &lt;span class="go"&gt;1439946675.667&lt;/span&gt;
@@ -1101,7 +1357,7 @@ mapping if the host is not in /etc/hosts.&lt;/p&gt;
 
 &lt;p&gt;This time it takes over 30 seconds.  Using grep again, we can count how many
 times the rsh daemon opens and reads the /etc/hosts file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@server1 ~]$&lt;/span&gt; grep open.*etc.*hosts.*5 /tmp/rsh-server.strace &lt;span class="p"&gt;|&lt;/span&gt; wc -l
 &lt;span class="go"&gt;1000&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1123,12 +1379,12 @@ specified in &lt;strong&gt;/etc/netgroup&lt;/strong&gt;.  This file does not exi
 configure our server to do so.&lt;/p&gt;
 &lt;p&gt;First, edit the &lt;em&gt;/etc/nsswitch.conf&lt;/em&gt; file.  The default nsswitch configuration
 file uses nisplus:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;netgroup:   nisplus&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;netgroup:   nisplus&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Change this to &lt;em&gt;files&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;netgroup:   files&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;netgroup:   files&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -1138,7 +1394,7 @@ one for each host.  The beauty about this solution is that we can list 100
 or 1000 hosts on the same line in the same netgroup.  Keep in mind, there may
 be a line size limit at some point.&lt;/p&gt;
 &lt;p&gt;We'll call the name of our netgroup &lt;strong&gt;nodes&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo touch /etc/netgroup&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo touch /etc/netgroup&lt;/span&gt;
 &lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo -n nodes &amp;gt;&amp;gt; /etc/netgroup&amp;quot;&lt;/span&gt;
 &lt;span class="go"&gt;for i in {001..999}; do sudo -i sh -c &amp;quot;echo -n &amp;#39; (node$i,-,-)&amp;#39; &amp;gt;&amp;gt; /etc/netgroup&amp;quot;; done&lt;/span&gt;
 &lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo -n &amp;#39; (client1,-,-)&amp;#39; &amp;gt;&amp;gt; /etc/netgroup&amp;quot;&lt;/span&gt;
@@ -1147,13 +1403,13 @@ be a line size limit at some point.&lt;/p&gt;
 
 &lt;p&gt;So, nodes 001 thru 999 plus client1 are in the &lt;em&gt;nodes&lt;/em&gt; netgroup.  Now, we need
 to adjust the &lt;em&gt;hosts.equiv&lt;/em&gt; file to use the new netgroup:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/netgroup&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo cp /dev/null /etc/netgroup&lt;/span&gt;
 &lt;span class="go"&gt;sudo -i sh -c &amp;quot;echo +@nodes &amp;gt;&amp;gt; /etc/hosts.equiv&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Now, let's retest rsh again from client1:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%&lt;/span&gt;3N
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
 &lt;span class="go"&gt;1439948137.505&lt;/span&gt;
 &lt;span class="go"&gt; 21:35:38 up 3 days,  1:27,  1 user,  load average: 0.00, 0.03, 0.00&lt;/span&gt;
 &lt;span class="go"&gt;1439948137.731&lt;/span&gt;
@@ -1162,13 +1418,13 @@ to adjust the &lt;em&gt;hosts.equiv&lt;/em&gt; file to use the new netgroup:&lt;
 
 &lt;p&gt;Well, that was fast.  Let's see how many times rshd opened /etc/hosts file with
 the same file descriptor:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@server1 ~]$&lt;/span&gt; grep open.*etc.*hosts.*5 /tmp/rsh-server.strace &lt;span class="p"&gt;|&lt;/span&gt; wc -l
 &lt;span class="go"&gt;0&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;None, so let's check the /etc/netgroup file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;[giovanni@server1 ~]$ grep open.*etc.*netgroup.*5 /tmp/rsh-server.strace | wc -l&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@server1 ~]$&lt;/span&gt; grep open.*etc.*netgroup.*5 /tmp/rsh-server.strace &lt;span class="p"&gt;|&lt;/span&gt; wc -l
 &lt;span class="go"&gt;1&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1182,7 +1438,7 @@ used in private networks that have no direct connection to the Internet.  Howeve
 if you are using it, say for launching parallel jobs in an HPC cluster, then
 hopefully this article explains why rsh is sometimes slow and how to
 workaround the slowness using netgroups.&lt;/p&gt;
-&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><updated>2015-07-03T12:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><published>2015-07-03T12:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;&lt;a href="https://collectd.org/"&gt;Collectd&lt;/a&gt; comes with a long &lt;a href="https://collectd.org/wiki/index.php/Table_of_Plugins"&gt;list of
 plugins&lt;/a&gt;.  In a previous
 &lt;a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"&gt;article&lt;/a&gt;, we showed how to install the
@@ -1207,20 +1463,20 @@ used as an real-world example.&lt;/p&gt;
 &lt;p&gt;Lastly, of the python modules used in the example below, the 
 &lt;a href="https://pypi.python.org/pypi/pyparsing/2.0.3"&gt;PyParsing&lt;/a&gt; module is not a core
 Python module.  You can, however, install it easily with Pip:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo pip install pyparsing
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo pip install pyparsing
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Enabling the Python Plugin&lt;/h2&gt;
 &lt;p&gt;The default &lt;em&gt;collectd.conf&lt;/em&gt; comes with the Python plugin disabled:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;##&amp;lt;LoadPlugin python&amp;gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;##&amp;lt;LoadPlugin python&amp;gt;
 ##  Globals true
 ##&amp;lt;/LoadPlugin&amp;gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Simply uncomment the stanza to have collectd load this plugin at run time:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="nt"&gt;&amp;lt;LoadPlugin&lt;/span&gt; &lt;span class="err"&gt;python&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nt"&gt;&amp;lt;LoadPlugin&lt;/span&gt; &lt;span class="err"&gt;python&lt;/span&gt;&lt;span class="nt"&gt;&amp;gt;&lt;/span&gt;
   Globals true
 &lt;span class="nt"&gt;&amp;lt;/LoadPlugin&amp;gt;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -1234,7 +1490,7 @@ will walk through writing a script, section by section, to understand how to
 gather and dispatch metrics to collectd.&lt;/p&gt;
 &lt;h3&gt;Importing Modules&lt;/h3&gt;
 &lt;p&gt;The first part of our script will import the necessary modules.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;collectd&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;collectd&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;signal&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;subprocess&lt;/span&gt;
 &lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pyparsing&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;alphanums&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt;
@@ -1253,42 +1509,42 @@ will return the number of cores by state per partition in a parsable format.
 This is done using the &lt;strong&gt;sinfo&lt;/strong&gt; command.  It then uses the pyparsing module to
 parse the output.  Lastly, it iterates over the output and returns a
 dictionary.  This will be used in the &lt;em&gt;read_callback&lt;/em&gt; function.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;get_cpus_by_state&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;get_cpus_by_state&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
     &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot;Returns a dictionary of CPU cores and their states, per Slurm&lt;/span&gt;
 &lt;span class="sd"&gt;    partition.&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
 
     &lt;span class="n"&gt;cores&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{}&lt;/span&gt;
 
-    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
-    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
-    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
-    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
+    &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;0&lt;/span&gt;
 
-    &lt;span class="n"&gt;sinfo&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/path/to/sinfo&amp;quot;&lt;/span&gt;
+    &lt;span class="n"&gt;sinfo&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;/path/to/sinfo&amp;quot;&lt;/span&gt;
 
     &lt;span class="k"&gt;try&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
-        &lt;span class="n"&gt;used_core_count&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Popen&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;sinfo&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-o&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;%P %C&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;--noheader&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;PIPE&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;communicate&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-        &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;used_core_count&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;used_core_count&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Popen&lt;/span&gt;&lt;span class="p"&gt;([&lt;/span&gt;&lt;span class="n"&gt;sinfo&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;-o&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;%P %C&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;--noheader&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;],&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="n"&gt;subprocess&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;PIPE&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;communicate&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+        &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;used_core_count&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;&lt;span class="se"&gt;\n&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
-        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;stdout&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]:&lt;/span&gt;
             &lt;span class="k"&gt;return&lt;/span&gt;
 
-        &lt;span class="n"&gt;part_parse&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;alphanums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+        &lt;span class="n"&gt;part_parse&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;alphanums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;Word&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/&amp;#39;&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="n"&gt;nums&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
         &lt;span class="n"&gt;output&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;part_parse&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;scanString&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stdout&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
         &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;output&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
             &lt;span class="n"&gt;queue&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
-            &lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;total&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;total&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;partition&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;][&lt;/span&gt;&lt;span class="mi"&gt;1&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;split&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;/&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;queue&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;strip&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;*&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="o"&gt;+&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
-            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-allocated&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;allocated&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-idle&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;idle&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-other&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;other&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+            &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all-total&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt; &lt;span class="o"&gt;+=&lt;/span&gt; &lt;span class="nb"&gt;int&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;total&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
         &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;
 
@@ -1305,13 +1561,13 @@ completion. Collectd, however, will ignore the &lt;strong&gt;SIGCHLD&lt;/strong&
 parent Python plugin process is waiting for.  As a result, the Python plugin
 will throw an OSError exception when the child process terminates and logs the
 following error:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;Unhandled python exception in read callback: OSError: [Errno 10] No child processes&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;Unhandled python exception in read callback: OSError: [Errno 10] No child processes&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This function will restore the default SIGCHLD behavior so that the
 plugin can create new processes without throwing exceptions.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
     &lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SIGCHLD&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;signal&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;SIG_DFL&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1330,7 +1586,7 @@ schema&lt;/a&gt;. Therefore, the
 resulting metric name will be &lt;strong&gt;slurm.core_states.gauge-&lt;metric_name&gt;&lt;/strong&gt;, where
 metric_name refers to each of the keys in the dictionary returned by the
 &lt;em&gt;get_cpus_by_state()&lt;/em&gt; function.  Finally, the metric is dispatched to collectd.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;read_callback&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;read_callback&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;data&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="bp"&gt;None&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
     &lt;span class="sd"&gt;&amp;quot;&amp;quot;&amp;quot; Callback function for dispatching data into collectd&amp;quot;&amp;quot;&amp;quot;&lt;/span&gt;
 
     &lt;span class="n"&gt;cores&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;get_cpus_by_state&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
@@ -1338,13 +1594,13 @@ metric_name refers to each of the keys in the dictionary returned by the
     &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="ow"&gt;not&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
         &lt;span class="k"&gt;pass&lt;/span&gt;
     &lt;span class="k"&gt;else&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
-        &lt;span class="c"&gt;# for each key in each partition output, put the value&lt;/span&gt;
+        &lt;span class="c1"&gt;# for each key in each partition output, put the value&lt;/span&gt;
         &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt; &lt;span class="ow"&gt;in&lt;/span&gt; &lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
             &lt;span class="n"&gt;metric&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;Values&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
-            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;plugin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;core_states&amp;#39;&lt;/span&gt;
-            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;host&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;slurm&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;plugin&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;core_states&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;host&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;slurm&amp;#39;&lt;/span&gt;
             &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;interval&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="mi"&gt;30&lt;/span&gt;
-            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s"&gt;&amp;#39;gauge&amp;#39;&lt;/span&gt;
+            &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;type&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;gauge&amp;#39;&lt;/span&gt;
             &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;type_instance&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;key&lt;/span&gt;
             &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;values&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;cores&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="n"&gt;key&lt;/span&gt;&lt;span class="p"&gt;]]&lt;/span&gt;
             &lt;span class="n"&gt;metric&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;dispatch&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
@@ -1356,7 +1612,7 @@ metric_name refers to each of the keys in the dictionary returned by the
 restore the behavior of &lt;em&gt;SIGCHLD&lt;/em&gt; and the other to periodically run the
 read_callback function, which in turn calls the get_cpus_by_state() function to
 gather metrics and dispatch the values to the daemon.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;register_init&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;register_init&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;restore_sigchld&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;span class="n"&gt;collectd&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;register_read&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;read_callback&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1367,11 +1623,11 @@ as a &lt;a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40"&gt;gis
 &lt;p&gt;Now that we have enabled the Python plugin in collectd and wrote a read plugin,
 the last thing needed is to configure the plugin in collectd's configuration
 file. Add the following configuration stanza to &lt;strong&gt;collectd.conf&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Plugin&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
-  &lt;span class="n"&gt;ModulePath&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/path/to/python/plugin&amp;quot;&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;Plugin&lt;/span&gt; &lt;span class="n"&gt;python&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
+  &lt;span class="n"&gt;ModulePath&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;/path/to/python/plugin&amp;quot;&lt;/span&gt;
   &lt;span class="n"&gt;LogTraces&lt;/span&gt; &lt;span class="n"&gt;true&lt;/span&gt;
   &lt;span class="n"&gt;Interactive&lt;/span&gt; &lt;span class="n"&gt;false&lt;/span&gt;
-  &lt;span class="n"&gt;Import&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm_core_states&amp;quot;&lt;/span&gt;
+  &lt;span class="n"&gt;Import&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;slurm_core_states&amp;quot;&lt;/span&gt;
 &lt;span class="o"&gt;&amp;lt;/&lt;/span&gt;&lt;span class="n"&gt;Plugin&lt;/span&gt;&lt;span class="o"&gt;&amp;gt;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1392,14 +1648,14 @@ that the plugin is working by querying the metrics.&lt;/p&gt;
 &lt;p&gt;This step will vary depending on where your metrics are stored.  For example,
 if the metrics are written to a Graphite instance, you could query the metrics
 using the Graphite URL API:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;curl -s 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl -s 
 &lt;span class="s2"&gt;&amp;quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;amp;from=-1mins&amp;amp;format=json&amp;quot;&lt;/span&gt;
 &lt;span class="p"&gt;|&lt;/span&gt; python -m json.tool
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This fetches the cumulative number of allocated cores across all Slurm partitions, in json format. The last two datapoints are shown below:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="p"&gt;[&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="p"&gt;[&lt;/span&gt;
     &lt;span class="p"&gt;{&lt;/span&gt;
         &lt;span class="nt"&gt;&amp;quot;datapoints&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="p"&gt;[&lt;/span&gt;
             &lt;span class="p"&gt;[&lt;/span&gt;
@@ -1423,7 +1679,7 @@ using the Graphite URL API:&lt;/p&gt;
 &lt;p&gt;This is just one example of how to use Python and collectd to gather metrics
 and visualize them.  You could write a plugin with a similar structure to
 dispatch custom metrics to your metric collector, such as the Graphite suite or
-any other time-series database.&lt;/p&gt;</summary><category term="collectd"></category><category term="python"></category><category term="slurm"></category></entry><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><updated>2015-06-15T17:34:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+any other time-series database.&lt;/p&gt;</summary><category term="collectd"></category><category term="python"></category><category term="slurm"></category></entry><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><published>2015-06-15T17:34:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;There are a variety of ways to extract system resource information from a Linux
 server. Some of these utilities are triggered by cron, such as sysstat, while others are
 based on a predefined check interval, such as Nagios.  Others are meant to be used
@@ -1449,12 +1705,12 @@ found in the CentOS Base and EPEL repositories.&lt;/p&gt;
 &lt;h2&gt;Prerequisites&lt;/h2&gt;
 &lt;p&gt;Compiling any package from source requires a compiler.  If you don't already
 have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install gcc
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install gcc
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;For this exercise, you will also need kernel and the C library header files:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install kernel-headers glibc-headers
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install kernel-headers glibc-headers
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -1463,13 +1719,13 @@ have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
 website&lt;/a&gt;.  Download and untar the
 the latest source tarball.  At the time of this writing, version 5.5.0 is the
 latest stable version.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Configuring collectd&lt;/h2&gt;
 &lt;p&gt;After downloading and extracting the source files, change to that directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cd collectd-5.5.0
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd collectd-5.5.0
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -1477,14 +1733,14 @@ latest stable version.&lt;/p&gt;
 install&lt;/strong&gt; sequence of commands.&lt;/p&gt;
 &lt;p&gt;Start by running the configure step so that we can have a look at the
 available plugins:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;./configure
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;./configure
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This command will output quite a bit to the screen, checking your system for
 the presence of various libraries, header files and binaries in the process.
 Have a look at the summary at the end, for example:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;Configuration:
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;Configuration:
   Libraries:
     intel mic . . . . . . no (MicAccessApi not found)
     libaquaero5 . . . . . no (libaquaero5.h not found)
@@ -1512,13 +1768,13 @@ configure step was able to locate the necessary prerequisites to build each plug
 &lt;p&gt;Even though the configure step was not able to find many libraries or modules,
 collectd will still compile successfully, albeit without these plugins.  Often,
 you would like to enable several plugins at compile time, for example:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;./configure --enable-java --enable-python
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;./configure --enable-java --enable-python
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Without the appropriate package dependencies installed, the configure step will
 output the following line at the very end:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="n"&gt;configure&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;error&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Some plugins are missing dependencies - see the summary&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;configure&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="n"&gt;error&lt;/span&gt;&lt;span class="o"&gt;:&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Some plugins are missing dependencies - see the summary&lt;/span&gt;
 &lt;span class="s2"&gt;above for details&amp;quot;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1852,7 +2108,7 @@ dependency.&lt;/p&gt;
 &lt;h2&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;Once the plugin dependencies are sorted out, the &lt;strong&gt;make&lt;/strong&gt; and &lt;strong&gt;make install&lt;/strong&gt;
 steps typically go without a hitch.  In a future post, I will outline how to
-build the collectd RPMs using the latest available version. &lt;/p&gt;</summary><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><updated>2015-05-29T13:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+build the collectd RPMs using the latest available version. &lt;/p&gt;</summary><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><published>2015-05-29T13:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt; of
 this series, we set up an RPM build environment with a dedicated user for
 building RPMs.  &lt;/p&gt;
@@ -1873,20 +2129,20 @@ continuing.&lt;/p&gt;
 user.&lt;/p&gt;
 &lt;h2&gt;Install Packages&lt;/h2&gt;
 &lt;p&gt;To install the GPG package, run the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install gnupg2
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install gnupg2
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Create a GPG Key Pair&lt;/h2&gt;
 &lt;p&gt;Use the &lt;em&gt;gpg&lt;/em&gt; command to create a new key pair:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg --gen-key
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --gen-key
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The &lt;strong&gt;--gen-key&lt;/strong&gt; option is used interactively.  Select the key you want to use.
 The first option, &lt;em&gt;RSA and RSA&lt;/em&gt;, creates an RSA key for digital signing and
 another RSA key for encryption.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;Please select what kind of key you want:
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;Please select what kind of key you want:
    (1) RSA and RSA (default)
    (2) DSA and Elgamal
    (3) DSA (sign only)
@@ -1897,7 +2153,7 @@ Your selection? 1
 
 &lt;p&gt;Next, select the size.  The default &lt;em&gt;2048&lt;/em&gt; bits are sufficient, but if you are
 feeling particularly paranoid, go for &lt;em&gt;4096&lt;/em&gt; bits.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;RSA keys may be between 1024 and 4096 bits long.
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;RSA keys may be between 1024 and 4096 bits long.
 What keysize do you want? (2048) 2048
 Requested keysize is 2048 bits
 &lt;/pre&gt;&lt;/div&gt;
@@ -1905,7 +2161,7 @@ Requested keysize is 2048 bits
 
 &lt;p&gt;Next, choose how long the key should be valid.  In this example, we choose the
 default choice, &lt;em&gt;0&lt;/em&gt;, so the key will not expire.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;Please specify how long the key should be valid.
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;Please specify how long the key should be valid.
          0 = key does not expire
       &amp;lt;n&amp;gt;  = key expires in n days
       &amp;lt;n&amp;gt;w = key expires in n weeks
@@ -1921,7 +2177,7 @@ Is this correct? (y/N) y
 your name and email.  In this example, we leave the &lt;em&gt;Comment&lt;/em&gt; field empty.
 After filling out the fields, you are prompted to confirm the information or
 change any of the fields before continuing.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;GnuPG needs to construct a user ID to identify your key.
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;GnuPG needs to construct a user ID to identify your key.
 
 Real name: Example Org Signing Key
 Email address: support@example.com
@@ -1938,7 +2194,7 @@ passphrase.  Note the use of a suggested passphrase and not a password.  We
 recommend using an easy to remember sentence to protect the secret key.&lt;/p&gt;
 &lt;p&gt;You should now be presented with a curses based prompt to enter and confirm
 your passphrase.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;┌─────────────────────────────────────────────────────┐
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;┌─────────────────────────────────────────────────────┐
 │ Enter passphrase                                    │
 │                                                     │
 │                                                     │
@@ -1955,7 +2211,7 @@ remote server, you may get a GUI version of the passphrase prompt.  To get the
 GUI prompt, however, you will need to have the &lt;em&gt;pinentry-gtk&lt;/em&gt; package installed
 if you are using GNOME and &lt;em&gt;pinentry-qt&lt;/em&gt; or &lt;em&gt;pinentry-qt4&lt;/em&gt; if you are using KDE.&lt;/p&gt;
 &lt;p&gt;After typing your password, the key generation may stall and you may see the following message:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good idea to perform
 some other action (type on the keyboard, move the mouse, utilize the
 disks) during the prime generation; this gives the random number
 generator a better chance to gain enough entropy.
@@ -1967,7 +2223,7 @@ generator a better chance to gain enough entropy.
 the entropy on your virtual machine.  You may open another terminal to the
 server you are generating the keys on and install and run &lt;em&gt;rng-tools&lt;/em&gt;.  Shortly
 after the &lt;em&gt;rngd&lt;/em&gt; daemon is running, the key generation should complete and you should see a message like this:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg: key 3D832D1E marked as ultimately trusted
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg: key 3D832D1E marked as ultimately trusted
 public and secret key created and signed.
 
 gpg: checking the trustdb
@@ -1982,12 +2238,12 @@ sub   2048R/D4F51F8B 2015-05-29
 
 &lt;h2&gt;Confirming your keys&lt;/h2&gt;
 &lt;p&gt;To list your keys, run the following command:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg --list-keys
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --list-keys
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;You will see a listing of all keys.  In this example, only a single key is listed, the one we just created from the above steps.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;/home/makerpm/.gnupg/pubring.gpg
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;/home/makerpm/.gnupg/pubring.gpg
 ---------------------------------
 pub   2048R/3D832D1E 2015-05-29
 uid                  Example Org Signing Key &amp;lt;support@example.com&amp;gt;
@@ -2004,7 +2260,7 @@ another user, a new pseudo-terminal is not opened for the switched user.&lt;/p&g
 to the screen. Therefore, if you run the &lt;strong&gt;gpg --gen-key&lt;/strong&gt; command after
 switching to a different user, you may see one of the following error messages:&lt;/p&gt;
 &lt;p&gt;Without X11 Forwarding:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg-agent[5569]: directory `/home/makerpm/.gnupg/private-keys-v1.d&amp;#39; created
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg-agent[5569]: directory `/home/makerpm/.gnupg/private-keys-v1.d&amp;#39; created
 gpg-agent[5569]: command get_passphrase failed: Operation cancelled
 gpg: cancelled by user
 gpg: Key generation canceled.
@@ -2012,7 +2268,7 @@ gpg: Key generation canceled.
 
 
 &lt;p&gt;With X11 Forwarding:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;X11 connection rejected because of wrong authentication.
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;X11 connection rejected because of wrong authentication.
 xprop:  unable to open display &amp;#39;localhost:10.0&amp;#39;
 X11 connection rejected because of wrong authentication.
 
@@ -2030,20 +2286,20 @@ gpg: Key generation canceled.
 forwarding when switching to a different user.  To do this, you need an
 &lt;em&gt;export&lt;/em&gt; file in root's &lt;strong&gt;.xauth&lt;/strong&gt; directory.&lt;/p&gt;
 &lt;p&gt;First, switch to root:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;su -
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;su -
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Then, create an export file with the user you want to switch to, for example,
 &lt;strong&gt;user1&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cd $HOME
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd $HOME
 mkdir -p .xauth
 echo &amp;quot;user1&amp;quot; &amp;gt;&amp;gt; .xauth/export
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Switch to &lt;strong&gt;user1&lt;/strong&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;su - user1
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;su - user1
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -2057,12 +2313,12 @@ import it into each machine's local RPM database.&lt;/p&gt;
 &lt;p&gt;We need to export the signing key into ASCII armored output, which is a form of
 binary-to-text encoding.  We need the &lt;em&gt;name&lt;/em&gt; of the key in order to export it.&lt;/p&gt;
 &lt;p&gt;Get a list of keys:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg --list-keys
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --list-keys
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The output, as seen above, should similar to the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;/home/makerpm/.gnupg/pubring.gpg
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;/home/makerpm/.gnupg/pubring.gpg
 ---------------------------------
 pub   2048R/3D832D1E 2015-05-29
 uid                  Example Org Signing Key &amp;lt;support@example.com&amp;gt;
@@ -2073,7 +2329,7 @@ sub   2048R/D4F51F8B 2015-05-29
 &lt;p&gt;The &lt;em&gt;name&lt;/em&gt; is in the &lt;em&gt;uid&lt;/em&gt; line, before the email address.  In this case, it is
 &lt;strong&gt;Example Org Signing Key&lt;/strong&gt;.  Use gpg to export this key in ASCII armored
 output to a file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg --export -a &amp;quot;Example Org Signing Key&amp;quot; &amp;gt; RPM-GPG-KEY-example-org-signing-key
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --export -a &amp;quot;Example Org Signing Key&amp;quot; &amp;gt; RPM-GPG-KEY-example-org-signing-key
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -2087,18 +2343,18 @@ install custom RPMs signed with this key.&lt;/p&gt;
 &lt;p&gt;If SELinux is in &lt;em&gt;Enforcing&lt;/em&gt; mode, be sure that the TYPE in the target security
 context is &lt;strong&gt;cert_t&lt;/strong&gt;. Use the &lt;strong&gt;ls&lt;/strong&gt; command to view the SELinux context of
 the key file&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;ls -lZ /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;ls -lZ /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The output should look something similar to the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;-rw-r--r--. root root unconfined_u:object_r:cert_t:s0 /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;-rw-r--r--. root root unconfined_u:object_r:cert_t:s0 /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Lastly, import the key into the RPM database on all machines where you copied
 the key. This command will not return any output and exit with return code &lt;strong&gt;0&lt;/strong&gt;.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;rpm --import /etc/pki/rpm-gpg/RPM-GPG-KEY-example-org-signing-key
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -2108,28 +2364,28 @@ First, we need the public GPG key id.  In the output of &lt;strong&gt;gpg --list
 the public key id is found in the &lt;strong&gt;pub&lt;/strong&gt; line.  It is the 8 hex digits after
 the slash.  The size of the key, &lt;em&gt;2048&lt;/em&gt;, and the algorithm, &lt;em&gt;R&lt;/em&gt; for RSA, is
 shown before the slash on the &lt;strong&gt;pub&lt;/strong&gt; line.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;pub   2048R/3D832D1E 2015-05-29
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pub   2048R/3D832D1E 2015-05-29
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Then, use the &lt;strong&gt;rpm&lt;/strong&gt; command to find the public key.  &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;rpm -qa gpg-pubkey\*
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;rpm -qa gpg-pubkey\*
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The output will show all GPG keys that have been imported into the RPM
 database.  You should see your public key ID, in lowercase, in one of the pubkeys listed:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;gpg-pubkey-3d832d1e-556873e0
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg-pubkey-3d832d1e-556873e0
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Finally, use &lt;strong&gt;rpm&lt;/strong&gt; command again to see more information about the key:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;rpm -qi gpg-pubkey-3d832d1e-556873e0
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;rpm -qi gpg-pubkey-3d832d1e-556873e0
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;The output should look similar to the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;Name        : gpg-pubkey                   Relocations: (not relocatable)
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;Name        : gpg-pubkey                   Relocations: (not relocatable)
 Version     : 3d832d1e                          Vendor: (none)
 Release     : 556873e0                      Build Date: Fri 29 May 2015 08:13:22 PM EDT
 Install Date: Fri 29 May 2015 08:13:22 PM EDT      Build Host: localhost
@@ -2145,7 +2401,7 @@ Description :
 
 &lt;h2&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;You now have an RPM GPG key that you can use sign and verify custom RPMs.  In
-Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><updated>2015-05-24T10:38:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><published>2015-05-24T10:38:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;If you are working on or developing software for a RHEL based operating system,
 building RPMs is a great way to distribute packages within a group or
 enterprise.  Sometimes, the package you want is not in any of the usual RPM
@@ -2164,7 +2420,7 @@ EPEL yum repository configured.&lt;/p&gt;
 &lt;p&gt;Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.&lt;/p&gt;
 &lt;p&gt;To install the required packages, run the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum groupinstall &amp;#39;Development Tools&amp;#39;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum groupinstall &amp;#39;Development Tools&amp;#39;
 sudo yum install yum install rpmdevtools yum-utils
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -2178,7 +2434,7 @@ a dedicated user for this process. This way, if the RPM build environment is
 setup on a shared virtual machine, other users can switch to the dedicated user
 and use the same environment.&lt;/p&gt;
 &lt;p&gt;Create a dedicated user:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo useradd makerpm
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo useradd makerpm
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -2186,7 +2442,7 @@ and use the same environment.&lt;/p&gt;
 &lt;p&gt;This process is trivial when using the &lt;em&gt;rpmdevtools&lt;/em&gt; package. This package
 contains several scripts that help with building RPM packages. &lt;/p&gt;
 &lt;p&gt;As the &lt;em&gt;makerpm&lt;/em&gt; user, run the &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo su - makerpm
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo su - makerpm
 rpmdev-setuptree
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -2194,7 +2450,7 @@ rpmdev-setuptree
 &lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; will create the &lt;em&gt;~/rpmbuild&lt;/em&gt; directory and also create a
 &lt;em&gt;.rpmmacros&lt;/em&gt; file in the home directory.  The needed subdirectories are
 created under the rpmbuild directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost ~]$ tree rpmbuild/
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost ~]$ tree rpmbuild/
 rpmbuild/
 ├── BUILD
 ├── RPMS
@@ -2209,7 +2465,7 @@ rpmbuild/
 &lt;h2&gt;The .rpmmacros File&lt;/h2&gt;
 &lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command also installs a &lt;em&gt;.rpmmacros&lt;/em&gt; file in the user's
 home directory.  This file contains three lines by default:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;%_topdir      %&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="nv"&gt;$HOME&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;/rpmbuild
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;%_topdir      %&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="nv"&gt;$HOME&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;/rpmbuild
 %_smp_mflags  -j3
 %__arch_install_post   /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot
 &lt;/pre&gt;&lt;/div&gt;
@@ -2221,7 +2477,7 @@ It refers to the root directory of the RPM build environment.&lt;/p&gt;
 &lt;em&gt;make&lt;/em&gt; step in building the package.  On a dedicated machine, you can set this
 to the number of available processors.&lt;/p&gt;
 &lt;p&gt;Use the nproc command to determine the number of available processors:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;[makerpm@localhost ~]$ nproc
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;[makerpm@localhost ~]$ nproc
 4
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -2238,10 +2494,10 @@ for libraries in non-standard locations.&lt;/p&gt;
 &lt;h2&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
-follow good practice and sign your RPM packages.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+follow good practice and sign your RPM packages.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><published>2014-09-13T15:12:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
 waiting for kernel to gather sufficient entropy in order to sufficiently
 randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;We need to generate a lot of random bytes. It is a good idea to perform
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good idea to perform
 some other action (type on the keyboard, move the mouse, utilize the
 disks) during the prime generation; this gives the random number
 generator a better chance to gain enough entropy.
@@ -2257,38 +2513,38 @@ with this.  Until this becomes ubiquitous, you can use
 to gather entropy inside your virtual machine. In fact, rngd is enabled by
 default since Fedora 18.&lt;/p&gt;
 &lt;p&gt;Install the rng-tools package using YUM:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo yum install rng-tools
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install rng-tools
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Edit the rng-tools configuration file and configure the kernel device used for
 random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pseudorandom number generator:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo perl -p -i -e &amp;#39;s/EXTRAOPTIONS=&amp;quot;&amp;quot;/EXTRAOPTIONS=&amp;quot;-r \/dev\/urandom&amp;quot;/&amp;#39; /etc/sysconfig/rngd
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo perl -p -i -e &amp;#39;s/EXTRAOPTIONS=&amp;quot;&amp;quot;/EXTRAOPTIONS=&amp;quot;-r \/dev\/urandom&amp;quot;/&amp;#39; /etc/sysconfig/rngd
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Start rngd&lt;/h3&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;sudo chkconfig rngd on
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo chkconfig rngd on
 sudo service rngd start
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h3&gt;Verify available kernel entropy (higher is better)&lt;/h3&gt;
 &lt;p&gt;Before:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cat /proc/sys/kernel/random/entropy_avail 
 173
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;After:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cat /proc/sys/kernel/random/entropy_avail 
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cat /proc/sys/kernel/random/entropy_avail 
 4096
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;That's it.&lt;/p&gt;
 &lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
-&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><published>2014-08-03T12:15:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
 put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
 try to put meaningful things here regarding monitoring, configuration and
 troubleshooting of processes and applications running on Linux, mostly CentOS

@@ -65,6 +65,21 @@ Giovanni Torres            </a>
     <div class="row">
         <div class="col-sm-9">
             <article>
+                <h2><a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">Graphing sdiag with Graphite</a></h2>
+                <div class="summary"><h2>Introduction</h2>
+<p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.</p>
+<p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
+graph the output from sdiag.</p>
+<h2>Prerequisites</h2>
+<p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
+workload ...</p>
+                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">more ...</a>
+                </div>
+            </article>
+            <hr/>
+            <article>
                 <h2><a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">Wrapping Slurm's sdiag with Cython</a></h2>
                 <div class="summary"><h2>Introduction</h2>
 <p>Cython is a superset of Python and allows you to statically type variables,
@@ -115,21 +130,6 @@ rsh for remote access, it does have some valid use cases.</p>
                 </div>
             </article>
             <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">Using Collectd, Python and Graphite to Graph Slurm Partitions</a></h2>
-                <div class="summary"><h2>Introduction</h2>
-<p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
-plugins</a>.  In a previous
-<a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
-necessary dependencies to enable most of the collectd plugins when compiling
-collectd from source.</p>
-<p>One of these plugins is the <a href="https://collectd.org/wiki/index.php/Plugin:Python">Python
-plugin</a>, which is a binding
-that allows you to write ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
 
         <ul class="pagination">
                 <li class="prev disabled"><a href="#">&laquo;</a></li>
@@ -137,6 +137,8 @@ that allows you to write ...</p>
                             href="http://giovannitorres.me/index.html">1</a></li>
                     <li class=""><a
                             href="http://giovannitorres.me/index2.html">2</a></li>
+                    <li class=""><a
+                            href="http://giovannitorres.me/index3.html">3</a></li>
                 <li class="next"><a
                         href="http://giovannitorres.me/index2.html">&raquo;</a></li>
         </ul>
@@ -150,6 +152,11 @@ that allows you to write ...</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
                             Wrapping Slurm's sdiag with Cython
                         </a>
@@ -157,11 +164,6 @@ that allows you to write ...</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/signing-rpms.html">
                             Signing RPMs
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
                         </a>
                     </li>
                 </ul>
@@ -189,13 +191,14 @@ that allows you to write ...</p>
                             <i class="fa fa-folder-open fa-lg"></i> RPM
                         </a>
                     </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
-                <ul class="list-group " id="tags">
-                </ul>
-            </li>
 
 
 

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/cython.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><updated>2016-03-16T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/cython.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -14,7 +14,7 @@ uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.&lt;/p&gt;
 &lt;h2&gt;Looking at sdiag Output&lt;/h2&gt;
 &lt;p&gt;sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the &lt;code&gt;sdiag&lt;/code&gt; command and you should see similar output:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;*******************************************************
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;*******************************************************
 sdiag output at Sun Mar 27 14:21:29 2016
 Data since      Sun Mar 27 14:09:09 2016
 *******************************************************
@@ -77,8 +77,8 @@ Slurm header files.  The header file is in the include directory of your Slurm
 installation path, &lt;strong&gt;/path/to/slurm/include/slurm/slurm.h&lt;/strong&gt;&lt;/p&gt;
 &lt;p&gt;Open the &lt;strong&gt;slurm.h&lt;/strong&gt; header file and search for &lt;em&gt;slurm_get_statistics&lt;/em&gt;, one of
 the functions we want to wrap.  There, we see its declaration and signature:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt; &lt;span class="nf"&gt;PARAMS&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="kt"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
-                    &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt; &lt;span class="nf"&gt;PARAMS&lt;/span&gt;&lt;span class="p"&gt;((&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+                    &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;));&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -88,14 +88,14 @@ to declare both structs in the definition file.&lt;/p&gt;
 &lt;h2&gt;Wrapping C Code&lt;/h2&gt;
 &lt;p&gt;Let's start by declaring the structs.  The C code for the
 &lt;em&gt;stats_info_request_msg&lt;/em&gt; struct looks like:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
     &lt;span class="kt"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;command_id&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
-&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="kt"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
+&lt;span class="p"&gt;}&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Create a file called &lt;em&gt;sdiag.pxd&lt;/em&gt; and start with the following:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;
 
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
@@ -111,7 +111,7 @@ can be used without Python's GIL.&lt;/p&gt;
 file.  The &lt;em&gt;typedef&lt;/em&gt; in C becomes a &lt;em&gt;ctypedef&lt;/em&gt; in Cython.&lt;/p&gt;
 &lt;p&gt;For more information on struct and enum declaration, see &lt;a href="http://docs.cython.org/src/userguide/external_C_code.html#styles-of-struct-union-and-enum-declaration"&gt;Cython's documentation&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;Next, add the &lt;em&gt;stats_info_response_msg_t&lt;/em&gt; struct to the .pxd file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_response_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="nc"&gt;stats_info_response_msg_t&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
         &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;parts_packed&lt;/span&gt;
         &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time&lt;/span&gt;
         &lt;span class="n"&gt;time_t&lt;/span&gt; &lt;span class="n"&gt;req_time_start&lt;/span&gt;
@@ -130,7 +130,7 @@ file.  The &lt;em&gt;typedef&lt;/em&gt; in C becomes a &lt;em&gt;ctypedef&lt;/em
 
 &lt;p&gt;Note some of the types in this struct.  We need to import these as well into
 the .pxd file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint64_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint64_t&lt;/span&gt;
 
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;sys/types.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="k"&gt;ctypedef&lt;/span&gt; &lt;span class="nb"&gt;long&lt;/span&gt; &lt;span class="n"&gt;time_t&lt;/span&gt;
@@ -138,20 +138,20 @@ the .pxd file:&lt;/p&gt;
 
 
 &lt;p&gt;Now, we can declare the two functions:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;**&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
                              &lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;slurm_reset_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;There are some C macros that we also need to declare:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_RESET&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_RESET&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;We now need to declare some functions and macros from &lt;em&gt;slurm_errno.h&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm_errno.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;slurm/slurm_errno.h&amp;quot;&lt;/span&gt; &lt;span class="k"&gt;nogil&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;SLURM_SUCCESS&lt;/span&gt;
 
     &lt;span class="n"&gt;char&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;slurm_strerror&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;errnum&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
@@ -163,7 +163,7 @@ the .pxd file:&lt;/p&gt;
 &lt;p&gt;There's one more declaration we need, but it is not in the &lt;em&gt;slurm.h&lt;/em&gt; header
 file.  In this case, since the function is externalized, we can declare it
 directly:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="kr"&gt;extern&lt;/span&gt; &lt;span class="kt"&gt;void&lt;/span&gt; &lt;span class="nf"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;stats_info_response_msg_t&lt;/span&gt; &lt;span class="o"&gt;*&lt;/span&gt;&lt;span class="n"&gt;msg&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -174,7 +174,7 @@ need to look at the &lt;em&gt;sdiag.c&lt;/em&gt; file and recreate the needed po
 &lt;p&gt;We will expose two functions to Python: get_stats() and reset_stats().
 Therefore, these need to use the &lt;em&gt;cpdef&lt;/em&gt; function declaration, since &lt;em&gt;cpdef&lt;/em&gt;
 functions have access to both C and Python.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
     &lt;span class="k"&gt;pass&lt;/span&gt;
 
 &lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
@@ -184,8 +184,8 @@ functions have access to both C and Python.&lt;/p&gt;
 
 &lt;p&gt;In the &lt;em&gt;get_stats&lt;/em&gt; function, we need to statically type some variables that
 will get used in the function.  This is done with &lt;em&gt;cdef&lt;/em&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
-    &lt;span class="n"&gt;cdef&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;():&lt;/span&gt;
+    &lt;span class="k"&gt;cdef&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
         &lt;span class="nb"&gt;int&lt;/span&gt; &lt;span class="n"&gt;rc&lt;/span&gt;
         &lt;span class="n"&gt;uint32_t&lt;/span&gt; &lt;span class="n"&gt;i&lt;/span&gt;
         &lt;span class="nb"&gt;dict&lt;/span&gt; &lt;span class="n"&gt;rpc_type_stats&lt;/span&gt;
@@ -199,7 +199,7 @@ will get used in the function.  This is done with &lt;em&gt;cdef&lt;/em&gt;:&lt;
 &lt;p&gt;Next, follow through &lt;em&gt;sdiag.c&lt;/em&gt; and write the necessary Cython to call the
 &lt;em&gt;slurm_get_statistics&lt;/em&gt; function, populate the buffer, and copy the buffer
 into a dictionary.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="p"&gt;[&lt;/span&gt;&lt;span class="o"&gt;...&lt;/span&gt;&lt;span class="p"&gt;]&lt;/span&gt;
     &lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;command_id&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;STAT_COMMAND_GET&lt;/span&gt;
     &lt;span class="n"&gt;rc&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;slurm_get_statistics&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="o"&gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="o"&gt;&amp;lt;&lt;/span&gt;&lt;span class="n"&gt;stats_info_request_msg_t&lt;/span&gt;&lt;span class="o"&gt;*&amp;gt;&amp;amp;&lt;/span&gt;&lt;span class="n"&gt;req&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
@@ -219,7 +219,7 @@ Unfortunately, it is not externalized and we cannot simply declare it in the
 .pxd file and use it.  We have to recreate it in the implementation file as a
 separate function.  Since this function does not need to be exposed to Python,
 we can use a &lt;em&gt;cdef&lt;/em&gt; function:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
     &lt;span class="n"&gt;num2string&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
         &lt;span class="mf"&gt;1001&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;REQUEST_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
         &lt;span class="mf"&gt;1002&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;MESSAGE_NODE_REGISTRATION_STATUS&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;
@@ -233,7 +233,7 @@ we can use a &lt;em&gt;cdef&lt;/em&gt; function:&lt;/p&gt;
 
 &lt;p&gt;At the end of the &lt;em&gt;get_stats&lt;/em&gt; function, we need to free the response message
 buffer and return the dictionary back to the caller:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;    &lt;span class="n"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;    &lt;span class="n"&gt;slurm_free_stats_response_msg&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;buf&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
     &lt;span class="n"&gt;buf&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="bp"&gt;NULL&lt;/span&gt;
     &lt;span class="k"&gt;return&lt;/span&gt; &lt;span class="n"&gt;stat_dict&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -241,14 +241,14 @@ buffer and return the dictionary back to the caller:&lt;/p&gt;
 
 &lt;p&gt;Pay attention to the types required in the implementation file, they need to be
 imported, similarly to the definition file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;libc.stdint&lt;/span&gt; &lt;span class="k"&gt;cimport&lt;/span&gt; &lt;span class="n"&gt;uint16_t&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;uint32_t&lt;/span&gt;
 &lt;span class="k"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pwd&lt;/span&gt; &lt;span class="k"&gt;import&lt;/span&gt; &lt;span class="n"&gt;getpwuid&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Lastly, the functions we created in the implementation file can be declared in
 the definition file, using the same signature as in the implementation file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;dict&lt;/span&gt; &lt;span class="nf"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;span class="k"&gt;cpdef&lt;/span&gt; &lt;span class="kt"&gt;int&lt;/span&gt; &lt;span class="nf"&gt;reset_stats&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;span class="k"&gt;cdef&lt;/span&gt; &lt;span class="nf"&gt;rpc_num2string&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;uint16_t&lt;/span&gt; &lt;span class="n"&gt;opcode&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -259,7 +259,7 @@ the definition file, using the same signature as in the implementation file:&lt;
 &lt;h2&gt;Compiling with Cython&lt;/h2&gt;
 &lt;p&gt;Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;cython sdiag.pyx
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cython sdiag.pyx
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -274,21 +274,21 @@ The standard way of creating an extension module is through the use of
 &lt;p&gt;We can, as an exercise, compile by the extension module by hand to get an
 understanding of how the module is generated with the compiler and linker.&lt;/p&gt;
 &lt;p&gt;Our next step is to compile &lt;em&gt;sdiag.c&lt;/em&gt; into an object file.  Use Python's &lt;strong&gt;python-config&lt;/strong&gt; to get the appropriate CFLAGS to pass to the compiler:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc -c sdiag.c $(python-config --cflags) -fPIC&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;gcc -c sdiag.c $(python-config --cflags) -fPIC&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;This step produces the &lt;em&gt;sdiag.o&lt;/em&gt; object file.&lt;/p&gt;
 &lt;p&gt;Now, compile &lt;em&gt;sdiag.o&lt;/em&gt; into a shared library.  We will need to add the linker
 flags that point to Slurm's libslurm.so:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;gcc sdiag.o -o sdiag.so -shared $(python-config --ldflags) \&lt;/span&gt;
 &lt;span class="go"&gt;  -L/usr/local/slurm/15.08.8/lib -lslurm&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;h2&gt;Testing the module&lt;/h2&gt;
 &lt;p&gt;Create a directory for the module:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;cd ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;mkdir sdiag&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -297,7 +297,7 @@ flags that point to Slurm's libslurm.so:&lt;/p&gt;
 &lt;p&gt;Copy the &lt;strong&gt;sdiag.so&lt;/strong&gt; module to the &lt;code&gt;${HOME}/local/sdiag&lt;/code&gt; directory.  Next,
 create an &lt;code&gt;__init__.py&lt;/code&gt; file.  Since Slurm makes heavy use of dlopen() calls,
 we need to set the flags in &lt;code&gt;__init__.py&lt;/code&gt;:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;__future__&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;absolute_import&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;__future__&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;absolute_import&lt;/span&gt;
 
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sys&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;ctypes&lt;/span&gt;
@@ -311,7 +311,7 @@ we need to set the flags in &lt;code&gt;__init__.py&lt;/code&gt;:&lt;/p&gt;
 &lt;p&gt;Now, we can test the module.  Make sure you are in the &lt;code&gt;${HOME}/local&lt;/code&gt;
 directory before running the Python interpreter.  Otherwise, be sure to adjust
 your PYTHONPATH.&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sdiag&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;sdiag&lt;/span&gt;
 &lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="kn"&gt;from&lt;/span&gt; &lt;span class="nn"&gt;pprint&lt;/span&gt; &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="n"&gt;pprint&lt;/span&gt;
 &lt;span class="gp"&gt;&amp;gt;&amp;gt;&amp;gt; &lt;/span&gt;&lt;span class="n"&gt;pprint&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;sdiag&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_stats&lt;/span&gt;&lt;span class="p"&gt;())&lt;/span&gt;
 &lt;span class="go"&gt;{u&amp;#39;agent_queue_size&amp;#39;: 0,&lt;/span&gt;

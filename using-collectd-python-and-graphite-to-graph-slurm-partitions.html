@@ -132,20 +132,20 @@ used as an real-world example.</p>
 <p>Lastly, of the python modules used in the example below, the 
 <a href="https://pypi.python.org/pypi/pyparsing/2.0.3">PyParsing</a> module is not a core
 Python module.  You can, however, install it easily with Pip:</p>
-<div class="highlight"><pre>sudo pip install pyparsing
+<div class="highlight"><pre><span></span>sudo pip install pyparsing
 </pre></div>
 
 
 <h2>Enabling the Python Plugin</h2>
 <p>The default <em>collectd.conf</em> comes with the Python plugin disabled:</p>
-<div class="highlight"><pre>##&lt;LoadPlugin python&gt;
+<div class="highlight"><pre><span></span>##&lt;LoadPlugin python&gt;
 ##  Globals true
 ##&lt;/LoadPlugin&gt;
 </pre></div>
 
 
 <p>Simply uncomment the stanza to have collectd load this plugin at run time:</p>
-<div class="highlight"><pre><span class="nt">&lt;LoadPlugin</span> <span class="err">python</span><span class="nt">&gt;</span>
+<div class="highlight"><pre><span></span><span class="nt">&lt;LoadPlugin</span> <span class="err">python</span><span class="nt">&gt;</span>
   Globals true
 <span class="nt">&lt;/LoadPlugin&gt;</span>
 </pre></div>
@@ -159,7 +159,7 @@ will walk through writing a script, section by section, to understand how to
 gather and dispatch metrics to collectd.</p>
 <h3>Importing Modules</h3>
 <p>The first part of our script will import the necessary modules.</p>
-<div class="highlight"><pre><span class="kn">import</span> <span class="nn">collectd</span>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collectd</span>
 <span class="kn">import</span> <span class="nn">signal</span>
 <span class="kn">import</span> <span class="nn">subprocess</span>
 <span class="kn">from</span> <span class="nn">pyparsing</span> <span class="kn">import</span> <span class="n">Word</span><span class="p">,</span> <span class="n">alphanums</span><span class="p">,</span> <span class="n">nums</span>
@@ -178,42 +178,42 @@ will return the number of cores by state per partition in a parsable format.
 This is done using the <strong>sinfo</strong> command.  It then uses the pyparsing module to
 parse the output.  Lastly, it iterates over the output and returns a
 dictionary.  This will be used in the <em>read_callback</em> function.</p>
-<div class="highlight"><pre><span class="k">def</span> <span class="nf">get_cpus_by_state</span><span class="p">():</span>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">get_cpus_by_state</span><span class="p">():</span>
     <span class="sd">&quot;&quot;&quot;Returns a dictionary of CPU cores and their states, per Slurm</span>
 <span class="sd">    partition.&quot;&quot;&quot;</span>
 
     <span class="n">cores</span> <span class="o">=</span> <span class="p">{}</span>
 
-    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-    <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
 
-    <span class="n">sinfo</span> <span class="o">=</span> <span class="s">&quot;/path/to/sinfo&quot;</span>
+    <span class="n">sinfo</span> <span class="o">=</span> <span class="s2">&quot;/path/to/sinfo&quot;</span>
 
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">used_core_count</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="n">sinfo</span><span class="p">,</span> <span class="s">&#39;-o&#39;</span><span class="p">,</span> <span class="s">&#39;%P %C&#39;</span><span class="p">,</span> <span class="s">&#39;--noheader&#39;</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
-        <span class="n">stdout</span> <span class="o">=</span> <span class="n">used_core_count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="n">used_core_count</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">([</span><span class="n">sinfo</span><span class="p">,</span> <span class="s1">&#39;-o&#39;</span><span class="p">,</span> <span class="s1">&#39;%P %C&#39;</span><span class="p">,</span> <span class="s1">&#39;--noheader&#39;</span><span class="p">],</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">)</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="n">used_core_count</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">stdout</span> <span class="o">==</span> <span class="p">[</span><span class="s">&#39;&#39;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">stdout</span> <span class="o">==</span> <span class="p">[</span><span class="s1">&#39;&#39;</span><span class="p">]:</span>
             <span class="k">return</span>
 
-        <span class="n">part_parse</span> <span class="o">=</span> <span class="n">Word</span><span class="p">(</span><span class="n">alphanums</span> <span class="o">+</span> <span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">Word</span><span class="p">(</span><span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span><span class="p">)</span>
+        <span class="n">part_parse</span> <span class="o">=</span> <span class="n">Word</span><span class="p">(</span><span class="n">alphanums</span> <span class="o">+</span> <span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="n">Word</span><span class="p">(</span><span class="n">nums</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span> <span class="o">+</span> <span class="s1">&#39;/&#39;</span> <span class="o">+</span> <span class="n">nums</span><span class="p">)</span>
         <span class="n">output</span> <span class="o">=</span> <span class="n">part_parse</span><span class="o">.</span><span class="n">scanString</span><span class="p">(</span><span class="n">stdout</span><span class="p">)</span>
 
         <span class="k">for</span> <span class="n">partition</span> <span class="ow">in</span> <span class="n">output</span><span class="p">:</span>
             <span class="n">queue</span> <span class="o">=</span> <span class="n">partition</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">allocated</span><span class="p">,</span> <span class="n">idle</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">partition</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s">&#39;/&#39;</span><span class="p">)</span>
+            <span class="n">allocated</span><span class="p">,</span> <span class="n">idle</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">total</span> <span class="o">=</span> <span class="n">partition</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)</span>
 
-            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;-allocated&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;-idle&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;-other&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="n">queue</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s1">&#39;*&#39;</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39;-total&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
 
-            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-            <span class="n">cores</span><span class="p">[</span><span class="s">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-allocated&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">allocated</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-idle&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">idle</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-other&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+            <span class="n">cores</span><span class="p">[</span><span class="s1">&#39;all-total&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="nb">int</span><span class="p">(</span><span class="n">total</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">cores</span>
 
@@ -230,13 +230,13 @@ completion. Collectd, however, will ignore the <strong>SIGCHLD</strong> signal t
 parent Python plugin process is waiting for.  As a result, the Python plugin
 will throw an OSError exception when the child process terminates and logs the
 following error:</p>
-<div class="highlight"><pre><span class="go">Unhandled python exception in read callback: OSError: [Errno 10] No child processes</span>
+<div class="highlight"><pre><span></span><span class="go">Unhandled python exception in read callback: OSError: [Errno 10] No child processes</span>
 </pre></div>
 
 
 <p>This function will restore the default SIGCHLD behavior so that the
 plugin can create new processes without throwing exceptions.</p>
-<div class="highlight"><pre><span class="k">def</span> <span class="nf">restore_sigchld</span><span class="p">():</span>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">restore_sigchld</span><span class="p">():</span>
     <span class="n">signal</span><span class="o">.</span><span class="n">signal</span><span class="p">(</span><span class="n">signal</span><span class="o">.</span><span class="n">SIGCHLD</span><span class="p">,</span> <span class="n">signal</span><span class="o">.</span><span class="n">SIG_DFL</span><span class="p">)</span>
 </pre></div>
 
@@ -255,7 +255,7 @@ schema</a>. Therefore, the
 resulting metric name will be <strong>slurm.core_states.gauge-<metric_name></strong>, where
 metric_name refers to each of the keys in the dictionary returned by the
 <em>get_cpus_by_state()</em> function.  Finally, the metric is dispatched to collectd.</p>
-<div class="highlight"><pre><span class="k">def</span> <span class="nf">read_callback</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+<div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">read_callback</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Callback function for dispatching data into collectd&quot;&quot;&quot;</span>
 
     <span class="n">cores</span> <span class="o">=</span> <span class="n">get_cpus_by_state</span><span class="p">()</span>
@@ -263,13 +263,13 @@ metric_name refers to each of the keys in the dictionary returned by the
     <span class="k">if</span> <span class="ow">not</span> <span class="n">cores</span><span class="p">:</span>
         <span class="k">pass</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="c"># for each key in each partition output, put the value</span>
+        <span class="c1"># for each key in each partition output, put the value</span>
         <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">cores</span><span class="p">:</span>
             <span class="n">metric</span> <span class="o">=</span> <span class="n">collectd</span><span class="o">.</span><span class="n">Values</span><span class="p">()</span>
-            <span class="n">metric</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="s">&#39;core_states&#39;</span>
-            <span class="n">metric</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s">&#39;slurm&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">plugin</span> <span class="o">=</span> <span class="s1">&#39;core_states&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">host</span> <span class="o">=</span> <span class="s1">&#39;slurm&#39;</span>
             <span class="n">metric</span><span class="o">.</span><span class="n">interval</span> <span class="o">=</span> <span class="mi">30</span>
-            <span class="n">metric</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s">&#39;gauge&#39;</span>
+            <span class="n">metric</span><span class="o">.</span><span class="n">type</span> <span class="o">=</span> <span class="s1">&#39;gauge&#39;</span>
             <span class="n">metric</span><span class="o">.</span><span class="n">type_instance</span> <span class="o">=</span> <span class="n">key</span>
             <span class="n">metric</span><span class="o">.</span><span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">cores</span><span class="p">[</span><span class="n">key</span><span class="p">]]</span>
             <span class="n">metric</span><span class="o">.</span><span class="n">dispatch</span><span class="p">()</span>
@@ -281,7 +281,7 @@ metric_name refers to each of the keys in the dictionary returned by the
 restore the behavior of <em>SIGCHLD</em> and the other to periodically run the
 read_callback function, which in turn calls the get_cpus_by_state() function to
 gather metrics and dispatch the values to the daemon.</p>
-<div class="highlight"><pre><span class="n">collectd</span><span class="o">.</span><span class="n">register_init</span><span class="p">(</span><span class="n">restore_sigchld</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="n">collectd</span><span class="o">.</span><span class="n">register_init</span><span class="p">(</span><span class="n">restore_sigchld</span><span class="p">)</span>
 <span class="n">collectd</span><span class="o">.</span><span class="n">register_read</span><span class="p">(</span><span class="n">read_callback</span><span class="p">)</span>
 </pre></div>
 
@@ -292,11 +292,11 @@ as a <a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40">gist</a>)
 <p>Now that we have enabled the Python plugin in collectd and wrote a read plugin,
 the last thing needed is to configure the plugin in collectd's configuration
 file. Add the following configuration stanza to <strong>collectd.conf</strong>:</p>
-<div class="highlight"><pre><span class="o">&lt;</span><span class="n">Plugin</span> <span class="n">python</span><span class="o">&gt;</span>
-  <span class="n">ModulePath</span> <span class="s">&quot;/path/to/python/plugin&quot;</span>
+<div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">Plugin</span> <span class="n">python</span><span class="o">&gt;</span>
+  <span class="n">ModulePath</span> <span class="s2">&quot;/path/to/python/plugin&quot;</span>
   <span class="n">LogTraces</span> <span class="n">true</span>
   <span class="n">Interactive</span> <span class="n">false</span>
-  <span class="n">Import</span> <span class="s">&quot;slurm_core_states&quot;</span>
+  <span class="n">Import</span> <span class="s2">&quot;slurm_core_states&quot;</span>
 <span class="o">&lt;/</span><span class="n">Plugin</span><span class="o">&gt;</span>
 </pre></div>
 
@@ -317,14 +317,14 @@ that the plugin is working by querying the metrics.</p>
 <p>This step will vary depending on where your metrics are stored.  For example,
 if the metrics are written to a Graphite instance, you could query the metrics
 using the Graphite URL API:</p>
-<div class="highlight"><pre>curl -s 
+<div class="highlight"><pre><span></span>curl -s 
 <span class="s2">&quot;http://graphite.example.com/render?target=slurm.core_states.gauge-all-allocated&amp;from=-1mins&amp;format=json&quot;</span>
 <span class="p">|</span> python -m json.tool
 </pre></div>
 
 
 <p>This fetches the cumulative number of allocated cores across all Slurm partitions, in json format. The last two datapoints are shown below:</p>
-<div class="highlight"><pre><span class="p">[</span>
+<div class="highlight"><pre><span></span><span class="p">[</span>
     <span class="p">{</span>
         <span class="nt">&quot;datapoints&quot;</span><span class="p">:</span> <span class="p">[</span>
             <span class="p">[</span>
@@ -394,6 +394,11 @@ any other time-series database.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
                             Wrapping Slurm's sdiag with Cython
                         </a>
@@ -401,11 +406,6 @@ any other time-series database.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/signing-rpms.html">
                             Signing RPMs
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
                         </a>
                     </li>
                 </ul>
@@ -433,13 +433,14 @@ any other time-series database.</p>
                             <i class="fa fa-folder-open fa-lg"></i> RPM
                         </a>
                     </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
-                <ul class="list-group " id="tags">
-                </ul>
-            </li>
 
 
 

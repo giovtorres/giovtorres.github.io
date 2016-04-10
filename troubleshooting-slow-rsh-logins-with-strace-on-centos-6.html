@@ -124,21 +124,21 @@ workaround for this slowness</p>
 both servers if you are not using DNS for name resolution.</p>
 <h2>Installing the rsh Client</h2>
 <p>To install the rsh client on client1, install the <strong>rsh</strong> package:</p>
-<div class="highlight"><pre>sudo yum install rsh
+<div class="highlight"><pre><span></span>sudo yum install rsh
 </pre></div>
 
 
 <h2>Installing the rsh Server</h2>
 <p>The rsh server runs under the xinetd superserver.  Install both packages on
 server1:</p>
-<div class="highlight"><pre>sudo yum install xinetd rsh-server
+<div class="highlight"><pre><span></span>sudo yum install xinetd rsh-server
 </pre></div>
 
 
 <h3>Configuring the rsh Server</h3>
 <p>The configuration file for rsh is <strong>/etc/xinetd.d/rsh</strong> and is disabled by
 default:</p>
-<div class="highlight"><pre>service shell
+<div class="highlight"><pre><span></span>service shell
 {
     socket_type     = stream
     wait            = no
@@ -153,19 +153,19 @@ default:</p>
 
 <p>To enable rsh, change <em>disable</em> from <strong>yes</strong> to <strong>no</strong>.  Then, start or
 restart the xinetd service:</p>
-<div class="highlight"><pre>sudo service xinetd restart
+<div class="highlight"><pre><span></span>sudo service xinetd restart
 </pre></div>
 
 
 <h2>Adjusting iptables</h2>
 <p>rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the <em>client</em>:</p>
-<div class="highlight"><pre>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
+<div class="highlight"><pre><span></span>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
 </pre></div>
 
 
 <p>Similarly, add the following iptables rule on the <em>server</em>:</p>
-<div class="highlight"><pre>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
+<div class="highlight"><pre><span></span>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.200 --dport 514:1023 -j ACCEPT
 </pre></div>
 
 
@@ -178,7 +178,7 @@ hostnames that a remote user is allowed to access.</p>
 <p>In this example, we only need the system-wide <em>/etc/hosts.equiv</em> for testing
 rsh.  On server1, <em>/etc/hosts.equiv</em> should have at least a single line for
 <em>client1</em>:</p>
-<div class="highlight"><pre><span class="go">[giovanni@server1 ~]$ sudo cat /etc/hosts.equiv </span>
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@server1 ~]$</span> sudo cat /etc/hosts.equiv 
 <span class="go">client1</span>
 </pre></div>
 
@@ -187,7 +187,7 @@ rsh.  On server1, <em>/etc/hosts.equiv</em> should have at least a single line f
 <h2>Testing From the Command Line</h2>
 <p>Test the rsh connection from client1 to server1.  Wrap the command around a
 pair of date commands to see the time it takes to complete the remote command:</p>
-<div class="highlight"><pre><span class="gp">[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%</span>3N
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@client1 ~]$</span> date +%s.%3N<span class="p">;</span> /usr/bin/rsh server1 /usr/bin/uptime<span class="p">;</span> date +%s.%3N
 <span class="go">1439740132.050</span>
 <span class="go"> 11:48:52 up 15:40,  1 user,  load average: 0.00, 0.00, 0.00</span>
 <span class="go">1439740132.158</span>
@@ -203,7 +203,7 @@ is great and typical, only 108ms.</p>
 given cluster.</p>
 <p>Let us generate a set of fake hosts in /etc/hosts.equiv, starting with an empty
 file, then appending client1 to the end of the file:</p>
-<div class="highlight"><pre><span class="go">sudo cp /dev/null /etc/hosts.equiv</span>
+<div class="highlight"><pre><span></span><span class="go">sudo cp /dev/null /etc/hosts.equiv</span>
 <span class="go">for i in {001..099}; do sudo -i sh -c &quot;echo node$i &gt;&gt; /etc/hosts.equiv&quot;; done</span>
 <span class="go">sudo -i sh -c &quot;echo client1 &gt;&gt; /etc/hosts.equiv&quot;</span>
 </pre></div>
@@ -212,7 +212,7 @@ file, then appending client1 to the end of the file:</p>
 <p>There are now 100 hosts in the /etc/hosts.equiv file, with client1 being the
 last in the list.  Test the rsh connection again from client1 to server1, same
 as before:</p>
-<div class="highlight"><pre><span class="gp">[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%</span>3N
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@client1 ~]$</span> date +%s.%3N<span class="p">;</span> /usr/bin/rsh server1 /usr/bin/uptime<span class="p">;</span> date +%s.%3N
 <span class="go">1439740856.004</span>
 <span class="go"> 12:01:00 up 15:52,  1 user,  load average: 0.00, 0.00, 0.00</span>
 <span class="go">1439740859.902</span>
@@ -228,24 +228,24 @@ rshd daemon is doing.</p>
 <h2>Testing with Strace</h2>
 <p>First, make sure you have the strace package installed.  If not, installing it
 is easy:</p>
-<div class="highlight"><pre>sudo yum install strace
+<div class="highlight"><pre><span></span>sudo yum install strace
 </pre></div>
 
 
 <p>In the xinetd rsh configuration file shown above, the server parameter
 specifies the path to the rsh daemon: </p>
-<div class="highlight"><pre>    server          = /usr/sbin/in.rshd
+<div class="highlight"><pre><span></span>    server          = /usr/sbin/in.rshd
 </pre></div>
 
 
 <p>We will replace this server with a custom script that will use strace to launch
 the rsh daemon.  Replace the server parameter value with the following:</p>
-<div class="highlight"><pre>    server          = /tmp/rsh-strace.sh
+<div class="highlight"><pre><span></span>    server          = /tmp/rsh-strace.sh
 </pre></div>
 
 
 <p>Now, create the <em>/tmp/rsh-strace.sh</em> bash script with the following two lines:</p>
-<div class="highlight"><pre><span class="c">#!/bin/bash</span>
+<div class="highlight"><pre><span></span><span class="ch">#!/bin/bash</span>
 /usr/bin/strace -f -tt -o /tmp/rsh-server.strace /usr/sbin/in.rshd
 </pre></div>
 
@@ -256,7 +256,7 @@ the rsh daemon.  Replace the server parameter value with the following:</p>
 <p><strong>-o</strong>    write the output to a specified file instead of stderr</p>
 <p>The script must be executable.  Change the permissions to at least <em>0755</em>
 before restarting xinetd:</p>
-<div class="highlight"><pre>sudo chmod <span class="m">0755</span> /tmp/rsh-strace.sh
+<div class="highlight"><pre><span></span>sudo chmod <span class="m">0755</span> /tmp/rsh-strace.sh
 sudo /sbin/service xinetd restart
 </pre></div>
 
@@ -269,7 +269,7 @@ output to <em>/tmp/rsh-server.strace</em>, overwriting it each time.</p>
 output to see if we can tell why the rsh command got slow after adding more
 nodes into the <em>/etc/hosts.equiv</em> file.</p>
 <p>Buried in all the system calls is an open() and read() to /etc/hosts.equiv:</p>
-<div class="highlight"><pre><span class="go">11800 19:09:24.244476 open(&quot;/etc/hosts.equiv&quot;, O_RDONLY) = 4</span>
+<div class="highlight"><pre><span></span><span class="go">11800 19:09:24.244476 open(&quot;/etc/hosts.equiv&quot;, O_RDONLY) = 4</span>
 <span class="go">[...]</span>
 <span class="go">11800 19:09:24.244559 read(4, &quot;node001\nnode002\nnode003\nnode004\n&quot;..., 4096) = 799</span>
 </pre></div>
@@ -279,7 +279,7 @@ nodes into the <em>/etc/hosts.equiv</em> file.</p>
 read() function uses as its first argument.</p>
 <p>Subsequently, there are many open() and read() calls to <em>/etc/hosts</em> that return the same file
 descriptor, <strong>5</strong>:</p>
-<div class="highlight"><pre><span class="go">11800 19:09:24.283178 open(&quot;/etc/hosts&quot;, O_RDONLY|O_CLOEXEC) = 5</span>
+<div class="highlight"><pre><span></span><span class="go">11800 19:09:24.283178 open(&quot;/etc/hosts&quot;, O_RDONLY|O_CLOEXEC) = 5</span>
 <span class="go">11800 19:09:24.283279 read(5, &quot;127.0.0.1   localhost localhost.&quot;..., 4096) = 253</span>
 <span class="go">11800 19:09:24.283327 read(5, &quot;&quot;, 4096) = 0</span>
 </pre></div>
@@ -287,7 +287,7 @@ descriptor, <strong>5</strong>:</p>
 
 <p>In fact, this pattern repeats itself many times.  Using grep, we can count how
 many times this occurs:</p>
-<div class="highlight"><pre><span class="go">[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l</span>
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@server1 ~]$</span> grep open.*etc.*hosts.*5 /tmp/rsh-server.strace <span class="p">|</span> wc -l
 <span class="go">100</span>
 </pre></div>
 
@@ -297,14 +297,14 @@ is at line 100 in /etc/hosts.equiv.  It appears the rsh daemon serially checks
 /etc/hosts for each host list in /etc/hosts.equiv, also checking for DNS
 mapping if the host is not in /etc/hosts.</p>
 <p>Let's see what happens where there are 1000 hosts in /etc/hosts.equiv:</p>
-<div class="highlight"><pre><span class="go">sudo cp /dev/null /etc/hosts.equiv</span>
+<div class="highlight"><pre><span></span><span class="go">sudo cp /dev/null /etc/hosts.equiv</span>
 <span class="go">for i in {001..999}; do sudo -i sh -c &quot;echo node$i &gt;&gt; /etc/hosts.equiv&quot;; done</span>
 <span class="go">sudo -i sh -c &quot;echo client1 &gt;&gt; /etc/hosts.equiv&quot;</span>
 </pre></div>
 
 
 <p>From client1, rsh to server1 again:</p>
-<div class="highlight"><pre><span class="gp">[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%</span>3N
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@client1 ~]$</span> date +%s.%3N<span class="p">;</span> /usr/bin/rsh server1 /usr/bin/uptime<span class="p">;</span> date +%s.%3N
 <span class="go">1439946641.429</span>
 <span class="go"> 21:11:16 up 3 days,  1:02,  1 user,  load average: 0.12, 0.04, 0.01</span>
 <span class="go">1439946675.667</span>
@@ -313,7 +313,7 @@ mapping if the host is not in /etc/hosts.</p>
 
 <p>This time it takes over 30 seconds.  Using grep again, we can count how many
 times the rsh daemon opens and reads the /etc/hosts file:</p>
-<div class="highlight"><pre><span class="go">[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l</span>
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@server1 ~]$</span> grep open.*etc.*hosts.*5 /tmp/rsh-server.strace <span class="p">|</span> wc -l
 <span class="go">1000</span>
 </pre></div>
 
@@ -335,12 +335,12 @@ specified in <strong>/etc/netgroup</strong>.  This file does not exist by defaul
 configure our server to do so.</p>
 <p>First, edit the <em>/etc/nsswitch.conf</em> file.  The default nsswitch configuration
 file uses nisplus:</p>
-<div class="highlight"><pre><span class="go">netgroup:   nisplus</span>
+<div class="highlight"><pre><span></span><span class="go">netgroup:   nisplus</span>
 </pre></div>
 
 
 <p>Change this to <em>files</em>:</p>
-<div class="highlight"><pre><span class="go">netgroup:   files</span>
+<div class="highlight"><pre><span></span><span class="go">netgroup:   files</span>
 </pre></div>
 
 
@@ -350,7 +350,7 @@ one for each host.  The beauty about this solution is that we can list 100
 or 1000 hosts on the same line in the same netgroup.  Keep in mind, there may
 be a line size limit at some point.</p>
 <p>We'll call the name of our netgroup <strong>nodes</strong>:</p>
-<div class="highlight"><pre><span class="go">sudo touch /etc/netgroup</span>
+<div class="highlight"><pre><span></span><span class="go">sudo touch /etc/netgroup</span>
 <span class="go">sudo -i sh -c &quot;echo -n nodes &gt;&gt; /etc/netgroup&quot;</span>
 <span class="go">for i in {001..999}; do sudo -i sh -c &quot;echo -n &#39; (node$i,-,-)&#39; &gt;&gt; /etc/netgroup&quot;; done</span>
 <span class="go">sudo -i sh -c &quot;echo -n &#39; (client1,-,-)&#39; &gt;&gt; /etc/netgroup&quot;</span>
@@ -359,13 +359,13 @@ be a line size limit at some point.</p>
 
 <p>So, nodes 001 thru 999 plus client1 are in the <em>nodes</em> netgroup.  Now, we need
 to adjust the <em>hosts.equiv</em> file to use the new netgroup:</p>
-<div class="highlight"><pre><span class="go">sudo cp /dev/null /etc/netgroup</span>
+<div class="highlight"><pre><span></span><span class="go">sudo cp /dev/null /etc/netgroup</span>
 <span class="go">sudo -i sh -c &quot;echo +@nodes &gt;&gt; /etc/hosts.equiv&quot;</span>
 </pre></div>
 
 
 <p>Now, let's retest rsh again from client1:</p>
-<div class="highlight"><pre><span class="gp">[giovanni@client1 ~]$ date +%s.%3N; /usr/bin/rsh server1 /usr/bin/uptime; date +%s.%</span>3N
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@client1 ~]$</span> date +%s.%3N<span class="p">;</span> /usr/bin/rsh server1 /usr/bin/uptime<span class="p">;</span> date +%s.%3N
 <span class="go">1439948137.505</span>
 <span class="go"> 21:35:38 up 3 days,  1:27,  1 user,  load average: 0.00, 0.03, 0.00</span>
 <span class="go">1439948137.731</span>
@@ -374,13 +374,13 @@ to adjust the <em>hosts.equiv</em> file to use the new netgroup:</p>
 
 <p>Well, that was fast.  Let's see how many times rshd opened /etc/hosts file with
 the same file descriptor:</p>
-<div class="highlight"><pre><span class="go">[giovanni@server1 ~]$ grep open.*etc.*hosts.*5 /tmp/rsh-server.strace | wc -l</span>
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@server1 ~]$</span> grep open.*etc.*hosts.*5 /tmp/rsh-server.strace <span class="p">|</span> wc -l
 <span class="go">0</span>
 </pre></div>
 
 
 <p>None, so let's check the /etc/netgroup file:</p>
-<div class="highlight"><pre><span class="go">[giovanni@server1 ~]$ grep open.*etc.*netgroup.*5 /tmp/rsh-server.strace | wc -l</span>
+<div class="highlight"><pre><span></span><span class="gp">[giovanni@server1 ~]$</span> grep open.*etc.*netgroup.*5 /tmp/rsh-server.strace <span class="p">|</span> wc -l
 <span class="go">1</span>
 </pre></div>
 
@@ -440,6 +440,11 @@ workaround the slowness using netgroups.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
                             Wrapping Slurm's sdiag with Cython
                         </a>
@@ -447,11 +452,6 @@ workaround the slowness using netgroups.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/signing-rpms.html">
                             Signing RPMs
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
                         </a>
                     </li>
                 </ul>
@@ -479,13 +479,14 @@ workaround the slowness using netgroups.</p>
                             <i class="fa fa-folder-open fa-lg"></i> RPM
                         </a>
                     </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
-                <ul class="list-group " id="tags">
-                </ul>
-            </li>
 
 
 

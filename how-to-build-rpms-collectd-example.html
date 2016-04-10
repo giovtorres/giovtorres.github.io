@@ -121,7 +121,7 @@ packages provide the utilities that we will use to build RPMs, namely rpmbuild,
 spectool, and yum-builddep.</p>
 <p>The steps in this guide will be carried out by the <strong>makerpm</strong> user.</p>
 <p>Additionally, we will need the source for collectd:</p>
-<div class="highlight"><pre><span class="go">cd $HOME</span>
+<div class="highlight"><pre><span></span><span class="go">cd $HOME</span>
 <span class="go">mkdir src &amp;&amp; cd src</span>
 <span class="go">curl --progress https://collectd.org/files/collectd-5.5.0.tar.gz | tar xz</span>
 </pre></div>
@@ -139,20 +139,20 @@ contains custom macros for the many built-in plugins as well as subpackage
 definitions for each configured plugin.</p>
 <p>Have a look at the spec file and then copy it to the SPECS directory in your
 rpmbuild directory:</p>
-<div class="highlight"><pre><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/src/collectd-5.5.0/contrib/redhat</span>
+<div class="highlight"><pre><span></span><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/src/collectd-5.5.0/contrib/redhat</span>
 <span class="x">cp collectd.spec </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/rpmbuild/SPECS</span>
 </pre></div>
 
 
 <p>Change to the SPECS directory inside your rpmbuild directory and use the
 <strong>spectool</strong> command to download the sources listed inside the spec file.  </p>
-<div class="highlight"><pre><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/rpmbuild/SPECS</span>
+<div class="highlight"><pre><span></span><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/rpmbuild/SPECS</span>
 <span class="x">spectool -g -R collectd.spec</span>
 </pre></div>
 
 
 <p>The <strong>-g</strong> flag tells spectool to download the <em>Source</em> listed in the spec file.</p>
-<div class="highlight"><pre><span class="gh">Name</span><span class="p">:</span>           collectd
+<div class="highlight"><pre><span></span><span class="gh">Name</span><span class="p">:</span>           collectd
 <span class="gh">Version</span><span class="p">:</span>        5.5.0
 <span class="gh">Source</span><span class="p">:</span>         http://collectd.org/files/<span class="kc">%{name}</span>-<span class="kc">%{version}</span>.tar.bz2
 </pre></div>
@@ -160,17 +160,17 @@ rpmbuild directory:</p>
 
 <p>The <strong>-R</strong> flag downloads the <em>Source</em> to the rpm's %{_sourcedir}, which
 translates to <strong>$HOME/rpmbuild/SOURCES</strong> directory:</p>
-<div class="highlight"><pre><span class="nv">$ </span>rpm --eval <span class="s2">&quot;%{_sourcedir}&quot;</span>
+<div class="highlight"><pre><span></span>$ rpm --eval <span class="s2">&quot;%{_sourcedir}&quot;</span>
 /home/makerpm/rpmbuild/SOURCES
 </pre></div>
 
 
 <p>Now, run the <strong>rpmbuild</strong> command to build the RPM from the spec file:</p>
-<div class="highlight"><pre>rpmbuild -bb collectd.spec 
+<div class="highlight"><pre><span></span>rpmbuild -bb collectd.spec 
 </pre></div>
 
 
-<div class="highlight"><pre><span class="go">error: Failed build dependencies:</span>
+<div class="highlight"><pre><span></span><span class="go">error: Failed build dependencies:</span>
 <span class="go">    libtool-ltdl-devel is needed by collectd-5.5.0-1.el6.x86_64</span>
 <span class="go">    libcap-devel is needed by collectd-5.5.0-1.el6.x86_64</span>
 <span class="go">    librabbitmq-devel is needed by collectd-5.5.0-1.el6.x86_64</span>
@@ -207,17 +207,17 @@ in the <em>Requires</em> and <em>BuildRequires</em> tags in spec file.</p>
 <p>Thankfully, these dependencies are easy to satisfy with the <strong>yum-builddep</strong>
 command found in the <strong>yum-utils</strong> package.  Run the following to download the
 necessary dependencies:</p>
-<div class="highlight"><pre>sudo yum-builddep collectd.spec
+<div class="highlight"><pre><span></span>sudo yum-builddep collectd.spec
 </pre></div>
 
 
 <p>Now that all dependencies are installed, re-run <strong>rpmbuild</strong>:</p>
-<div class="highlight"><pre>rpmbuild -bb collectd.spec
+<div class="highlight"><pre><span></span>rpmbuild -bb collectd.spec
 </pre></div>
 
 
 <p>This gets to the very end and throws an error when checking rpaths:</p>
-<div class="highlight"><pre><span class="go">+ /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot</span>
+<div class="highlight"><pre><span></span><span class="go">+ /usr/lib/rpm/check-rpaths /usr/lib/rpm/check-buildroot</span>
 <span class="go">*******************************************************************************</span>
 <span class="go">*</span>
 <span class="go">* WARNING: &#39;check-rpaths&#39; detected a broken RPATH and will cause &#39;rpmbuild&#39;</span>
@@ -271,22 +271,22 @@ in the library is redundant.</p>
 <strong>/usr/lib/rpm/check-rpaths</strong> line from the <strong>$HOME/.rpmmacros</strong> and then rerun the
 rpmbuild command.  The second option is to tell rpmbuild to ignore standard
 RPATHs by running rpmbuild as follows:</p>
-<div class="highlight"><pre>QA_RPATHS=0x0001 rpmbuild -bb collectd.spec
+<div class="highlight"><pre><span></span>QA_RPATHS=0x0001 rpmbuild -bb collectd.spec
 </pre></div>
 
 
 <p>After you rerun rpmbuild and it finishes successfully, you will see the last
 line as:</p>
-<div class="highlight"><pre><span class="go"> **+ exit 0**</span>
+<div class="highlight"><pre><span></span><span class="go"> **+ exit 0**</span>
 </pre></div>
 
 
 <p>The built RPMs will be in the <strong>$HOME/rpmbuild/RPMS/x86_64</strong> directory:</p>
-<div class="highlight"><pre><span class="go">ls $HOME/rpmbuild/RPMS/x86_64/</span>
+<div class="highlight"><pre><span></span><span class="go">ls $HOME/rpmbuild/RPMS/x86_64/</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span class="go">collectd-5.5.0-1.el6.x86_64.rpm</span>
+<div class="highlight"><pre><span></span><span class="go">collectd-5.5.0-1.el6.x86_64.rpm</span>
 <span class="go">collectd-netlink-5.5.0-1.el6.x86_64.rpm</span>
 <span class="go">collectd-amqp-5.5.0-1.el6.x86_64.rpm</span>
 <span class="go">collectd-nginx-5.5.0-1.el6.x86_64.rpm</span>
@@ -355,7 +355,7 @@ an RPM.  </p>
 <p>Grab the src rpm for collectd from the EPEL repository.  It is an
 outdated version of collectd but serves the purpose of this guide.  Download
 and save the file somewhere in your home directory:</p>
-<div class="highlight"><pre><span class="go">cd $HOME</span>
+<div class="highlight"><pre><span></span><span class="go">cd $HOME</span>
 <span class="go">mkdir local &amp;&amp; cd local</span>
 <span class="go">wget http://dl.fedoraproject.org/pub/epel/6/SRPMS/collectd-4.10.9-1.el6.src.rpm</span>
 </pre></div>
@@ -363,12 +363,12 @@ and save the file somewhere in your home directory:</p>
 
 <p>Before using <strong>rpmbuild</strong>, run <strong>yum-builddep</strong> on the src rpm to
 download any missing dependencies.  </p>
-<div class="highlight"><pre><span class="go">sudo yum-builddep collectd-4.10.9-1.el6.src.rpm</span>
+<div class="highlight"><pre><span></span><span class="go">sudo yum-builddep collectd-4.10.9-1.el6.src.rpm</span>
 </pre></div>
 
 
 <p>Now, use <em>rpmbuild</em> to rebuild the src rpm:</p>
-<div class="highlight"><pre><span class="go">QA_RPATHS=0x0001 rpmbuild --rebuild collectd-4.10.9-1.el6.src.rpm</span>
+<div class="highlight"><pre><span></span><span class="go">QA_RPATHS=0x0001 rpmbuild --rebuild collectd-4.10.9-1.el6.src.rpm</span>
 </pre></div>
 
 
@@ -381,7 +381,7 @@ avoid issues with rpaths during the build.</p>
 them.  It comes with default configurations, but it is easy to adapt and
 customize a configuration.</p>
 <p>First, download mock:</p>
-<div class="highlight"><pre>sudo yum install mock
+<div class="highlight"><pre><span></span>sudo yum install mock
 </pre></div>
 
 
@@ -389,7 +389,7 @@ customize a configuration.</p>
 directory and copy the <strong>epel-6-x86_64.cfg</strong>, since that configuration file
 includes the repositories for CentOS and EPEL, which is exactly the repos
 needed for satisfying dependencies for collectd.</p>
-<div class="highlight"><pre><span class="go">cd /etc/mock</span>
+<div class="highlight"><pre><span></span><span class="go">cd /etc/mock</span>
 <span class="go">sudo cp epel-6-x86_64.cfg centos-6-x86_64.cfg</span>
 </pre></div>
 
@@ -407,30 +407,30 @@ make the following changes:</p>
 </ul>
 <p>The mock utility should be run as non-root.  Any user using mock should be a
 member of the mock group:</p>
-<div class="highlight"><pre><span class="go">sudo usermod -a -G mock makerpm</span>
+<div class="highlight"><pre><span></span><span class="go">sudo usermod -a -G mock makerpm</span>
 </pre></div>
 
 
 <p>Next, use the <strong>newgrp</strong> command to change groups during the current login
 session:</p>
-<div class="highlight"><pre><span class="go">newgrp mock</span>
+<div class="highlight"><pre><span></span><span class="go">newgrp mock</span>
 </pre></div>
 
 
 <p>Mock needs the spec file to first build the SRPM.  Copy the spec file to the
 SPECS directory:</p>
-<div class="highlight"><pre><span class="go">cp collectd-5.5.0/contrib/redhat/collectd.spec $HOME/rpmbuild/SPECS/</span>
+<div class="highlight"><pre><span></span><span class="go">cp collectd-5.5.0/contrib/redhat/collectd.spec $HOME/rpmbuild/SPECS/</span>
 </pre></div>
 
 
 <p>As before, use <strong>spectool</strong> to download the sources specified in the spec file:</p>
-<div class="highlight"><pre><span class="go">spectool -R -g collectd.spec</span>
+<div class="highlight"><pre><span></span><span class="go">spectool -R -g collectd.spec</span>
 </pre></div>
 
 
 <p>Now, instruct mock to use our custom <em>centos-6-x86_64</em> configuration and build
 a source rpm from the spec file and sources:</p>
-<div class="highlight"><pre><span class="go">mock -r centos-6-x86_64 --buildsrpm \</span>
+<div class="highlight"><pre><span></span><span class="go">mock -r centos-6-x86_64 --buildsrpm \</span>
 <span class="go">--spec $HOME/rpmbuild/SPECS/collectd.spec \</span>
 <span class="go">--sources $HOME/rpmbuild/SOURCES</span>
 </pre></div>
@@ -439,7 +439,7 @@ a source rpm from the spec file and sources:</p>
 <p>By default, all builds are written in the <strong>/var/lib/mock</strong> directory.  After
 building the SRPM in the previous command, the output shows where the results
 are written:</p>
-<div class="highlight"><pre><span class="n">INFO</span><span class="o">:</span> <span class="n">Results</span> <span class="n">and</span><span class="sr">/or logs in: /var/lib/mock/centos-6-x86_64/</span><span class="n">result</span>
+<div class="highlight"><pre><span></span><span class="n">INFO</span><span class="o">:</span> <span class="n">Results</span> <span class="n">and</span><span class="sr">/or logs in: /var/lib/mock/centos-6-x86_64/</span><span class="n">result</span>
 </pre></div>
 
 
@@ -448,21 +448,21 @@ all the necessary packages.  Therefore, there is no need to run
 <strong>yum-builddep</strong>. Mock will take care of them.</p>
 <p>Lastly, instruct mock to build the collectd RPMs using the source RPM built in
 the previous step:</p>
-<div class="highlight"><pre><span class="go">mock -r centos-6-x86_64 --no-clean --rebuild /var/lib/mock/centos-6-x86_64/result/collectd-5.5.0-1.el6.src.rpm</span>
+<div class="highlight"><pre><span></span><span class="go">mock -r centos-6-x86_64 --no-clean --rebuild /var/lib/mock/centos-6-x86_64/result/collectd-5.5.0-1.el6.src.rpm</span>
 </pre></div>
 
 
 <p>Again, the output will show where the built RPMs are written:</p>
-<div class="highlight"><pre><span class="go">INFO: Results and/or logs in: /var/lib/mock/centos-6-x86_64/result</span>
+<div class="highlight"><pre><span></span><span class="go">INFO: Results and/or logs in: /var/lib/mock/centos-6-x86_64/result</span>
 </pre></div>
 
 
-<div class="highlight"><pre>cd /var/lib/mock/centos-6-x86_64/result/
+<div class="highlight"><pre><span></span>cd /var/lib/mock/centos-6-x86_64/result/
 ls *rpm
 </pre></div>
 
 
-<div class="highlight"><pre>collectd-netlink-5.5.0-1.el6.x86_64.rpm
+<div class="highlight"><pre><span></span>collectd-netlink-5.5.0-1.el6.x86_64.rpm
 collectd-5.5.0-1.el6.src.rpm
 collectd-nginx-5.5.0-1.el6.x86_64.rpm
 collectd-5.5.0-1.el6.x86_64.rpm
@@ -579,6 +579,11 @@ our RPMs and distributing the GPG key.</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
+                        </a>
+                    </li>
+                    <li class="list-group-item">
                         <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">
                             Wrapping Slurm's sdiag with Cython
                         </a>
@@ -586,11 +591,6 @@ our RPMs and distributing the GPG key.</p>
                     <li class="list-group-item">
                         <a href="http://giovannitorres.me/signing-rpms.html">
                             Signing RPMs
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
                         </a>
                     </li>
                 </ul>
@@ -618,13 +618,14 @@ our RPMs and distributing the GPG key.</p>
                             <i class="fa fa-folder-open fa-lg"></i> RPM
                         </a>
                     </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
                 </ul>
             </li>
 
-            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-tags fa-lg"></i><span class="icon-label">Tags</span></h4></a>
-                <ul class="list-group " id="tags">
-                </ul>
-            </li>
 
 
 

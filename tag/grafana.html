@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
 <head>
-    <title>collectd - Giovanni Torres</title>
+    <title>grafana - Giovanni Torres</title>
     <!-- Using the latest rendering mode for IE -->
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta charset="utf-8">
@@ -11,7 +11,7 @@
 
 
     <meta name="author" content="Giovanni Torres" />
-    <meta name="keywords" content="collectd" />
+    <meta name="keywords" content="grafana" />
 
     <!-- Open Graph tags -->
         <meta property="og:site_name" content="Giovanni Torres" />
@@ -66,44 +66,17 @@ Giovanni Torres            </a>
     <div class="row">
         <div class="col-sm-9">
             <article>
-                <h2><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></h2>
+                <h2><a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">Graphing sdiag with Graphite</a></h2>
                 <div class="summary"><h2>Introduction</h2>
-<p>Now that we have an <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">rpm build
-environment</a>
-, we can build RPM packages.</p>
-<p>In this guide, we will use the collectd monitoring application and walk through
-three different ways of building RPMs for this package:
-using a spec file, rebuilding a source rpm, and using
-<a href="https://fedoraproject.org/wiki/Mock">mock</a>.</p>
+<p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.</p>
+<p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
+graph the output from sdiag.</p>
 <h2>Prerequisites</h2>
-<p>We already ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">Using Collectd, Python and Graphite to Graph Slurm Partitions</a></h2>
-                <div class="summary"><h2>Introduction</h2>
-<p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
-plugins</a>.  In a previous
-<a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
-necessary dependencies to enable most of the collectd plugins when compiling
-collectd from source.</p>
-<p>One of these plugins is the <a href="https://collectd.org/wiki/index.php/Plugin:Python">Python
-plugin</a>, which is a binding
-that allows you to write ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">Enabling (Almost All) Collectd Plugins on CentOS 6</a></h2>
-                <div class="summary"><h2>Introduction</h2>
-<p>There are a variety of ways to extract system resource information from a Linux
-server. Some of these utilities are triggered by cron, such as sysstat, while others are
-based on a predefined check interval, such as Nagios.  Others are meant to be used
-interactively, such as htop or ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">more ...</a>
+<p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
+workload ...</p>
+                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">more ...</a>
                 </div>
             </article>
             <hr/>
@@ -118,18 +91,8 @@ interactively, such as htop or ...</p>
             <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
                 <ul class="list-group" id="recentposts">
                     <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
-                            Using Collectd, Python and Graphite to Graph Slurm Partitions
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
-                            Enabling (Almost All) Collectd Plugins on CentOS 6
+                        <a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">
+                            Graphing sdiag with Graphite
                         </a>
                     </li>
                 </ul>
@@ -183,7 +146,7 @@ interactively, such as htop or ...</p>
    <div class="container">
       <hr>
       <div class="row">
-         <div class="col-xs-10">&copy; 2015 Giovanni Torres
+         <div class="col-xs-10">&copy; 2016 Giovanni Torres
             &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>

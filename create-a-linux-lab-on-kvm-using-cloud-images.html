@@ -273,20 +273,16 @@ mkdir -p <span class="nv">$DIR</span>/<span class="nv">$1</span>
     <span class="nb">echo</span> <span class="s2">&quot;</span><span class="k">$(</span>date -R<span class="k">)</span><span class="s2"> DONE. SSH to </span><span class="nv">$1</span><span class="s2"> using </span><span class="nv">$IP</span><span class="s2">, with  username &#39;centos&#39;.&quot;</span>
 
 <span class="nb">popd</span> &gt; /dev/null
-<span class="sb">``</span>
-
-Be sure to change the SSH RSA public key to your own.
+</pre></div>
 
 
-<span class="c1">## Getting the Cloud Images</span>
-
-You can find CentOS cloud images at http://cloud.centos.org.  Let<span class="err">&#39;</span>s download a
-CentOS <span class="m">7</span> cloud image:
-
-<span class="sb">```</span>console
-<span class="nb">cd</span> virt/images
-wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz
-xz -d CentOS-7-x86_64-GenericCloud.qcow2.xz
+<p>Be sure to change the SSH RSA public key to your own.</p>
+<h2>Getting the Cloud Images</h2>
+<p>You can find CentOS cloud images at http://cloud.centos.org.  Let's download a
+CentOS 7 cloud image:</p>
+<div class="highlight"><pre><span></span><span class="go">cd virt/images</span>
+<span class="go">wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz</span>
+<span class="go">xz -d CentOS-7-x86_64-GenericCloud.qcow2.xz</span>
 </pre></div>
 
 

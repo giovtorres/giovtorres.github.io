@@ -1,0 +1,252 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/kvm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-05-11T19:52:00-04:00</updated><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;Whether you are testing a new clustered application, validating configuration
+management playbooks or studying for the RHCE, it's convenient to have access
+to a set of Linux virtual machines.  This is the beauty of the cloud.  You can
+launch fresh new instances and off you go.&lt;/p&gt;
+&lt;p&gt;If you have an host with adequate resources running KVM, you could have the
+same ability, locally, to spin up a few Linux virtual machines to create your
+own lab in a box.&lt;/p&gt;
+&lt;p&gt;We will use a script and some cloud images from CentOS to create virtual
+machines in just a few seconds.&lt;/p&gt;
+&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;This guide assumes you are running a recent version of Fedora with KVM
+installed.  You will also need a few packages:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo dnf install libvirt-client virt-install genisoimage&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Setting up the Directory&lt;/h2&gt;
+&lt;p&gt;Create the following directory structure:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir -p ~/virt/images&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;We will put the VM installation script in &lt;code&gt;~/virt&lt;/code&gt; and all the virtual machine
+image files will go in the &lt;code&gt;~/virt/images&lt;/code&gt; directory.&lt;/p&gt;
+&lt;h2&gt;Installation Script&lt;/h2&gt;
+&lt;p&gt;This script originally came from &lt;a href="https://goldmann.pl/blog/2014/01/16/running-fedora-cloud-images-on-kvm/"&gt;Marek Goldmann's
+post&lt;/a&gt;.
+I've since modified it further to fit my needs.&lt;/p&gt;
+&lt;p&gt;I run the script as my normal user and not as root.  This means that I'm using
+the &lt;strong&gt;qemu:///session&lt;/strong&gt; URI to connect to libvirt.  Since libvirt and qemu are
+new enough on Fedora, a tap device gets created and connected to the default bridge,
+&lt;strong&gt;virbr0&lt;/strong&gt;, which allows the guests to communicate with each other as they will
+be on the same subnet.&lt;/p&gt;
+&lt;p&gt;See the contents of &lt;code&gt;/etc/qemu/bridge.conf&lt;/code&gt; and the output of &lt;strong&gt;ip address show&lt;/strong&gt; for the
+tap networking device.&lt;/p&gt;
+&lt;p&gt;Now, copy the following script and save it as &lt;code&gt;~/virt/virt-install-centos&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;The script is also available as a
+&lt;a href="https://gist.github.com/giovtorres/0049cec554179d96e0a8329930a6d724"&gt;gist&lt;/a&gt;.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="ch"&gt;#!/bin/bash&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Take one argument from the commandline: VM name&lt;/span&gt;
+&lt;span class="k"&gt;if&lt;/span&gt; ! &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="nv"&gt;$#&lt;/span&gt; -eq &lt;span class="m"&gt;1&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;then&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Usage: &lt;/span&gt;&lt;span class="nv"&gt;$0&lt;/span&gt;&lt;span class="s2"&gt; &amp;lt;node-name&amp;gt;&amp;quot;&lt;/span&gt;
+    &lt;span class="nb"&gt;exit&lt;/span&gt; 1
+&lt;span class="k"&gt;fi&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Check if domain already exists&lt;/span&gt;
+virsh dominfo &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$?&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; -eq &lt;span class="m"&gt;0&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;then&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; -n &lt;span class="s2"&gt;&amp;quot;[WARNING] &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; already exists.  &amp;quot;&lt;/span&gt;
+    &lt;span class="nb"&gt;read&lt;/span&gt; -p &lt;span class="s2"&gt;&amp;quot;Do you want to overwrite &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; [y/N]? &amp;quot;&lt;/span&gt; -r
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;[[&lt;/span&gt; &lt;span class="nv"&gt;$REPLY&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt;~ ^&lt;span class="o"&gt;[&lt;/span&gt;Yy&lt;span class="o"&gt;]&lt;/span&gt;$ &lt;span class="o"&gt;]]&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;then&lt;/span&gt;
+        &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;else&lt;/span&gt;
+        &lt;span class="nb"&gt;echo&lt;/span&gt; -e &lt;span class="s2"&gt;&amp;quot;\nNot overwriting &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt;. Exiting...&amp;quot;&lt;/span&gt;
+        &lt;span class="nb"&gt;exit&lt;/span&gt; 1
+    &lt;span class="k"&gt;fi&lt;/span&gt;
+&lt;span class="k"&gt;fi&lt;/span&gt;
+
+&lt;span class="c1"&gt;# Directory to store images&lt;/span&gt;
+&lt;span class="nv"&gt;DIR&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;~/virt/images
+
+&lt;span class="c1"&gt;# Location of cloud image&lt;/span&gt;
+&lt;span class="nv"&gt;IMAGE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nv"&gt;$DIR&lt;/span&gt;/CentOS-7-x86_64-GenericCloud.qcow2
+
+&lt;span class="c1"&gt;# Amount of RAM in MB&lt;/span&gt;
+&lt;span class="nv"&gt;MEM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;768
+
+&lt;span class="c1"&gt;# Number of virtual CPUs&lt;/span&gt;
+&lt;span class="nv"&gt;CPUS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;1
+
+&lt;span class="c1"&gt;# Cloud init files&lt;/span&gt;
+&lt;span class="nv"&gt;USER_DATA&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;user-data
+&lt;span class="nv"&gt;META_DATA&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;meta-data
+&lt;span class="nv"&gt;CI_ISO&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;-cidata.iso
+&lt;span class="nv"&gt;DISK&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;.qcow2
+
+&lt;span class="c1"&gt;# Bridge for VMs (default on Fedora is virbr0)&lt;/span&gt;
+&lt;span class="nv"&gt;BRIDGE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;virbr0
+
+&lt;span class="c1"&gt;# Start clean&lt;/span&gt;
+rm -rf &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/span&gt;
+mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/span&gt;
+
+&lt;span class="nb"&gt;pushd&lt;/span&gt; &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null
+
+    &lt;span class="c1"&gt;# Create log file&lt;/span&gt;
+    touch &lt;span class="nv"&gt;$1&lt;/span&gt;.log
+
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Destroying the &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; domain (if it exists)...&amp;quot;&lt;/span&gt;
+
+    &lt;span class="c1"&gt;# Remove domain with the same name&lt;/span&gt;
+    virsh destroy &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
+    virsh undefine &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
+
+    &lt;span class="c1"&gt;# cloud-init config: set hostname, remove cloud-init package,&lt;/span&gt;
+    &lt;span class="c1"&gt;# and add ssh-key &lt;/span&gt;
+    cat &amp;gt; &lt;span class="nv"&gt;$USER_DATA&lt;/span&gt; &lt;span class="s"&gt;&amp;lt;&amp;lt; _EOF_&lt;/span&gt;
+&lt;span class="s"&gt;#cloud-config&lt;/span&gt;
+
+&lt;span class="s"&gt;# Hostname management&lt;/span&gt;
+&lt;span class="s"&gt;preserve_hostname: False&lt;/span&gt;
+&lt;span class="s"&gt;hostname: $1&lt;/span&gt;
+&lt;span class="s"&gt;fqdn: $1.example.local&lt;/span&gt;
+
+&lt;span class="s"&gt;# Remove cloud-init when finished with it&lt;/span&gt;
+&lt;span class="s"&gt;runcmd:&lt;/span&gt;
+&lt;span class="s"&gt;  - [ yum, -y, remove, cloud-init ]&lt;/span&gt;
+
+&lt;span class="s"&gt;# Configure where output will go&lt;/span&gt;
+&lt;span class="s"&gt;output: &lt;/span&gt;
+&lt;span class="s"&gt;  all: &amp;quot;&amp;gt;&amp;gt; /var/log/cloud-init.log&amp;quot;&lt;/span&gt;
+
+&lt;span class="s"&gt;# configure interaction with ssh server&lt;/span&gt;
+&lt;span class="s"&gt;ssh_svcname: ssh&lt;/span&gt;
+&lt;span class="s"&gt;ssh_deletekeys: True&lt;/span&gt;
+&lt;span class="s"&gt;ssh_genkeytypes: [&amp;#39;rsa&amp;#39;, &amp;#39;ecdsa&amp;#39;]&lt;/span&gt;
+
+&lt;span class="s"&gt;# Install my public ssh key to the first user-defined user configured &lt;/span&gt;
+&lt;span class="s"&gt;# in cloud.cfg in the template (which is centos for CentOS cloud images)&lt;/span&gt;
+&lt;span class="s"&gt;ssh_authorized_keys:&lt;/span&gt;
+&lt;span class="s"&gt;  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDBil2QzORhDcnKiVVNpO5daOSYVp8nshcIc7aTEkdlqCRir2Oni8BEStK7x7bvh0jrp9KptlHPeos87fQs//VXEb1FEprL2c6fPWmVdtjmYw3yzSkaFKMksL7FdUoEiwF6t8pQAg2mU0Qj9emSHBKg5ttdGqNoSvXc92k7iOzgauda7jdNak+Dx9dPhR3FJwHMcZSlQHO4cweZcK63bZitxlFkJ/FJdry/TBirDhRcXslOJ3ECU2xiyRXJVPs3VNLjMdOTTAoMmZj+GraUBbQ9VIqe683xe02sM83th5hj2C4gW3qXUoFkNLfKAMRxXLRMEwI3ABFB/AAUhACxyTJp giovanni@throwaway&lt;/span&gt;
+&lt;span class="s"&gt;_EOF_&lt;/span&gt;
+
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;instance-id: &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt;; local-hostname: &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; &amp;gt; &lt;span class="nv"&gt;$META_DATA&lt;/span&gt;
+
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Copying template image...&amp;quot;&lt;/span&gt;
+    cp &lt;span class="nv"&gt;$IMAGE&lt;/span&gt; &lt;span class="nv"&gt;$DISK&lt;/span&gt;
+
+    &lt;span class="c1"&gt;# Create CD-ROM ISO with cloud-init config&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Generating ISO for cloud-init...&amp;quot;&lt;/span&gt;
+    genisoimage -output &lt;span class="nv"&gt;$CI_ISO&lt;/span&gt; -volid cidata -joliet -r &lt;span class="nv"&gt;$USER_DATA&lt;/span&gt; &lt;span class="nv"&gt;$META_DATA&lt;/span&gt; &lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log
+
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Installing the domain and adjusting the configuration...&amp;quot;&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;[INFO] Installing with the following parameters:&amp;quot;&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;virt-install --import --name &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; --ram &lt;/span&gt;&lt;span class="nv"&gt;$MEM&lt;/span&gt;&lt;span class="s2"&gt; --vcpus &lt;/span&gt;&lt;span class="nv"&gt;$CPUS&lt;/span&gt;&lt;span class="s2"&gt; --disk&lt;/span&gt;
+&lt;span class="s2"&gt;    &lt;/span&gt;&lt;span class="nv"&gt;$DISK&lt;/span&gt;&lt;span class="s2"&gt;,format=qcow2,bus=virtio --disk &lt;/span&gt;&lt;span class="nv"&gt;$CI_ISO&lt;/span&gt;&lt;span class="s2"&gt;,device=cdrom --network&lt;/span&gt;
+&lt;span class="s2"&gt;    bridge=virbr0,model=virtio --os-type=linux --os-variant=rhel6 --noautoconsole&amp;quot;&lt;/span&gt;
+
+    &lt;span class="nb"&gt;exit&lt;/span&gt;
+
+    virt-install --import --name &lt;span class="nv"&gt;$1&lt;/span&gt; --ram &lt;span class="nv"&gt;$MEM&lt;/span&gt; --vcpus &lt;span class="nv"&gt;$CPUS&lt;/span&gt; --disk &lt;span class="se"&gt;\&lt;/span&gt;
+    &lt;span class="nv"&gt;$DISK&lt;/span&gt;,format&lt;span class="o"&gt;=&lt;/span&gt;qcow2,bus&lt;span class="o"&gt;=&lt;/span&gt;virtio --disk &lt;span class="nv"&gt;$CI_ISO&lt;/span&gt;,device&lt;span class="o"&gt;=&lt;/span&gt;cdrom --network &lt;span class="se"&gt;\&lt;/span&gt;
+    &lt;span class="nv"&gt;bridge&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;virbr0,model&lt;span class="o"&gt;=&lt;/span&gt;virtio --os-type&lt;span class="o"&gt;=&lt;/span&gt;linux --os-variant&lt;span class="o"&gt;=&lt;/span&gt;rhel6 --noautoconsole
+
+    &lt;span class="nv"&gt;MAC&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;virsh dumpxml &lt;span class="nv"&gt;$1&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; awk -F&lt;span class="se"&gt;\&amp;#39;&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/mac address/ {print $2}&amp;#39;&lt;/span&gt;&lt;span class="k"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;while&lt;/span&gt; &lt;span class="nb"&gt;true&lt;/span&gt;
+    &lt;span class="k"&gt;do&lt;/span&gt;
+        &lt;span class="nv"&gt;IP&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;grep -B1 &lt;span class="nv"&gt;$MAC&lt;/span&gt; /var/lib/libvirt/dnsmasq/&lt;span class="nv"&gt;$BRIDGE&lt;/span&gt;.status &lt;span class="p"&gt;|&lt;/span&gt; head &lt;span class="se"&gt;\&lt;/span&gt;
+             -n &lt;span class="m"&gt;1&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; awk &lt;span class="s1"&gt;&amp;#39;{print $2}&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; sed -e s/&lt;span class="se"&gt;\&amp;quot;&lt;/span&gt;//g -e s/,//&lt;span class="k"&gt;)&lt;/span&gt;
+        &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$IP&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;
+        &lt;span class="k"&gt;then&lt;/span&gt;
+            sleep 1
+        &lt;span class="k"&gt;else&lt;/span&gt;
+            &lt;span class="nb"&gt;break&lt;/span&gt;
+        &lt;span class="k"&gt;fi&lt;/span&gt;
+    &lt;span class="k"&gt;done&lt;/span&gt;
+
+    &lt;span class="c1"&gt;# Eject cdrom&lt;/span&gt;
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Cleaning up cloud-init...&amp;quot;&lt;/span&gt;
+    virsh change-media &lt;span class="nv"&gt;$1&lt;/span&gt; hda --eject --config &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log
+
+    &lt;span class="c1"&gt;# Remove the unnecessary cloud init files&lt;/span&gt;
+    rm &lt;span class="nv"&gt;$USER_DATA&lt;/span&gt; &lt;span class="nv"&gt;$CI_ISO&lt;/span&gt;
+
+    &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; DONE. SSH to &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; using &lt;/span&gt;&lt;span class="nv"&gt;$IP&lt;/span&gt;&lt;span class="s2"&gt;, with  username &amp;#39;centos&amp;#39;.&amp;quot;&lt;/span&gt;
+
+&lt;span class="nb"&gt;popd&lt;/span&gt; &amp;gt; /dev/null
+&lt;span class="sb"&gt;``&lt;/span&gt;
+
+Be sure to change the SSH RSA public key to your own.
+
+
+&lt;span class="c1"&gt;## Getting the Cloud Images&lt;/span&gt;
+
+You can find CentOS cloud images at http://cloud.centos.org.  Let&lt;span class="err"&gt;&amp;#39;&lt;/span&gt;s download a
+CentOS &lt;span class="m"&gt;7&lt;/span&gt; cloud image:
+
+&lt;span class="sb"&gt;```&lt;/span&gt;console
+&lt;span class="nb"&gt;cd&lt;/span&gt; virt/images
+wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz
+xz -d CentOS-7-x86_64-GenericCloud.qcow2.xz
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Make sure that the &lt;strong&gt;IMAGE&lt;/strong&gt; variable in the script is pointing to the image:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;IMAGE=&lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;DIR&lt;/span&gt;&lt;span class="x"&gt;/CentOS-7-x86_64-GenericCloud.qcow2&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Build VMs&lt;/h2&gt;
+&lt;p&gt;Now, just run the virt-install-centos command and pass it the name of the
+virtual machine you want to build:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;./virt-install-centos testvm1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;Sat, 14 May 2016 01:02:04 -0400 Destroying the testvm1 domain (if it exists)...&lt;/span&gt;
+&lt;span class="go"&gt;Sat, 14 May 2016 01:02:04 -0400 Copying template image...&lt;/span&gt;
+&lt;span class="go"&gt;Sat, 14 May 2016 01:02:04 -0400 Generating ISO for cloud-init...&lt;/span&gt;
+&lt;span class="go"&gt;Sat, 14 May 2016 01:02:04 -0400 Installing the domain and adjusting the configuration...&lt;/span&gt;
+&lt;span class="go"&gt;[INFO] Installing with the following parameters:&lt;/span&gt;
+&lt;span class="go"&gt;virt-install --import --name testvm1 --ram 768 --vcpus 1 --disk&lt;/span&gt;
+&lt;span class="go"&gt;    testvm1.qcow2,format=qcow2,bus=virtio --disk testvm1-cidata.iso,device=cdrom --network&lt;/span&gt;
+&lt;span class="go"&gt;    bridge=virbr0,model=virtio --os-type=linux --os-variant=rhel6 --noautoconsole&lt;/span&gt;
+
+&lt;span class="go"&gt;Starting install...&lt;/span&gt;
+&lt;span class="go"&gt;Creating domain...                                                                |    0 B  00:00:00     &lt;/span&gt;
+&lt;span class="go"&gt;Domain creation completed.&lt;/span&gt;
+&lt;span class="go"&gt;Sat, 14 May 2016 01:02:17 -0400 Cleaning up cloud-init...&lt;/span&gt;
+&lt;span class="go"&gt;Sat, 14 May 2016 01:02:17 -0400 DONE. SSH to testvm1 using 192.168.124.138, with  username &amp;#39;centos&amp;#39;.&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The VM was ready in under 15 seconds.  This is fast because the cloud image is
+small, so copying it to create a new VM is quick.  Also, the cloud image is
+already prebuilt.  The &lt;strong&gt;cloud-init&lt;/strong&gt; service runs at boot time, looks for a
+configuration on a virtual CD-ROM device and finishes the configuration of the
+VM, like setting up SSH keys, before reaching the login prompt.&lt;/p&gt;
+&lt;h2&gt;Log into the VM&lt;/h2&gt;
+&lt;p&gt;CentOS cloud images have the username &lt;strong&gt;centos&lt;/strong&gt;.  Log in as this user to the
+new VM:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;ssh centos@192.168.124.138&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;The authenticity of host &amp;#39;192.168.124.138 (192.168.124.138)&amp;#39; can&amp;#39;t be established.&lt;/span&gt;
+&lt;span class="go"&gt;ECDSA key fingerprint is SHA256:Z2sSRXqyrc6udLHHZN2goh0eZolDmhOU7bpCJiQoaKA.&lt;/span&gt;
+&lt;span class="go"&gt;ECDSA key fingerprint is MD5:57:88:78:4a:bb:d0:01:d2:1b:f3:93:93:39:63:b4:af.&lt;/span&gt;
+&lt;span class="go"&gt;Are you sure you want to continue connecting (yes/no)? yes&lt;/span&gt;
+&lt;span class="go"&gt;Warning: Permanently added &amp;#39;192.168.124.138&amp;#39; (ECDSA) to the list of known hosts.&lt;/span&gt;
+&lt;span class="gp"&gt;[centos@testvm1 ~]$&lt;/span&gt; 
+&lt;span class="gp"&gt;[centos@testvm1 ~]$&lt;/span&gt; sudo su -
+&lt;span class="gp"&gt;[root@testvm1 ~]#&lt;/span&gt; 
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;The script uses cloud-init to "inject" a startup configuration to the virtual
+machine.  The image disk expands to 8GB by default.  You can expand this
+manually by shutting down the VM and virt-resize tool, which requires the
+&lt;strong&gt;libguestfs-tools&lt;/strong&gt; package.&lt;/p&gt;
+&lt;p&gt;To remove the VM, shut it down and just delete its directory.  For example:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;virsh shutdown testvm1&lt;/span&gt;
+&lt;span class="go"&gt;rm -rf ~/virt/images/testvm1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The script also works with CentOS 6 and Fedora 23 cloud images.  If you are
+using the latter, you may want to rename the script to &lt;code&gt;virt-install-fedora&lt;/code&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry></feed>

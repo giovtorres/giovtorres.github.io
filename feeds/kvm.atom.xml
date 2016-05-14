@@ -171,10 +171,12 @@ mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;p&gt;Be sure to change the SSH RSA public key to your own.&lt;/p&gt;
+&lt;p&gt;You will generate an SSH key pair if you haven't already done so.  Be sure to
+change the SSH RSA public key in the script to your own.&lt;/p&gt;
 &lt;h2&gt;Getting the Cloud Images&lt;/h2&gt;
-&lt;p&gt;You can find CentOS cloud images at http://cloud.centos.org.  Let's download a
-CentOS 7 cloud image:&lt;/p&gt;
+&lt;p&gt;You can find CentOS cloud images at
+&lt;a href="http://cloud.centos.org"&gt;http://cloud.centos.org&lt;/a&gt;.  Let's download a CentOS 7
+cloud image:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cd virt/images&lt;/span&gt;
 &lt;span class="go"&gt;wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz&lt;/span&gt;
 &lt;span class="go"&gt;xz -d CentOS-7-x86_64-GenericCloud.qcow2.xz&lt;/span&gt;
@@ -187,7 +189,7 @@ CentOS 7 cloud image:&lt;/p&gt;
 
 
 &lt;h2&gt;Build VMs&lt;/h2&gt;
-&lt;p&gt;Now, just run the virt-install-centos command and pass it the name of the
+&lt;p&gt;Now, just run the &lt;strong&gt;virt-install-centos&lt;/strong&gt; command and pass it the name of the
 virtual machine you want to build:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;./virt-install-centos testvm1&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -245,4 +247,4 @@ manually by shutting down the VM and virt-resize tool, which requires the
 
 
 &lt;p&gt;The script also works with CentOS 6 and Fedora 23 cloud images.  If you are
-using the latter, you may want to rename the script to &lt;code&gt;virt-install-fedora&lt;/code&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry></feed>
+using the latter, you may want to rename the script to &lt;strong&gt;virt-install-fedora&lt;/strong&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry></feed>

@@ -276,10 +276,12 @@ mkdir -p <span class="nv">$DIR</span>/<span class="nv">$1</span>
 </pre></div>
 
 
-<p>Be sure to change the SSH RSA public key to your own.</p>
+<p>You will generate an SSH key pair if you haven't already done so.  Be sure to
+change the SSH RSA public key in the script to your own.</p>
 <h2>Getting the Cloud Images</h2>
-<p>You can find CentOS cloud images at http://cloud.centos.org.  Let's download a
-CentOS 7 cloud image:</p>
+<p>You can find CentOS cloud images at
+<a href="http://cloud.centos.org">http://cloud.centos.org</a>.  Let's download a CentOS 7
+cloud image:</p>
 <div class="highlight"><pre><span></span><span class="go">cd virt/images</span>
 <span class="go">wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz</span>
 <span class="go">xz -d CentOS-7-x86_64-GenericCloud.qcow2.xz</span>
@@ -292,7 +294,7 @@ CentOS 7 cloud image:</p>
 
 
 <h2>Build VMs</h2>
-<p>Now, just run the virt-install-centos command and pass it the name of the
+<p>Now, just run the <strong>virt-install-centos</strong> command and pass it the name of the
 virtual machine you want to build:</p>
 <div class="highlight"><pre><span></span><span class="go">./virt-install-centos testvm1</span>
 </pre></div>
@@ -350,7 +352,7 @@ manually by shutting down the VM and virt-resize tool, which requires the
 
 
 <p>The script also works with CentOS 6 and Fedora 23 cloud images.  If you are
-using the latter, you may want to rename the script to <code>virt-install-fedora</code>.</p>
+using the latter, you may want to rename the script to <strong>virt-install-fedora</strong>.</p>
             </div>
             <!-- /.entry-content -->
     <hr/>

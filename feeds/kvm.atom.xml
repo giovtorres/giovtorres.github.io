@@ -176,7 +176,7 @@ change the SSH RSA public key in the script to your own.&lt;/p&gt;
 &lt;h2&gt;Getting the Cloud Images&lt;/h2&gt;
 &lt;p&gt;You can find CentOS cloud images at
 &lt;a href="http://cloud.centos.org"&gt;http://cloud.centos.org&lt;/a&gt;.  Let's download a
-compressed CentOS 7 cloud image to save time and bandwith, then decompress it:&lt;/p&gt;
+compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;cd virt/images&lt;/span&gt;
 &lt;span class="go"&gt;wget http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2.xz&lt;/span&gt;
 &lt;span class="go"&gt;xz --decompress CentOS-7-x86_64-GenericCloud.qcow2.xz&lt;/span&gt;

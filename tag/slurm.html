@@ -27,7 +27,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -41,12 +40,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -54,7 +47,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -67,13 +59,14 @@ Giovanni Torres            </a>
         <div class="col-sm-9">
             <article>
                 <h2><a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">Graphing sdiag with Graphite</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.</p>
 <p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
 graph the output from sdiag.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
 workload ...</p>
                     <a class="btn btn-default btn-xs" href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">more ...</a>
@@ -82,7 +75,7 @@ workload ...</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">Wrapping Slurm's sdiag with Cython</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -93,7 +86,7 @@ This means you don't have to know much C, if any, to ...</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">Using Collectd, Python and Graphite to Graph Slurm Partitions</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
 plugins</a>.  In a previous
 <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
@@ -177,6 +170,15 @@ that allows you to write ...</p>
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -188,7 +190,7 @@ that allows you to write ...</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

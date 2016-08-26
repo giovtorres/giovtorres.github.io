@@ -32,7 +32,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -48,12 +47,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -61,7 +54,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -103,7 +95,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p>So far, we have <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">setup an RPM build
 environment</a>
 , <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">setup our RPM signing key</a>,
@@ -111,7 +103,8 @@ and <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">b
 thing left to do is to use the rpm signing key to sign our newly built RPMs.</p>
 <p>In this last part of this guide, we will sign the collectd RPMs that we built
 in the <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">Part 3</a>.</p>
-<h2>Configure %_gpg_name in Macro File</h2>
+<p><br></p>
+<h4>Configure %_gpg_name in Macro File</h4>
 <p>Before we can sign RPMs, we need to tell the <strong>rpm</strong> command which gpg key to use.
 In <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part 1</a>,
 we saw the <code>.rpmmacros</code> file, which included some default rpm macros.</p>
@@ -132,7 +125,8 @@ sub   2048R/D97540C0 2015-11-30
 </pre></div>
 
 
-<h2>Signing RPMs</h2>
+<p><br></p>
+<h4>Signing RPMs</h4>
 <p>Change to the directory where the RPMs were created.  Depending on the
 chosen method, the directory could be either of the following:</p>
 <ul>
@@ -206,7 +200,8 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 </pre></div>
 
 
-<h2>Verifying RPMs</h2>
+<p><br></p>
+<h4>Verifying RPMs</h4>
 <p>To verify the signature, use the <code>--checksig</code> rpm flag:</p>
 <div class="highlight"><pre><span></span><span class="gp">[makerpm@localhost x86_64]$</span> rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 <span class="go">collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK</span>
@@ -240,7 +235,8 @@ collectd-5.5.0-1.el6.x86_64.rpm:
 </pre></div>
 
 
-<h2>RPM Distribution</h2>
+<p><br></p>
+<h4>RPM Distribution</h4>
 <p>Now that we have signed RPMs, we are ready to distribute them to other servers
 within the infrastructure.  There are various ways to do this, so use a method
 that fits your workflow.</p>
@@ -356,12 +352,31 @@ also add the signed RPMs to a custom repository.</p>
             </li>
 
 
+                    <li class="list-group-item"><h4><i class="fa fa-tags fa-list-ul"></i><span class="icon-label">Series</span></h4>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                                <h5></i> Previous article</h5>
+                                <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a>
+                            </li>
+                            <li class="list-group-item">
+                            </li>
+                        </ul>
+                    </li>
 
 
     <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
         <div id="gh_repos">
             <p class="list-group-item">Status updating...</p>
         </div>
+    </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
     </li>
     </ul>
 </section>
@@ -374,7 +389,7 @@ also add the signed RPMs to a custom repository.</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

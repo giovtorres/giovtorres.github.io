@@ -32,7 +32,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -48,12 +47,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -61,7 +54,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -103,7 +95,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p>If you are working on or developing software for a RHEL based operating system,
 building RPMs is a great way to distribute packages within a group or
 enterprise.  Sometimes, the package you want is not in any of the usual RPM
@@ -115,10 +107,12 @@ a configuration management tool like Puppet or Ansible to take the tarball and
 run the build/compile/install commands for you.</p>
 <p>In this guide, we will walk through the steps required to setup an environment
 to build RPMs.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>Before continuing with this guide, start with a new virtual machine with the
 EPEL yum repository configured.</p>
-<h2>Install Packages</h2>
+<p><br></p>
+<h4>Install Packages</h4>
 <p>Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.</p>
 <p>To install the required packages, run the following:</p>
@@ -127,7 +121,8 @@ sudo yum install yum install rpmdevtools yum-utils
 </pre></div>
 
 
-<h2>Create a Dedicated User</h2>
+<p><br></p>
+<h4>Create a Dedicated User</h4>
 <p>Do <strong>not</strong> build RPMs as the <em>root</em> user!  You have been warned.  Things can go
 really wrong if the spec file is not written properly.  In fact, the <em>rpmbuild</em>
 command will build the RPM in its own <em>BUILD_ROOT</em>, therefore root access is
@@ -140,7 +135,8 @@ and use the same environment.</p>
 </pre></div>
 
 
-<h2>Set Up The rpmbuild Tree</h2>
+<p><br></p>
+<h4>Set Up The rpmbuild Tree</h4>
 <p>This process is trivial when using the <em>rpmdevtools</em> package. This package
 contains several scripts that help with building RPM packages. </p>
 <p>As the <em>makerpm</em> user, run the <em>rpmdev-setuptree</em> command:</p>
@@ -164,7 +160,8 @@ rpmbuild/
 </pre></div>
 
 
-<h2>The .rpmmacros File</h2>
+<p><br></p>
+<h4>The .rpmmacros File</h4>
 <p>The <em>rpmdev-setuptree</em> command also installs a <em>.rpmmacros</em> file in the user's
 home directory.  This file contains three lines by default:</p>
 <div class="highlight"><pre><span></span>%_topdir      %<span class="o">(</span><span class="nb">echo</span> <span class="nv">$HOME</span><span class="o">)</span>/rpmbuild
@@ -193,7 +190,8 @@ libraries as long as the libraries are put in the standard locations, such as
 for libraries in non-standard locations.</p>
 <p>For a more thorough explanation, see this Fedora Project link:
 <a href="https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath">https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath</a>.</p>
-<h2>Conclusion</h2>
+<p><br></p>
+<h4>Conclusion</h4>
 <p>You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
 follow good practice and sign your RPM packages.</p>
@@ -304,12 +302,31 @@ follow good practice and sign your RPM packages.</p>
             </li>
 
 
+                    <li class="list-group-item"><h4><i class="fa fa-tags fa-list-ul"></i><span class="icon-label">Series</span></h4>
+                        <ul class="list-group">
+                            <li class="list-group-item">
+                            </li>
+                            <li class="list-group-item">
+                                <h5>Next article</h5>
+                                <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">How to Setup an RPM Signing Key</a>
+                            </li>
+                        </ul>
+                    </li>
 
 
     <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
         <div id="gh_repos">
             <p class="list-group-item">Status updating...</p>
         </div>
+    </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
     </li>
     </ul>
 </section>
@@ -322,7 +339,7 @@ follow good practice and sign your RPM packages.</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

@@ -34,7 +34,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -50,12 +49,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -63,7 +56,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -107,7 +99,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p>Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -115,11 +107,13 @@ This means you don't have to know much C, if any, to get access to C functions
 and expose the results to Python.</p>
 <p>In this guide, we will use Cython to wrap some C functions in Slurm's sdiag
 program and make the statistics available to Python.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>This guide assumes you are using Slurm, an HPC workload manager.  This guide
 uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.</p>
 <p>This should also work in Python 3.5.1.</p>
-<h2>Looking at sdiag Output</h2>
+<p><br></p>
+<h4>Looking at sdiag Output</h4>
 <p>sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the <code>sdiag</code> command and you should see similar output:</p>
 <div class="highlight"><pre><span></span>*******************************************************
@@ -160,7 +154,8 @@ Backfilling stats
 
 <p>We want to use Cython to wrap the necessary Slurm API functions to get access
 to these statistics via Python.</p>
-<h2>Looking at the C API</h2>
+<p><br></p>
+<h4>Looking at the C API</h4>
 <p>Normally, we would start with Slurm's [API
 page](http://slurm.schedmd.com/api.html], which lists various functions to get
 direct access to Slurm data structures.  This page, however, does not have any
@@ -174,12 +169,14 @@ The <strong>sdiag.c</strong> file is the source code for the sdiag program. We n
 replicate a portion of this program in order to get access to the statistics.</p>
 <p>Looking at the program, we need to wrap the <strong>slurm_get_statistics</strong>,
 <strong>slurm_reset_statistics</strong>, and the <strong>slurm_free_stats_response_msg</strong> functions.</p>
-<h2>Organizing the Cython code</h2>
+<p><br></p>
+<h4>Organizing the Cython code</h4>
 <p>We need two files for this project: an implementation (.pyx) file and a
 definition file (.pxd).</p>
 <p>We put the C function and variable declarations in the in the definition file.
 The Cython code for wrapping the functions goes in the implementation file.</p>
-<h2>Slurm Header Files</h2>
+<p><br></p>
+<h4>Slurm Header Files</h4>
 <p>We need to declare the C functions and variables, and we get those from the
 Slurm header files.  The header file is in the include directory of your Slurm
 installation path, <strong>/path/to/slurm/include/slurm/slurm.h</strong></p>
@@ -193,7 +190,8 @@ the functions we want to wrap.  There, we see its declaration and signature:</p>
 <p>The signature for <em>slurm_get_statistics</em> has two structs:
 <em>stats_info_response_msg_t</em> and <em>stats_info_request_msg_t</em>.  We will also have
 to declare both structs in the definition file.</p>
-<h2>Wrapping C Code</h2>
+<p><br></p>
+<h4>Wrapping C Code</h4>
 <p>Let's start by declaring the structs.  The C code for the
 <em>stats_info_request_msg</em> struct looks like:</p>
 <div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="k">struct</span> <span class="n">stats_info_request_msg</span> <span class="p">{</span>
@@ -276,7 +274,8 @@ directly:</p>
 
 
 <p>This API function is for freeing memory allocated by the stats response buffer.</p>
-<h2>Writing the Implementation File</h2>
+<p><br></p>
+<h4>Writing the Implementation File</h4>
 <p>The implementation file (.pyx) is where the Cython code goes.  This is where we
 need to look at the <em>sdiag.c</em> file and recreate the needed portions in Cython.</p>
 <p>We will expose two functions to Python: get_stats() and reset_stats().
@@ -364,7 +363,8 @@ the definition file, using the same signature as in the implementation file:</p>
 
 <p>The end result should look something like this
 <a href="https://gist.github.com/giovtorres/274b32c8ded1a46e416c">gist</a>.</p>
-<h2>Compiling with Cython</h2>
+<p><br></p>
+<h4>Compiling with Cython</h4>
 <p>Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.</p>
 <div class="highlight"><pre><span></span>cython sdiag.pyx
@@ -375,7 +375,8 @@ to a C file.</p>
 errors or warnings.  This is the beauty of Cython.  It did all the hard work of
 compiling the Cython source to C code.  The resulting file will be <strong>sdiag.c</strong>.
 Have a look and see what Cython had done for us.</p>
-<h2>Creating the Python Extension Module</h2>
+<p><br></p>
+<h4>Creating the Python Extension Module</h4>
 <p>The resulting C output file can now be converted to a Python extension module.
 The standard way of creating an extension module is through the use of
 <em>distutils</em> in a setup.py file.</p>
@@ -394,7 +395,8 @@ flags that point to Slurm's libslurm.so:</p>
 </pre></div>
 
 
-<h2>Testing the module</h2>
+<p><br></p>
+<h4>Testing the module</h4>
 <p>Create a directory for the module:</p>
 <div class="highlight"><pre><span></span><span class="go">mkdir ${HOME}/local</span>
 <span class="go">cd ${HOME}/local</span>
@@ -438,7 +440,8 @@ your PYTHONPATH.</p>
 
 
 <p>The <em>get_stats()</em> function returns a dictionary of key value pairs of information produced by the sdiag command.</p>
-<h2>Conclusion</h2>
+<p><br></p>
+<h4>Conclusion</h4>
 <p>With Cython, we are able to easily wrap C code and make it available to Python.
 We now have tighter integration with Slurm and don't have to run Slurm commands
 and parse the output.  For more examples of using Cython to wrap the Slurm C
@@ -549,6 +552,15 @@ on GitHub.</p>
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -560,7 +572,7 @@ on GitHub.</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

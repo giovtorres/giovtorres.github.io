@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/rpm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-11-29T00:00:00-05:00</updated><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><published>2015-11-29T00:00:00-05:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/rpm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-11-29T00:00:00-05:00</updated><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><published>2015-11-29T00:00:00-05:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;So far, we have &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;setup an RPM build
 environment&lt;/a&gt;
 , &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"&gt;setup our RPM signing key&lt;/a&gt;,
@@ -7,7 +7,8 @@ and &lt;a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html
 thing left to do is to use the rpm signing key to sign our newly built RPMs.&lt;/p&gt;
 &lt;p&gt;In this last part of this guide, we will sign the collectd RPMs that we built
 in the &lt;a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html"&gt;Part 3&lt;/a&gt;.&lt;/p&gt;
-&lt;h2&gt;Configure %_gpg_name in Macro File&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Configure %_gpg_name in Macro File&lt;/h4&gt;
 &lt;p&gt;Before we can sign RPMs, we need to tell the &lt;strong&gt;rpm&lt;/strong&gt; command which gpg key to use.
 In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt;,
 we saw the &lt;code&gt;.rpmmacros&lt;/code&gt; file, which included some default rpm macros.&lt;/p&gt;
@@ -28,7 +29,8 @@ sub   2048R/D97540C0 2015-11-30
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Signing RPMs&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Signing RPMs&lt;/h4&gt;
 &lt;p&gt;Change to the directory where the RPMs were created.  Depending on the
 chosen method, the directory could be either of the following:&lt;/p&gt;
 &lt;ul&gt;
@@ -102,7 +104,8 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Verifying RPMs&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Verifying RPMs&lt;/h4&gt;
 &lt;p&gt;To verify the signature, use the &lt;code&gt;--checksig&lt;/code&gt; rpm flag:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[makerpm@localhost x86_64]$&lt;/span&gt; rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 &lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK&lt;/span&gt;
@@ -136,7 +139,8 @@ collectd-5.5.0-1.el6.x86_64.rpm:
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;RPM Distribution&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;RPM Distribution&lt;/h4&gt;
 &lt;p&gt;Now that we have signed RPMs, we are ready to distribute them to other servers
 within the infrastructure.  There are various ways to do this, so use a method
 that fits your workflow.&lt;/p&gt;
@@ -144,7 +148,7 @@ that fits your workflow.&lt;/p&gt;
 Ansible or Salt, to distribute the RPM GPG key to all machines and then
 install the RPM.  Alternatively, if you are using Spacewalk, for example, to
 manage custom YUM repositories, you could add the RPM GPG key to Spacewalk and
-also add the signed RPMs to a custom repository.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><published>2015-09-19T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+also add the signed RPMs to a custom repository.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><published>2015-09-19T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Now that we have an &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;rpm build
 environment&lt;/a&gt;
 , we can build RPM packages.&lt;/p&gt;
@@ -152,7 +156,8 @@ environment&lt;/a&gt;
 three different ways of building RPMs for this package:
 using a spec file, rebuilding a source rpm, and using
 &lt;a href="https://fedoraproject.org/wiki/Mock"&gt;mock&lt;/a&gt;.&lt;/p&gt;
-&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;We already installed the necessary packages in &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part
 1&lt;/a&gt;.  These
 packages provide the utilities that we will use to build RPMs, namely rpmbuild,
@@ -165,7 +170,8 @@ spectool, and yum-builddep.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Building RPMs from a SPEC file&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Building RPMs from a SPEC file&lt;/h4&gt;
 &lt;p&gt;A spec file includes all the information and steps the &lt;strong&gt;rpmbuild&lt;/strong&gt; command
 needs to build an RPM package.  Among other things, it lists the name and
 version of your application, all package dependencies and how the application
@@ -378,7 +384,8 @@ line as:&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Rebuilding Source RPMs (SRPMs)&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Rebuilding Source RPMs (SRPMs)&lt;/h4&gt;
 &lt;p&gt;Building from a src rpm is admittedly easier than from a spec file. A source
 RPM, or SRPM, is the corresponding source code to a ready-to-install, compiled
 RPM. It includes a spec file, source files and possibly patch files.  It can be
@@ -414,7 +421,8 @@ download any missing dependencies.  &lt;/p&gt;
 or comment out the &lt;strong&gt;/usr/lib/rpm/check-rpaths&lt;/strong&gt; line in your $HOME/.rpmmacros to
 avoid issues with rpaths during the build.&lt;/p&gt;
 &lt;p&gt;The built RPMs are again in the &lt;strong&gt;$HOME/rpmbuild/RPMS/x86_64/&lt;/strong&gt; directory.&lt;/p&gt;
-&lt;h2&gt;Building RPMs using Mock&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Building RPMs using Mock&lt;/h4&gt;
 &lt;p&gt;Mock is a tool that creates chroot environments and builds RPM packages in
 them.  It comes with default configurations, but it is easy to adapt and
 customize a configuration.&lt;/p&gt;
@@ -555,11 +563,12 @@ collectd-mysql-5.5.0-1.el6.x86_64.rpm
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Mock is a great tool for building RPMs.  You get a clean chroot environment in
 which to build RPMs.  Building from a source rpm or a spec file is slightly
 more involved.  In the last part of this guide, Part 4, we will look at signing
-our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><published>2015-05-29T13:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><published>2015-05-29T13:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt; of
 this series, we set up an RPM build environment with a dedicated user for
 building RPMs.  &lt;/p&gt;
@@ -569,7 +578,8 @@ Signing RPMs is a good practice and ensures all the installed RPMs in your
 environment are verified from trusted sources.&lt;/p&gt;
 &lt;p&gt;In this guide, we will walk through the steps required to create your own RPM
 GPG signing key, distribute it and import it into a machine's RPM database.&lt;/p&gt;
-&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;Creating a GPG key requires a certain amount of entropy in order to ensure
 sufficient randomness.  If you are following this guide on a virtual machine,
 you will need to make sure that the virtual machine has sufficient entropy.&lt;/p&gt;
@@ -578,13 +588,15 @@ increase the entropy on your virtual machine using &lt;em&gt;rng-tools&lt;/em&gt
 continuing.&lt;/p&gt;
 &lt;p&gt;Additionally, the steps in this guide will be carried out by the &lt;strong&gt;makerpm&lt;/strong&gt;
 user.&lt;/p&gt;
-&lt;h2&gt;Install Packages&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Install Packages&lt;/h4&gt;
 &lt;p&gt;To install the GPG package, run the following:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install gnupg2
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Create a GPG Key Pair&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Create a GPG Key Pair&lt;/h4&gt;
 &lt;p&gt;Use the &lt;em&gt;gpg&lt;/em&gt; command to create a new key pair:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --gen-key
 &lt;/pre&gt;&lt;/div&gt;
@@ -687,7 +699,8 @@ sub   2048R/D4F51F8B 2015-05-29
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Confirming your keys&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Confirming your keys&lt;/h4&gt;
 &lt;p&gt;To list your keys, run the following command:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --list-keys
 &lt;/pre&gt;&lt;/div&gt;
@@ -702,7 +715,8 @@ sub   2048R/D4F51F8B 2015-05-29
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Troubleshooting TTY Issues&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Troubleshooting TTY Issues&lt;/h4&gt;
 &lt;p&gt;There is an &lt;a href="https://bugzilla.redhat.com/show_bug.cgi?id=659512#c5"&gt;issue&lt;/a&gt;,
 apparently with the &lt;em&gt;gnupg2&lt;/em&gt; package, where if you &lt;em&gt;su&lt;/em&gt;, i.e. switch, to
 another user, a new pseudo-terminal is not opened for the switched user.&lt;/p&gt;
@@ -732,7 +746,8 @@ gpg: Key generation canceled.
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Workaround&lt;/h3&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;# Workaround&lt;/h4&gt;
 &lt;p&gt;In order to work around the above TTY issue, you will need to use X11
 forwarding when switching to a different user.  To do this, you need an
 &lt;em&gt;export&lt;/em&gt; file in root's &lt;strong&gt;.xauth&lt;/strong&gt; directory.&lt;/p&gt;
@@ -756,11 +771,13 @@ echo &amp;quot;user1&amp;quot; &amp;gt;&amp;gt; .xauth/export
 
 &lt;p&gt;Now, if you try to generate gpg keys, pinentry will present the passphrase
 prompt.&lt;/p&gt;
-&lt;h2&gt;Distributing the Public Key&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Distributing the Public Key&lt;/h4&gt;
 &lt;p&gt;If you plan to distribute custom built RPMs to multiple or even all machines in your
 environment, you will need to distribute the public key to all machines and
 import it into each machine's local RPM database.&lt;/p&gt;
-&lt;h3&gt;Export the Signing Key&lt;/h3&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h5&gt;Export the Signing Key&lt;/h5&gt;
 &lt;p&gt;We need to export the signing key into ASCII armored output, which is a form of
 binary-to-text encoding.  We need the &lt;em&gt;name&lt;/em&gt; of the key in order to export it.&lt;/p&gt;
 &lt;p&gt;Get a list of keys:&lt;/p&gt;
@@ -786,7 +803,8 @@ output to a file:&lt;/p&gt;
 
 &lt;p&gt;The resulting file, &lt;strong&gt;RPM-GPG-KEY-example-org-signing-key&lt;/strong&gt;, is the RPM signing
 key that we can distribute to other machines.&lt;/p&gt;
-&lt;h3&gt;Importing the Key into the RPM database&lt;/h3&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h5&gt;Importing the Key into the RPM database&lt;/h5&gt;
 &lt;p&gt;On RHEL 6 and its clones, the default location on the filesystem for RPM GPG
 keys are &lt;strong&gt;/etc/pki/rpm-gpg&lt;/strong&gt;.  Use your tool of choice, such as scp, rsync,
 Puppet, Ansible, etc., to copy the file to any remote machine where you will
@@ -809,7 +827,8 @@ the key. This command will not return any output and exit with return code &lt;s
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Verify Key Import&lt;/h3&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h5&gt;Verify Key Import&lt;/h5&gt;
 &lt;p&gt;To verify that the key has been imported, we can search the RPM database.
 First, we need the public GPG key id.  In the output of &lt;strong&gt;gpg --list-keys&lt;/strong&gt;,
 the public key id is found in the &lt;strong&gt;pub&lt;/strong&gt; line.  It is the 8 hex digits after
@@ -850,9 +869,10 @@ Description :
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;You now have an RPM GPG key that you can use sign and verify custom RPMs.  In
-Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><published>2015-05-24T10:38:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><published>2015-05-24T10:38:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;If you are working on or developing software for a RHEL based operating system,
 building RPMs is a great way to distribute packages within a group or
 enterprise.  Sometimes, the package you want is not in any of the usual RPM
@@ -864,10 +884,12 @@ a configuration management tool like Puppet or Ansible to take the tarball and
 run the build/compile/install commands for you.&lt;/p&gt;
 &lt;p&gt;In this guide, we will walk through the steps required to setup an environment
 to build RPMs.&lt;/p&gt;
-&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;Before continuing with this guide, start with a new virtual machine with the
 EPEL yum repository configured.&lt;/p&gt;
-&lt;h2&gt;Install Packages&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Install Packages&lt;/h4&gt;
 &lt;p&gt;Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.&lt;/p&gt;
 &lt;p&gt;To install the required packages, run the following:&lt;/p&gt;
@@ -876,7 +898,8 @@ sudo yum install yum install rpmdevtools yum-utils
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Create a Dedicated User&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Create a Dedicated User&lt;/h4&gt;
 &lt;p&gt;Do &lt;strong&gt;not&lt;/strong&gt; build RPMs as the &lt;em&gt;root&lt;/em&gt; user!  You have been warned.  Things can go
 really wrong if the spec file is not written properly.  In fact, the &lt;em&gt;rpmbuild&lt;/em&gt;
 command will build the RPM in its own &lt;em&gt;BUILD_ROOT&lt;/em&gt;, therefore root access is
@@ -889,7 +912,8 @@ and use the same environment.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Set Up The rpmbuild Tree&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Set Up The rpmbuild Tree&lt;/h4&gt;
 &lt;p&gt;This process is trivial when using the &lt;em&gt;rpmdevtools&lt;/em&gt; package. This package
 contains several scripts that help with building RPM packages. &lt;/p&gt;
 &lt;p&gt;As the &lt;em&gt;makerpm&lt;/em&gt; user, run the &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command:&lt;/p&gt;
@@ -913,7 +937,8 @@ rpmbuild/
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;The .rpmmacros File&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;The .rpmmacros File&lt;/h4&gt;
 &lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command also installs a &lt;em&gt;.rpmmacros&lt;/em&gt; file in the user's
 home directory.  This file contains three lines by default:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;%_topdir      %&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="nv"&gt;$HOME&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;/rpmbuild
@@ -942,7 +967,8 @@ libraries as long as the libraries are put in the standard locations, such as
 for libraries in non-standard locations.&lt;/p&gt;
 &lt;p&gt;For a more thorough explanation, see this Fedora Project link:
 &lt;a href="https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath"&gt;https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath&lt;/a&gt;.&lt;/p&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
 follow good practice and sign your RPM packages.&lt;/p&gt;</summary><category term="rpm"></category></entry></feed>

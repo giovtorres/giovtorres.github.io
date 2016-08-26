@@ -34,7 +34,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -50,12 +49,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -63,7 +56,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -107,7 +99,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p>rsh is the remote shell "r command" that has long been superseded by SSH as it
 uses a much stronger authentication system.  While you should generally not use
 rsh for remote access, it does have some valid use cases.</p>
@@ -117,25 +109,29 @@ rsh to launch parallel jobs onto multiple compute nodes and rsh conveniently
 offers password-less, host-based authentication to these remote nodes.</p>
 <p>In this article, we will look at why rsh can be very slow and suggest a
 workaround for this slowness</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>In this example, the rsh client hostname is <em>client1</em> with an IP address of
 192.168.122.200.  The rsh server hostname <em>server1</em> with an IP address of
 192.168.122.202.  Make sure that each server has an entry in /etc/hosts for
 both servers if you are not using DNS for name resolution.</p>
-<h2>Installing the rsh Client</h2>
+<p><br></p>
+<h4>Installing the rsh Client</h4>
 <p>To install the rsh client on client1, install the <strong>rsh</strong> package:</p>
 <div class="highlight"><pre><span></span>sudo yum install rsh
 </pre></div>
 
 
-<h2>Installing the rsh Server</h2>
+<p><br></p>
+<h4>Installing the rsh Server</h4>
 <p>The rsh server runs under the xinetd superserver.  Install both packages on
 server1:</p>
 <div class="highlight"><pre><span></span>sudo yum install xinetd rsh-server
 </pre></div>
 
 
-<h3>Configuring the rsh Server</h3>
+<p><br></p>
+<h5>Configuring the rsh Server</h5>
 <p>The configuration file for rsh is <strong>/etc/xinetd.d/rsh</strong> and is disabled by
 default:</p>
 <div class="highlight"><pre><span></span>service shell
@@ -157,7 +153,8 @@ restart the xinetd service:</p>
 </pre></div>
 
 
-<h2>Adjusting iptables</h2>
+<p><br></p>
+<h4>Adjusting iptables</h4>
 <p>rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the <em>client</em>:</p>
 <div class="highlight"><pre><span></span>-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
@@ -171,7 +168,8 @@ rule on the <em>client</em>:</p>
 
 <p>Restart the iptables service on both client and server after adding these
 rules, adjusting the IP addresses for ones that match your configuration.</p>
-<h2>Configuring Host-Based Authentication</h2>
+<p><br></p>
+<h4>Configuring Host-Based Authentication</h4>
 <p>The authentication mechanism for rsh is based on the contents of
 <em>/etc/hosts.equiv</em> and or <em>$HOME/.rhosts</em>. Both files include a list of
 hostnames that a remote user is allowed to access.</p>
@@ -184,7 +182,8 @@ rsh.  On server1, <em>/etc/hosts.equiv</em> should have at least a single line f
 
 
 <p>The permissions of this file should be <strong>0600</strong>.</p>
-<h2>Testing From the Command Line</h2>
+<p><br></p>
+<h4>Testing From the Command Line</h4>
 <p>Test the rsh connection from client1 to server1.  Wrap the command around a
 pair of date commands to see the time it takes to complete the remote command:</p>
 <div class="highlight"><pre><span></span><span class="gp">[giovanni@client1 ~]$</span> date +%s.%3N<span class="p">;</span> /usr/bin/rsh server1 /usr/bin/uptime<span class="p">;</span> date +%s.%3N
@@ -225,7 +224,8 @@ A great debugging tool for Linux is strace, which traces the system calls and
 signals an application makes from userspace to kernel space and the responses.
 We will now use strace on the server to capture system calls to see what the
 rshd daemon is doing.</p>
-<h2>Testing with Strace</h2>
+<p><br></p>
+<h4>Testing with Strace</h4>
 <p>First, make sure you have the strace package installed.  If not, installing it
 is easy:</p>
 <div class="highlight"><pre><span></span>sudo yum install strace
@@ -322,7 +322,8 @@ times the rsh daemon opens and reads the /etc/hosts file:</p>
 file.  So, if the rsh client is near the bottom of a very long hosts.equiv
 file, it can take 10s of seconds to return a command prompt or command output
 from the remote server.</p>
-<h2>Workaround using Netgroups</h2>
+<p><br></p>
+<h4>Workaround using Netgroups</h4>
 <p>It's clear that this strategy will not work.  Either abandon rsh or try to fix
 the problem if you really must use rsh.</p>
 <p>We can work around the problem using netgroups on the rsh server.  Netgroups
@@ -388,7 +389,8 @@ the same file descriptor:</p>
 <p>The per-line search behavior shifted from incessantly reading /etc/hosts to
 reading /etc/netgroup.  Except, reading a single line from /etc/netgroup speeds
 up the rsh server response significantly.</p>
-<h2>Conclusion</h2>
+<p><br></p>
+<h4>Conclusion</h4>
 <p>Again, you are probably not using rsh and for good reason.  rsh should only be
 used in private networks that have no direct connection to the Internet.  However,
 if you are using it, say for launching parallel jobs in an HPC cluster, then
@@ -500,6 +502,15 @@ workaround the slowness using netgroups.</p>
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -511,7 +522,7 @@ workaround the slowness using netgroups.</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

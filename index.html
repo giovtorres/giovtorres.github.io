@@ -26,7 +26,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -40,12 +39,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -53,7 +46,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -66,7 +58,7 @@ Giovanni Torres            </a>
         <div class="col-sm-9">
             <article>
                 <h2><a href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html">Create a Linux Lab on KVM Using Cloud Images</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>Whether you are testing a new clustered application, validating configuration
 management playbooks or studying for the RHCE, it's convenient to have access
 to a set of Linux virtual machines.  This is the beauty of the cloud.  You can
@@ -78,13 +70,14 @@ launch fresh new instances and off you go.</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">Graphing sdiag with Graphite</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.</p>
 <p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
 graph the output from sdiag.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
 workload ...</p>
                     <a class="btn btn-default btn-xs" href="http://giovannitorres.me/graphing-sdiag-with-graphite.html">more ...</a>
@@ -93,7 +86,7 @@ workload ...</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">Wrapping Slurm's sdiag with Cython</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -104,7 +97,7 @@ This means you don't have to know much C, if any, to ...</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/signing-rpms.html">Signing RPMs</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>So far, we have <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">setup an RPM build
 environment</a>
 , <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">setup our RPM signing key</a>,
@@ -117,7 +110,7 @@ thing left to do is to use the rpm signing key to sign our newly built RPMs.</p>
             <hr/>
             <article>
                 <h2><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></h2>
-                <div class="summary"><h2>Introduction</h2>
+                <div class="summary"><h4>Introduction</h4>
 <p>Now that we have an <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">rpm build
 environment</a>
 , we can build RPM packages.</p>
@@ -125,7 +118,8 @@ environment</a>
 three different ways of building RPMs for this package:
 using a spec file, rebuilding a source rpm, and using
 <a href="https://fedoraproject.org/wiki/Mock">mock</a>.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>We already ...</p>
                     <a class="btn btn-default btn-xs" href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">more ...</a>
                 </div>
@@ -213,6 +207,15 @@ using a spec file, rebuilding a source rpm, and using
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -224,7 +227,7 @@ using a spec file, rebuilding a source rpm, and using
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

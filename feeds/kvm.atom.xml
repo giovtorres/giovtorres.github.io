@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/kvm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-05-11T19:52:00-04:00</updated><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/kvm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-05-11T19:52:00-04:00</updated><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Whether you are testing a new clustered application, validating configuration
 management playbooks or studying for the RHCE, it's convenient to have access
 to a set of Linux virtual machines.  This is the beauty of the cloud.  You can
@@ -9,14 +9,16 @@ same ability, locally, to spin up a few Linux virtual machines to create your
 own lab in a box.&lt;/p&gt;
 &lt;p&gt;We will use a script and some cloud images from CentOS to create virtual
 machines in just a few seconds.&lt;/p&gt;
-&lt;h2&gt;Prerequisites&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are running a recent version of Fedora with KVM
 installed.  You will also need a few packages:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo dnf install libvirt-client virt-install genisoimage&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Setting up the Directory&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Setting up the Directory&lt;/h4&gt;
 &lt;p&gt;Create the following directory structure:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir -p ~/virt/images&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -24,7 +26,8 @@ installed.  You will also need a few packages:&lt;/p&gt;
 
 &lt;p&gt;We will put the VM installation script in &lt;code&gt;~/virt&lt;/code&gt; and all the virtual machine
 image files will go in the &lt;code&gt;~/virt/images&lt;/code&gt; directory.&lt;/p&gt;
-&lt;h2&gt;Installation Script&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Installation Script&lt;/h4&gt;
 &lt;p&gt;This script originally came from &lt;a href="https://goldmann.pl/blog/2014/01/16/running-fedora-cloud-images-on-kvm/"&gt;Marek Goldmann's
 post&lt;/a&gt;.
 I've since modified it further to fit my needs.&lt;/p&gt;
@@ -173,7 +176,8 @@ mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/
 
 &lt;p&gt;You will generate an SSH key pair if you haven't already done so.  Be sure to
 change the SSH RSA public key in the script to your own.&lt;/p&gt;
-&lt;h2&gt;Getting the Cloud Images&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Getting the Cloud Images&lt;/h4&gt;
 &lt;p&gt;You can find CentOS cloud images at
 &lt;a href="http://cloud.centos.org"&gt;http://cloud.centos.org&lt;/a&gt;.  Let's download a
 compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&lt;/p&gt;
@@ -188,7 +192,8 @@ compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Build VMs&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Build VMs&lt;/h4&gt;
 &lt;p&gt;Now, just run the &lt;strong&gt;virt-install-centos&lt;/strong&gt; command and pass it the name of the
 virtual machine you want to build:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;./virt-install-centos testvm1&lt;/span&gt;
@@ -217,7 +222,8 @@ small, so copying it to create a new VM is quick.  Also, the cloud image is
 already prebuilt.  The &lt;strong&gt;cloud-init&lt;/strong&gt; service runs at boot time, looks for a
 configuration on a virtual CD-ROM device and finishes the configuration of the
 VM, like setting up SSH keys, before reaching the login prompt.&lt;/p&gt;
-&lt;h2&gt;Log into the VM&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Log into the VM&lt;/h4&gt;
 &lt;p&gt;CentOS cloud images have the username &lt;strong&gt;centos&lt;/strong&gt;.  Log in as this user to the
 new VM:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;ssh centos@192.168.124.138&lt;/span&gt;
@@ -235,7 +241,8 @@ new VM:&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;The script uses cloud-init to "inject" a startup configuration to the virtual
 machine.  The image disk expands to 8GB by default.  You can expand this
 manually by shutting down the VM and virt-resize tool, which requires the

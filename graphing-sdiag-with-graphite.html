@@ -36,7 +36,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -52,12 +51,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -65,7 +58,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -113,17 +105,19 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p>In a <a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html">previous post</a>, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.</p>
 <p>In this guide, we will use <a href="https://github.com/PySlurm/pyslurm">PySlurm</a> to
 graph the output from sdiag.</p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>This guide assumes you are using <a href="http://slurm.schedmd.com/">Slurm</a>, an HPC
 workload manager, and the
 <a href="http://graphite.readthedocs.org/en/latest/">Graphite</a> suite.</p>
-<h2>Getting the Statistics</h2>
+<p><br></p>
+<h4>Getting the Statistics</h4>
 <p>The sdiag utility is a diagnostic tool that keeps statistics on the Slurm
 controller, the Main scheduler and the Backfill scheduler.  You can run this
 utility periodically, or as you make changes to the scheduler in <code>slurm.conf</code>.
@@ -202,7 +196,8 @@ dictionary:</p>
 </pre></div>
 
 
-<h2>Sending to Graphite</h2>
+<p><br></p>
+<h4>Sending to Graphite</h4>
 <p>Graphite is suite of three components: Carbon, Whisper and Graphite-web.
 Carbon is the metric collector.  Our script needs to send the statistics to
 Carbon, which will store the values in whisper time-series databases.  The
@@ -247,7 +242,8 @@ Carbon will create the whisper databases in
 prefixed with <code>gauge-</code> to signify that each value is a gauge.</p>
 <p>Some of the values are actually counters, but we will use Graphite's Function
 API to take the derivative of the series to generate per-second values.</p>
-<h2>Bringing It Together</h2>
+<p><br></p>
+<h4>Bringing It Together</h4>
 <p>Now, we can wrap up these two functions in a <code>main</code> function to bring
 everything together.</p>
 <div class="highlight"><pre><span></span><span class="n">CARBON_SERVER</span> <span class="o">=</span> <span class="s2">&quot;127.0.0.1&quot;</span>
@@ -301,7 +297,8 @@ The second line tells Carbon to create a whisper database for each metric where
 minute averages and kept for 1 year.  Adjust accordingly.</p>
 <p>Carbon re-reads this file once a minute, so there's no need to restart anything
 here.</p>
-<h2>Daemonizing the Script with Supervisor</h2>
+<p><br></p>
+<h4>Daemonizing the Script with Supervisor</h4>
 <p>The script runs in an infinite while loop, making it easy to daemonize.  We
 will daemonize this script with <a href="http://supervisord.org/">Supervisor</a>.</p>
 <p>The easiest way to install Supervisor is with <code>pip</code>:</p>
@@ -334,7 +331,8 @@ turn start the script:</p>
 </pre></div>
 
 
-<h2>Creating a Dashboard in Grafana</h2>
+<p><br></p>
+<h4>Creating a Dashboard in Grafana</h4>
 <p>If you are using Graphite, chances are you use a different frontend for
 creating graphs and dashboards.  <a href="http://grafana.org/">Grafana</a> is an excellent
 frontend for visualizing Graphite metrics, among other data sources.</p>
@@ -360,7 +358,8 @@ calculate the deltas between the datapoints.</p>
 <p><img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png" /></p>
 <p><img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png" /></p>
 <p><img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png" /></p>
-<h2>Conclusion</h2>
+<p><br></p>
+<h4>Conclusion</h4>
 <p>Using PySlurm and Graphite/Grafana, we can keep historical data for sdiag.  The
 backfill scheduler in particular has many options that are used to tweak the
 behavior of the algorithm.  These graphs could help to provide feedback after
@@ -475,6 +474,15 @@ contains the full <a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd5
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -486,7 +494,7 @@ contains the full <a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd5
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

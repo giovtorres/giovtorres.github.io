@@ -34,7 +34,6 @@
 
     <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
     <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
-        <link href="http://giovannitorres.me/static/custom.css" rel="stylesheet">
 
         <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
               title="Giovanni Torres ATOM Feed"/>
@@ -50,12 +49,6 @@
 <div class="navbar navbar-default navbar-fixed-top" role="navigation">
 	<div class="container">
         <div class="navbar-header">
-            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
-                <span class="sr-only">Toggle navigation</span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-                <span class="icon-bar"></span>
-            </button>
             <a href="http://giovannitorres.me/" class="navbar-brand">
 Giovanni Torres            </a>
         </div>
@@ -63,7 +56,6 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -107,7 +99,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <h4>Introduction</h4>
 <p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
 plugins</a>.  In a previous
 <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
@@ -122,7 +114,8 @@ interpreter every time the scripts need to run.</p>
 <p>In this article, we will demonstrate how to write a Python script for collectd
 that will graph CPU cores by state from <a href="http://slurm.schedmd.com">Slurm</a>, an HPC
 resource manager. </p>
-<h2>Prerequisites</h2>
+<p><br></p>
+<h4>Prerequisites</h4>
 <p>This article assumes you have some familiarity with Collectd and have an
 existing Graphite installation. For instructions on how to install Graphite,
 read the <a href="https://graphite.readthedocs.org/en/stable/install.html">installation
@@ -136,11 +129,12 @@ Python module.  You can, however, install it easily with Pip:</p>
 </pre></div>
 
 
-<h2>Enabling the Python Plugin</h2>
+<p><br></p>
+<h4>Enabling the Python Plugin</h4>
 <p>The default <em>collectd.conf</em> comes with the Python plugin disabled:</p>
-<div class="highlight"><pre><span></span>##&lt;LoadPlugin python&gt;
-##  Globals true
-##&lt;/LoadPlugin&gt;
+<div class="highlight"><pre><span></span>## &lt;LoadPlugin python&gt;
+##   Globals true
+## &lt;/LoadPlugin&gt;
 </pre></div>
 
 
@@ -151,13 +145,15 @@ Python module.  You can, however, install it easily with Pip:</p>
 </pre></div>
 
 
-<h2>Writing a Python Read Plugin</h2>
+<p><br></p>
+<h4>Writing a Python Read Plugin</h4>
 <p>The <a href="https://collectd.org/documentation/manpages/collectd-python.5.shtml">collectd-python
 manpage</a>
 documents how to use the Python plugin structure to create your own plugins. We
 will walk through writing a script, section by section, to understand how to
 gather and dispatch metrics to collectd.</p>
-<h3>Importing Modules</h3>
+<p><br></p>
+<h5>Importing Modules</h5>
 <p>The first part of our script will import the necessary modules.</p>
 <div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collectd</span>
 <span class="kn">import</span> <span class="nn">signal</span>
@@ -169,7 +165,7 @@ gather and dispatch metrics to collectd.</p>
 <p>The first import statement loads the collectd module.  This is the module that
 will register the read and write functions with collectd.  The remaining
 modules are used elsewhere in the script to gather information.</p>
-<h3>Gathering Metrics</h3>
+<h5>Gathering Metrics</h5>
 <p>The purpose of the plugin is to gather metrics and feed it to collectd.  From
 there, collectd will send it wherever it is configured to, for example to RRD
 files, to Graphite or another time-series database. </p>
@@ -222,7 +218,7 @@ dictionary.  This will be used in the <em>read_callback</em> function.</p>
 </pre></div>
 
 
-<h3>Taking care of SIGCHLD</h3>
+<h5>Taking care of SIGCHLD</h5>
 <p>This particular example uses the <em>subprocess</em> module to fork a child process that will execute
 the <em>sinfo</em> command.  The Python plugin is a parent to this forked process, and
 as such, the forked process will send a <strong>SIGCHLD</strong> signal to the parent process upon
@@ -241,7 +237,7 @@ plugin can create new processes without throwing exceptions.</p>
 </pre></div>
 
 
-<h3>Defining a Read Callback</h3>
+<h5>Defining a Read Callback</h5>
 <p>The purpose of the read callback is to setup the <em>Values</em> object with the
 parameters of the metrics you are dispatching to collectd.  It sets:</p>
 <ul>
@@ -276,7 +272,7 @@ metric_name refers to each of the keys in the dictionary returned by the
 </pre></div>
 
 
-<h3>Registering Functions</h3>
+<h5>Registering Functions</h5>
 <p>The final lines of the script registers two callbacks: an init function to
 restore the behavior of <em>SIGCHLD</em> and the other to periodically run the
 read_callback function, which in turn calls the get_cpus_by_state() function to
@@ -288,7 +284,8 @@ gather metrics and dispatch the values to the daemon.</p>
 
 <p>Save all the bits in a file, such as <strong>slurm_core_states.py</strong> (available here
 as a <a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40">gist</a>).</p>
-<h2>Configuring the Python Plugin Section</h2>
+<p><br></p>
+<h4>Configuring the Python Plugin Section</h4>
 <p>Now that we have enabled the Python plugin in collectd and wrote a read plugin,
 the last thing needed is to configure the plugin in collectd's configuration
 file. Add the following configuration stanza to <strong>collectd.conf</strong>:</p>
@@ -310,7 +307,8 @@ by the plugin. This is good for debugging.</p>
 script will not run interactively and is therefore set to <strong>false</strong>.</p>
 <p>The <em>Import</em> option imports our plugin into collectd's embedded Python
 interpreter.</p>
-<h2>Verifying</h2>
+<p><br></p>
+<h4>Verifying</h4>
 <p>After restarting the collectd service, check the logs to make sure there are no
 issues with the plugin.  If there are no warning or errors in the logs, verify
 that the plugin is working by querying the metrics.</p>
@@ -344,7 +342,8 @@ using the Graphite URL API:</p>
 
 <p>And finally, here is what a Graphite graph would look like:</p>
 <p><img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png" /></p>
-<h2>Conclusion</h2>
+<p><br></p>
+<h4>Conclusion</h4>
 <p>This is just one example of how to use Python and collectd to gather metrics
 and visualize them.  You could write a plugin with a similar structure to
 dispatch custom metrics to your metric collector, such as the Graphite suite or
@@ -454,6 +453,15 @@ any other time-series database.</p>
             <p class="list-group-item">Status updating...</p>
         </div>
     </li>
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
     </ul>
 </section>
             </aside>
@@ -465,7 +473,7 @@ any other time-series database.</p>
       <hr>
       <div class="row">
          <div class="col-xs-10">&copy; 2016 Giovanni Torres
-            &middot; Powered by <a href="https://github.com/DandyDev/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
             <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
             <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
          <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>

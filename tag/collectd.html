@@ -47,7 +47,8 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+              <li><a href="http://giovannitorres.me/reading-list.html"><i class="fa fa-book"></i><span class="icon-label">Reading List</span></a></li>
+              <li><a href="http://giovannitorres.me/about.html"><i class="fa fa-user"></i><span class="icon-label">About Me</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -58,50 +59,23 @@ Giovanni Torres            </a>
 <div class="container">
     <div class="row">
         <div class="col-sm-9">
-            <article>
-                <h2><a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a></h2>
-                <div class="summary"><h4>Introduction</h4>
-<p>Now that we have an <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">rpm build
-environment</a>
-, we can build RPM packages.</p>
-<p>In this guide, we will use the collectd monitoring application and walk through
-three different ways of building RPMs for this package:
-using a spec file, rebuilding a source rpm, and using
-<a href="https://fedoraproject.org/wiki/Mock">mock</a>.</p>
-<p><br></p>
-<h4>Prerequisites</h4>
-<p>We already ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">Using Collectd, Python and Graphite to Graph Slurm Partitions</a></h2>
-                <div class="summary"><h4>Introduction</h4>
-<p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
-plugins</a>.  In a previous
-<a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
-necessary dependencies to enable most of the collectd plugins when compiling
-collectd from source.</p>
-<p>One of these plugins is the <a href="https://collectd.org/wiki/index.php/Plugin:Python">Python
-plugin</a>, which is a binding
-that allows you to write ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">Enabling (Almost All) Collectd Plugins on CentOS 6</a></h2>
-                <div class="summary"><h4>Introduction</h4>
-<p>There are a variety of ways to extract system resource information from a Linux
-server. Some of these utilities are triggered by cron, such as sysstat, while others are
-based on a predefined check interval, such as Nagios.  Others are meant to be used
-interactively, such as htop or ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-
+    <section id="content">
+        <div id="archives">
+          <h2>Articles</h2>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2015-09-19T00:00:00-04:00">Sat 19 September 2015</time></span>
+                    <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">How to Build RPMs - Collectd Example</a>
+                </p>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2015-07-03T12:47:00-04:00">Fri 03 July 2015</time></span>
+                    <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">Using Collectd, Python and Graphite to Graph Slurm Partitions</a>
+                </p>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2015-06-15T17:34:00-04:00">Mon 15 June 2015</time></span>
+                    <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">Enabling (Almost All) Collectd Plugins on CentOS 6</a>
+                </p>
+        </div>
+    </section>
         </div>
         <div class="col-sm-3" id="sidebar">
             <aside>
@@ -109,25 +83,6 @@ interactively, such as htop or ...</p>
 <section class="well well-sm">
     <ul class="list-group list-group-flush">
 
-            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
-                <ul class="list-group" id="recentposts">
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">
-                            How to Build RPMs - Collectd Example
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html">
-                            Using Collectd, Python and Graphite to Graph Slurm Partitions
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">
-                            Enabling (Almost All) Collectd Plugins on CentOS 6
-                        </a>
-                    </li>
-                </ul>
-            </li>
 
             <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
                 <ul class="list-group" id="categories">
@@ -166,12 +121,6 @@ interactively, such as htop or ...</p>
 
 
 
-
-    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
-        <div id="gh_repos">
-            <p class="list-group-item">Status updating...</p>
-        </div>
-    </li>
     <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
       <ul class="list-group" id="links">
         <li class="list-group-item">
@@ -180,6 +129,12 @@ interactively, such as htop or ...</p>
             </a>
         </li>
       </ul>
+    </li>
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
     </li>
     </ul>
 </section>

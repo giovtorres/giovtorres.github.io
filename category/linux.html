@@ -49,7 +49,8 @@ Giovanni Torres            </a>
             <ul class="nav navbar-nav">
             </ul>
             <ul class="nav navbar-nav navbar-right">
-              <li><a href="http://giovannitorres.me/archives.html"><i class="fa fa-th-list"></i><span class="icon-label">Archives</span></a></li>
+              <li><a href="http://giovannitorres.me/reading-list.html"><i class="fa fa-book"></i><span class="icon-label">Reading List</span></a></li>
+              <li><a href="http://giovannitorres.me/about.html"><i class="fa fa-user"></i><span class="icon-label">About Me</span></a></li>
             </ul>
         </div>
         <!-- /.navbar-collapse -->
@@ -60,38 +61,23 @@ Giovanni Torres            </a>
 <div class="container">
     <div class="row">
         <div class="col-sm-9">
-            <article>
-                <h2><a href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">Troubleshooting slow rsh logins with strace on CentOS 6</a></h2>
-                <div class="summary"><h4>Introduction</h4>
-<p>rsh is the remote shell "r command" that has long been superseded by SSH as it
-uses a much stronger authentication system.  While you should generally not use
-rsh for remote access, it does have some valid use cases.</p>
-<p>In an HPC environment, for example, where the cluster is ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html">Increasing Entropy on Virtual Machines</a></h2>
-                <div class="summary"><p>Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
-waiting for kernel to gather sufficient entropy in order to sufficiently
-randomize the encrypted output?  You have probably seen a message such as:</p>
-<div class="highlight"><pre><span></span>We need to generate a lot of random bytes. It is a good ...</pre></div>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-            <article>
-                <h2><a href="http://giovannitorres.me/introduction.html">Introduction</a></h2>
-                <div class="summary"><p>Ah, so finally got around to setting up a place on the Internet to squat and
-put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
-try to put meaningful things here regarding monitoring, configuration and
-troubleshooting of processes and applications running ...</p>
-                    <a class="btn btn-default btn-xs" href="http://giovannitorres.me/introduction.html">more ...</a>
-                </div>
-            </article>
-            <hr/>
-
+    <section id="content">
+        <div id="archives">
+          <h2>Articles</h2>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2015-08-15T00:00:00-04:00">Sat 15 August 2015</time></span>
+                    <a href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">Troubleshooting slow rsh logins with strace on CentOS 6</a>
+                </p>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2014-09-13T15:12:00-04:00">Sat 13 September 2014</time></span>
+                    <a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html">Increasing Entropy on Virtual Machines</a>
+                </p>
+                <p>
+                    <span class="categories-timestamp"><time datetime="2014-08-03T12:15:00-04:00">Sun 03 August 2014</time></span>
+                    <a href="http://giovannitorres.me/introduction.html">Introduction</a>
+                </p>
+        </div>
+    </section>
         </div>
         <div class="col-sm-3" id="sidebar">
             <aside>
@@ -99,25 +85,6 @@ troubleshooting of processes and applications running ...</p>
 <section class="well well-sm">
     <ul class="list-group list-group-flush">
 
-            <li class="list-group-item"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Recent Posts</span></h4>
-                <ul class="list-group" id="recentposts">
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html">
-                            Troubleshooting slow rsh logins with strace on CentOS 6
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html">
-                            Increasing Entropy on Virtual Machines
-                        </a>
-                    </li>
-                    <li class="list-group-item">
-                        <a href="http://giovannitorres.me/introduction.html">
-                            Introduction
-                        </a>
-                    </li>
-                </ul>
-            </li>
 
             <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
                 <ul class="list-group" id="categories">
@@ -156,12 +123,6 @@ troubleshooting of processes and applications running ...</p>
 
 
 
-
-    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
-        <div id="gh_repos">
-            <p class="list-group-item">Status updating...</p>
-        </div>
-    </li>
     <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
       <ul class="list-group" id="links">
         <li class="list-group-item">
@@ -170,6 +131,12 @@ troubleshooting of processes and applications running ...</p>
             </a>
         </li>
       </ul>
+    </li>
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
     </li>
     </ul>
 </section>

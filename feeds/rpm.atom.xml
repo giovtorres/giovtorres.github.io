@@ -894,7 +894,7 @@ EPEL yum repository configured.&lt;/p&gt;
 and the autotools suite.&lt;/p&gt;
 &lt;p&gt;To install the required packages, run the following:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum groupinstall &amp;#39;Development Tools&amp;#39;
-sudo yum install yum install rpmdevtools yum-utils
+sudo yum install rpmdevtools yum-utils
 &lt;/pre&gt;&lt;/div&gt;
 
 

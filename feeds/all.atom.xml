@@ -1,5 +1,575 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-05-11T19:52:00-04:00</updated><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2017-03-28T19:45:00-04:00</updated><entry><title>Testing Ansible Roles with Molecule, TestInfra and Molecule</title><link href="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-molecule.html" rel="alternate"></link><published>2017-03-28T19:45:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2017-03-28:testing-ansible-roles-with-molecule-testinfra-and-molecule.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+&lt;p&gt;You've started down the path of using configuration management and decided to
+use Ansible.  You began with a big monolithic playbook and now it's time to
+break it down into modular roles that can be applied to groups of hosts as
+needed.&lt;/p&gt;
+&lt;p&gt;As you create roles, how do you ensure that your roles are working as
+expected, &lt;strong&gt;before&lt;/strong&gt; applying the roles to your servers?  You also have a
+heterogeneous environment with multiple operating systems.  How do you ensure
+that updates to existing roles will continue to work as expected?&lt;/p&gt;
+&lt;p&gt;This guide will show you how to test your roles against multiple operating
+systems on your local development workstation before committing your changes to
+version control.  &lt;em&gt;(You are version controlling your roles, right?)&lt;/em&gt;&lt;/p&gt;
+&lt;h2&gt;Stack&lt;/h2&gt;
+&lt;p&gt;We will use the following tools to create a local Ansible development
+environment.&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Fedora 25 Workstation&lt;/li&gt;
+&lt;li&gt;KVM Hypervisor and libvirt&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.vagrantup.com/"&gt;Vagrant&lt;/a&gt; with the
+  &lt;a href="https://github.com/vagrant-libvirt/vagrant-libvirt"&gt;vagrant-libvirt&lt;/a&gt; plugin&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/metacloud/molecule"&gt;Molecule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/philpep/testinfra"&gt;TestInfra&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;Ansible&lt;/li&gt;
+&lt;/ul&gt;
+&lt;h2&gt;Setup&lt;/h2&gt;
+&lt;h3&gt;Installing the KVM Hypervisor&lt;/h3&gt;
+&lt;p&gt;You will first need to setup the KVM hypervisor on your workstation, assuming
+your CPU supports virtualization extensions (most recent CPUs do).  If you
+don't have KVM already installed, install the virtualization group packages:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo dnf install @virtualization
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Start the libvirtd service and have it start at boot time:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo systemctl start libvirtd.service
+sudo systemctl enable libvirtd.service
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Installing Packages with DNF&lt;/h3&gt;
+&lt;p&gt;This setup requires Vagrant, a tool to create and configure lightweight virtual
+machines.  It works great for creating development environments locally using
+virtual machines.  Vagrant has plugins that support libvirt as a provider.
+Therefore, we can use Vagrant to launch virtual machines using the local KVM
+hypervisor.&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo dnf install vagrant vagrant-libvirt
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;The Vagrant &lt;a href="https://www.vagrantup.com/docs/installation/"&gt;installation&lt;/a&gt; page
+warns that some distributions have much older versions in their repositories.
+At the time of this writing, Fedora 25 is one minor release (1.8.5) behind the
+latest available (1.9.2) and is sufficient for this guide.&lt;/p&gt;
+&lt;p&gt;Other development packages are also required for building Molecule:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo dnf install gcc python-devel openssl-devel libffi-devel
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Installing Packages with pip&lt;/h3&gt;
+&lt;p&gt;The remainder of the required packages are not available in the Fedora 25
+repositories.  Therefore, we'll go directly to
+&lt;a href="https://pypi.python.org/pypi"&gt;PyPi&lt;/a&gt; to fetch these packages:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo pip install molecule testinfra python-vagrant ansible
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;If you already have a version of Ansible installed from the
+repositories and don't want to update, use &lt;code&gt;pip list&lt;/code&gt; to check the current
+version and then specify the existing version when calling &lt;code&gt;pip install&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;pip list | grep -w ^ansible
+sudo pip install molecule testinfra python-vagrant ansible==2.2.1.0
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Initializing a Role with Molecule&lt;/h2&gt;
+&lt;p&gt;Molecule can take of initializing a new role.  It will create the default
+directories, similar to &lt;code&gt;ansible-galaxy init&lt;/code&gt;.  It will also create a
+&lt;code&gt;molecule.yml&lt;/code&gt; and a &lt;code&gt;playbook.yml&lt;/code&gt; file.  These files will instruct Molecule
+which Vagrant boxes to use, and run TestInfra tests against the virtual machine
+after the role has been applied.  Create a new NTP role:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;molecule init --role ansible-role-ntp --driver vagrant --verifier testinfra
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This will create a new directory named &lt;code&gt;ansible-role-ntp&lt;/code&gt;.  Change to this
+directory and start building out the role:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd ansible-role-ntp
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Building an NTP Role&lt;/h3&gt;
+&lt;p&gt;We need a role to test.  If you already have a role that you would like to
+test, skip to the next section (&lt;strong&gt;Setting up the Tests&lt;/strong&gt;).&lt;/p&gt;
+&lt;p&gt;A role for NTP makes a good example because it requires multiple Ansible
+modules for installing the package, customizing the configuration, and starting
+the service.  Also, the NTP daemon name is different between CentOS and Debian,
+which requires us to use role variables.&lt;/p&gt;
+&lt;h4&gt;Tasks&lt;/h4&gt;
+&lt;p&gt;Configure the tasks that Ansible will carry out to install and configure NTP
+both CentOS 7 and Debian 8. We will provide a &lt;strong&gt;name&lt;/strong&gt; for each task which
+serves as built-in documentation for each task. Add the following tasks to
+&lt;code&gt;tasks/main.yml&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nn"&gt;---&lt;/span&gt;
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;Include OS-specific variables.&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;include_vars&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;{{&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;ansible_os_family&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;}}.yml&amp;quot;&lt;/span&gt;
+
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;Install NTP.&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;package&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;state&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;present&lt;/span&gt;
+
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;Set Time Zone.&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;file&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;src&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;/usr/share/zoneinfo/{{&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;ntp_timezone&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;}}&amp;quot;&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;dest&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;/etc/localtime&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;state&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;link&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;force&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;yes&lt;/span&gt;
+
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;Configure main NTP configuration file.&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;template&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;src&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp.conf.j2&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;dest&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;/etc/ntp.conf&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;owner&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;root&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;group&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;root&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;mode&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;0644&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;notify&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;restart ntp&lt;/span&gt;
+
+&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;Ensure the NTP service is running and enabled at boot time.&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;service&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;{{&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;ntp_daemon&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;}}&amp;quot;&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;enabled&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;yes&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;state&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;started&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;There are three variables in the tasks above: &lt;code&gt;ansible_os_family&lt;/code&gt;,
+&lt;code&gt;ntp_timezone&lt;/code&gt;, and &lt;code&gt;ntp_daemon&lt;/code&gt;.&lt;/p&gt;
+&lt;p&gt;Here, we take advantage of Ansible's &lt;a href="https://docs.ansible.com/ansible/setup_module.html"&gt;fact
+gathering&lt;/a&gt;.  When the role
+is applied, Ansible will retrieve facts about the remote system and return them
+as variables that can be used throughout the role.  The &lt;code&gt;ansible_os_family&lt;/code&gt;
+variable will resolve to either &lt;strong&gt;RedHat&lt;/strong&gt; or &lt;strong&gt;Debian&lt;/strong&gt;.  Therefore, the role
+will include all variables in either &lt;code&gt;vars/RedHat.yml&lt;/code&gt; or &lt;code&gt;vars/Debian.yml&lt;/code&gt;,
+depending on which OS is being tested. This design allows us to support
+multiple platforms without duplicating tasks, one for each OS.&lt;/p&gt;
+&lt;p&gt;The other two variables in this role are custom variables.  It is a good
+practice to prefix custom variables with the name of the role, in this case
+&lt;strong&gt;ntp_&lt;/strong&gt;.  This will avoid clashing of variables when applying multiple roles
+at the same time.&lt;/p&gt;
+&lt;h4&gt;Vars&lt;/h4&gt;
+&lt;p&gt;Variables in Ansible can exist in &lt;a href="https://docs.ansible.com/ansible/playbooks_variables.html"&gt;multiple
+places&lt;/a&gt;.  Our role
+will put variables in two places: &lt;code&gt;vars/&lt;/code&gt; and &lt;code&gt;defaults/&lt;/code&gt;.  We'll use the
+&lt;code&gt;vars/&lt;/code&gt; directory for effectively hardcoding variables based on the operating
+system.  For example, we know that the NTP daemon on Debian is named &lt;strong&gt;ntp&lt;/strong&gt;,
+while on RedHat it is named &lt;strong&gt;ntpd&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;vars/Debian.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nn"&gt;---&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp_daemon&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Edit the &lt;code&gt;vars/RedHat.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nn"&gt;---&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp_daemon&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntpd&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h4&gt;Defaults&lt;/h4&gt;
+&lt;p&gt;What about that other custom variables?  We'll put the other custom variables
+in &lt;code&gt;defaults/main.yml&lt;/code&gt; so that users can modify them when applying the role.&lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;defaults/main.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nn"&gt;---&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp_timezone&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;America/New_York&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;ntp_servers&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;0.us.pool.ntp.org&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;1.us.pool.ntp.org&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;2.us.pool.ntp.org&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;3.us.pool.ntp.org&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h4&gt;Handlers&lt;/h4&gt;
+&lt;p&gt;The handler is responsible for restarting the NTP service after Ansible detects
+a change in the configuration.  Edit the &lt;code&gt;handlers/main.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;restart ntp&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;service&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="s"&gt;&amp;quot;{{&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;ntp_daemon&lt;/span&gt;&lt;span class="nv"&gt; &lt;/span&gt;&lt;span class="s"&gt;}}&amp;quot;&lt;/span&gt;
+    &lt;span class="l l-Scalar l-Scalar-Plain"&gt;state&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;restarted&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h4&gt;Templates&lt;/h4&gt;
+&lt;p&gt;Ansible uses the &lt;a href="http://jinja.pocoo.org/"&gt;Jinja2&lt;/a&gt; templating engine.  We will
+replace certain parameters in the &lt;code&gt;ntp.conf&lt;/code&gt; file with variables.  When Ansible
+applies the role, the values of the variables are replaced.&lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;templates/ntp.conf.j2&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;# &lt;/span&gt;&lt;span class="cp"&gt;{{&lt;/span&gt; &lt;span class="nv"&gt;ansible_managed&lt;/span&gt; &lt;span class="cp"&gt;}}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;#&lt;/span&gt;
+&lt;span class="x"&gt;# Keep ntpd from panicking in the event of a large clock skew&lt;/span&gt;
+&lt;span class="x"&gt;# when a VM guest is suspended and resumed.&lt;/span&gt;
+&lt;span class="cp"&gt;{%&lt;/span&gt; &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="nv"&gt;ansible_virtualization_role&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;guest&amp;#39;&lt;/span&gt; &lt;span class="cp"&gt;%}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;tinker panic 0&lt;/span&gt;
+&lt;span class="cp"&gt;{%&lt;/span&gt; &lt;span class="k"&gt;endif&lt;/span&gt; &lt;span class="cp"&gt;%}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+
+&lt;span class="x"&gt;# Permit time synchronization with our time source, but do not&lt;/span&gt;
+&lt;span class="x"&gt;# permit the source to query or modify the service on this system.&lt;/span&gt;
+&lt;span class="x"&gt;restrict default kod nomodify notrap nopeer noquery&lt;/span&gt;
+&lt;span class="x"&gt;restrict -6 default kod nomodify notrap nopeer noquery&lt;/span&gt;
+
+&lt;span class="x"&gt;# Permit all access over the loopback interface.  This could&lt;/span&gt;
+&lt;span class="x"&gt;# be tightened as well, but to do so would effect some of&lt;/span&gt;
+&lt;span class="x"&gt;# the administrative functions.&lt;/span&gt;
+&lt;span class="x"&gt;restrict 127.0.0.1&lt;/span&gt;
+&lt;span class="x"&gt;restrict -6 ::1&lt;/span&gt;
+
+&lt;span class="cp"&gt;{%&lt;/span&gt; &lt;span class="k"&gt;for&lt;/span&gt; &lt;span class="nv"&gt;server&lt;/span&gt; &lt;span class="k"&gt;in&lt;/span&gt; &lt;span class="nv"&gt;ntp_servers&lt;/span&gt; &lt;span class="cp"&gt;%}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;span class="x"&gt;server &lt;/span&gt;&lt;span class="cp"&gt;{{&lt;/span&gt; &lt;span class="nv"&gt;server&lt;/span&gt; &lt;span class="cp"&gt;}}&lt;/span&gt;&lt;span class="x"&gt; iburst&lt;/span&gt;
+&lt;span class="cp"&gt;{%&lt;/span&gt; &lt;span class="k"&gt;endfor&lt;/span&gt; &lt;span class="cp"&gt;%}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+
+&lt;span class="x"&gt;# Driftfile&lt;/span&gt;
+&lt;span class="x"&gt;driftfile /var/lib/ntp/drift&lt;/span&gt;
+
+&lt;span class="x"&gt;# Disable the monitoring facility to prevent amplification attacks using ntpdc&lt;/span&gt;
+&lt;span class="x"&gt;# monlist command when default restrict does not include the noquery flag. See&lt;/span&gt;
+&lt;span class="x"&gt;# CVE-2013-5211 for more details.&lt;/span&gt;
+&lt;span class="x"&gt;# Note: Monitoring will not be disabled with the limited restriction flag.&lt;/span&gt;
+&lt;span class="x"&gt;disable monitor&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Edit the &lt;code&gt;templates/timezone.j2&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="cp"&gt;{{&lt;/span&gt; &lt;span class="nv"&gt;ntp_timezone&lt;/span&gt; &lt;span class="cp"&gt;}}&lt;/span&gt;&lt;span class="x"&gt;&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Setting up the Tests&lt;/h2&gt;
+&lt;p&gt;The role is complete.  Now it's time to setup the tests.  TestInfra aims to be
+a Python equivalent for &lt;a href="http://serverspec.org/"&gt;Serverspec&lt;/a&gt;.  It allows you
+write tests to make sure your servers are configured correctly.  The idea is to
+configure your servers with Ansible and test the state of the servers after
+configuration has been applied.&lt;/p&gt;
+&lt;p&gt;If you are not using the NTP role and instead using one of your own roles while
+following this guide, you can add Molecule to an existing role:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd my-role
+molecule init --driver vagrant --verifier testinfra
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;TestInfra has several
+&lt;a href="https://testinfra.readthedocs.io/en/latest/modules.html#"&gt;modules&lt;/a&gt; to run
+specific tests.  We will use some of these modules to add some tests for our
+role. &lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;tests/test_default.py&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;testinfra.utils.ansible_runner&lt;/span&gt;
+
+&lt;span class="n"&gt;testinfra_hosts&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;testinfra&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;utils&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;ansible_runner&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;AnsibleRunner&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;
+    &lt;span class="s1"&gt;&amp;#39;.molecule/ansible_inventory&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;get_hosts&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;all&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_ntp_package&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Package&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;Package&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;ntp&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;is_installed&lt;/span&gt;
+
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_ntp_file&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;File&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;f&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;File&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/etc/ntp.conf&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;exists&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;is_file&lt;/span&gt;
+
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_ntp_file_content&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;File&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="n"&gt;f&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;File&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;/etc/ntp.conf&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;f&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;contains&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;0.us.pool.ntp.org&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+
+
+&lt;span class="k"&gt;def&lt;/span&gt; &lt;span class="nf"&gt;test_ntp_service&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;Service&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="n"&gt;SystemInfo&lt;/span&gt;&lt;span class="p"&gt;):&lt;/span&gt;
+    &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;SystemInfo&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;distribution&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;debian&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;ntp_daemon&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;ntp&amp;quot;&lt;/span&gt;
+    &lt;span class="k"&gt;elif&lt;/span&gt; &lt;span class="n"&gt;SystemInfo&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;distribution&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;centos&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+        &lt;span class="n"&gt;ntp_daemon&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;ntpd&amp;quot;&lt;/span&gt;
+
+    &lt;span class="n"&gt;s&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="n"&gt;Service&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="n"&gt;ntp_daemon&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;is_running&lt;/span&gt;
+    &lt;span class="k"&gt;assert&lt;/span&gt; &lt;span class="n"&gt;s&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;is_enabled&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Configuring Molecule&lt;/h2&gt;
+&lt;p&gt;The role is complete and the tests are ready.  Now, the last piece is to
+configure Molecule to use Vagrant with two platforms: CentOS 7 and Debian 8.
+We also instruct Molecule to use the libvirt provider with the kvm driver.  The
+virtual machines will be configured with 1024MB of RAM and 1 vCPU.&lt;/p&gt;
+&lt;p&gt;Edit the &lt;code&gt;molecule.yml&lt;/code&gt; file:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="nn"&gt;---&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;driver&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;vagrant&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;vagrant&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;platforms&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;centos7&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;box&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;centos/7&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;debian8&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;box&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;debian/jessie64&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;providers&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;libvirt&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;type&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;libvirt&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;options&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+        &lt;span class="l l-Scalar l-Scalar-Plain"&gt;memory&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;1024&lt;/span&gt;
+        &lt;span class="l l-Scalar l-Scalar-Plain"&gt;cpus&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;1&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;driver&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;kvm&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;instances&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+    &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ansible-role-ntp&lt;/span&gt;
+      &lt;span class="l l-Scalar l-Scalar-Plain"&gt;ansible_groups&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+        &lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;group1&lt;/span&gt;
+&lt;span class="l l-Scalar l-Scalar-Plain"&gt;verifier&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt;
+  &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;testinfra&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Testing the Role&lt;/h2&gt;
+&lt;p&gt;Testing the role is simple after everything else is in place:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;molecule test
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;This command will launch Vagrant, which will download a CentOS 7 image and
+create a new local virtual machine.  When the virtual machine is ready, which
+typically takes a few seconds, Ansible will apply the role and then Molecule
+will call TestInfra to run the tests.&lt;/p&gt;
+&lt;p&gt;Here is the output from the command above:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;--&amp;gt; Destroying instances...&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Checking playbook&amp;#39;s syntax...&lt;/span&gt;
+
+&lt;span class="go"&gt;playbook: playbook.yml&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Creating instances...&lt;/span&gt;
+&lt;span class="go"&gt;Bringing machine &amp;#39;ansible-role-ntp&amp;#39; up with &amp;#39;libvirt&amp;#39; provider...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Creating image (snapshot of base box volume).&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Creating domain with the following settings...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Name:              ansible-role-ntp_ansible-role-ntp&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Domain type:       kvm&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Cpus:              1&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Memory:            1024M&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Management MAC:&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Loader:&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Base box:          centos/7&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Storage pool:      default&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Image:             /var/lib/libvirt/images/ansible-role-ntp_ansible-role-ntp.img (41G)&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Volume Cache:      default&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Kernel:&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Initrd:&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Graphics Type:     vnc&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Graphics Port:     5900&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Graphics IP:       127.0.0.1&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Graphics Password: Not defined&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Video Type:        cirrus&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Video VRAM:        9216&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Keymap:            en-us&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- TPM Path:&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- INPUT:             type=mouse, bus=ps2&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp:  -- Command line :&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Creating shared folders metadata...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Starting domain.&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Waiting for domain to get an IP address...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Waiting for SSH to become available...&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp:&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp: Vagrant insecure key detected. Vagrant will automatically replace&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp: this with a newly generated keypair for better security.&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp:&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp: Inserting generated public key within guest...&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp: Removing insecure key from the guest if it&amp;#39;s present...&lt;/span&gt;
+&lt;span class="go"&gt;    ansible-role-ntp: Key inserted! Disconnecting and reconnecting using new SSH key...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Setting hostname...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Configuring and enabling network interfaces...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Rsyncing folder: /home/torresgi/tmp/ansible-role-ntp/ =&amp;gt; /vagrant&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Machine not provisioned because `--no-provision` is specified.&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Starting Ansible Run...&lt;/span&gt;
+
+&lt;span class="go"&gt;PLAY [all] *********************************************************************&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [setup] *******************************************************************&lt;/span&gt;
+&lt;span class="go"&gt;ok: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [ansible-role-ntp : Include OS-specific variables] ************************&lt;/span&gt;
+&lt;span class="go"&gt;ok: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [ansible-role-ntp : Install NTP] ******************************************&lt;/span&gt;
+&lt;span class="go"&gt;changed: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [ansible-role-ntp : Set Time Zone] ****************************************&lt;/span&gt;
+&lt;span class="go"&gt;changed: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [ansible-role-ntp : Configure main NTP configuration file] ****************&lt;/span&gt;
+&lt;span class="go"&gt;--- before: /etc/ntp.conf&lt;/span&gt;
+&lt;span class="go"&gt;+++ after: dynamically generated&lt;/span&gt;
+&lt;span class="go"&gt;@@ -1,55 +1,27 @@&lt;/span&gt;
+&lt;span class="go"&gt;-# For more information about this file, see the man pages&lt;/span&gt;
+&lt;span class="go"&gt;-# ntp.conf(5), ntp_acc(5), ntp_auth(5), ntp_clock(5), ntp_misc(5), ntp_mon(5).&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-driftfile /var/lib/ntp/drift&lt;/span&gt;
+&lt;span class="go"&gt;+# Ansible managed: Do NOT edit this file manually!&lt;/span&gt;
+&lt;span class="go"&gt;+#&lt;/span&gt;
+&lt;span class="go"&gt;+# Keep ntpd from panicking in the event of a large clock skew&lt;/span&gt;
+&lt;span class="go"&gt;+# when a VM guest is suspended and resumed.&lt;/span&gt;
+&lt;span class="go"&gt;+tinker panic 0&lt;/span&gt;
+
+&lt;span class="gp"&gt; #&lt;/span&gt; Permit &lt;span class="nb"&gt;time&lt;/span&gt; synchronization with our &lt;span class="nb"&gt;time&lt;/span&gt; source, but &lt;span class="k"&gt;do&lt;/span&gt; not
+&lt;span class="gp"&gt; #&lt;/span&gt; permit the &lt;span class="nb"&gt;source&lt;/span&gt; to query or modify the service on this system.
+&lt;span class="go"&gt;-restrict default nomodify notrap nopeer noquery&lt;/span&gt;
+&lt;span class="go"&gt;+restrict default kod nomodify notrap nopeer noquery&lt;/span&gt;
+&lt;span class="go"&gt;+restrict -6 default kod nomodify notrap nopeer noquery&lt;/span&gt;
+
+&lt;span class="gp"&gt; #&lt;/span&gt; Permit all access over the loopback interface.  This could
+&lt;span class="gp"&gt; #&lt;/span&gt; be tightened as well, but to &lt;span class="k"&gt;do&lt;/span&gt; so would effect some of
+&lt;span class="gp"&gt; #&lt;/span&gt; the administrative functions.
+&lt;span class="go"&gt;-restrict 127.0.0.1&lt;/span&gt;
+&lt;span class="go"&gt;-restrict ::1&lt;/span&gt;
+&lt;span class="go"&gt;+restrict 127.0.0.1&lt;/span&gt;
+&lt;span class="go"&gt;+restrict -6 ::1&lt;/span&gt;
+
+&lt;span class="go"&gt;-# Hosts on local network are less restricted.&lt;/span&gt;
+&lt;span class="go"&gt;-#restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap&lt;/span&gt;
+&lt;span class="go"&gt;+server 0.us.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;+server 1.us.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;+server 2.us.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;+server 3.us.pool.ntp.org iburst&lt;/span&gt;
+
+&lt;span class="go"&gt;-# Use public servers from the pool.ntp.org project.&lt;/span&gt;
+&lt;span class="go"&gt;-# Please consider joining the pool (http://www.pool.ntp.org/join.html).&lt;/span&gt;
+&lt;span class="go"&gt;-server 0.centos.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;-server 1.centos.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;-server 2.centos.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;-server 3.centos.pool.ntp.org iburst&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-#broadcast 192.168.1.255 autokey   # broadcast server&lt;/span&gt;
+&lt;span class="go"&gt;-#broadcastclient           # broadcast client&lt;/span&gt;
+&lt;span class="go"&gt;-#broadcast 224.0.1.1 autokey       # multicast server&lt;/span&gt;
+&lt;span class="go"&gt;-#multicastclient 224.0.1.1     # multicast client&lt;/span&gt;
+&lt;span class="go"&gt;-#manycastserver 239.255.254.254        # manycast server&lt;/span&gt;
+&lt;span class="go"&gt;-#manycastclient 239.255.254.254 autokey # manycast client&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Enable public key cryptography.&lt;/span&gt;
+&lt;span class="go"&gt;-#crypto&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-includefile /etc/ntp/crypto/pw&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Key file containing the keys and key identifiers used when operating&lt;/span&gt;
+&lt;span class="go"&gt;-# with symmetric key cryptography.&lt;/span&gt;
+&lt;span class="go"&gt;-keys /etc/ntp/keys&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Specify the key identifiers which are trusted.&lt;/span&gt;
+&lt;span class="go"&gt;-#trustedkey 4 8 42&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Specify the key identifier to use with the ntpdc utility.&lt;/span&gt;
+&lt;span class="go"&gt;-#requestkey 8&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Specify the key identifier to use with the ntpq utility.&lt;/span&gt;
+&lt;span class="go"&gt;-#controlkey 8&lt;/span&gt;
+&lt;span class="go"&gt;-&lt;/span&gt;
+&lt;span class="go"&gt;-# Enable writing of statistics records.&lt;/span&gt;
+&lt;span class="go"&gt;-#statistics clockstats cryptostats loopstats peerstats&lt;/span&gt;
+&lt;span class="go"&gt;+# Driftfile&lt;/span&gt;
+&lt;span class="go"&gt;+driftfile /var/lib/ntp/drift&lt;/span&gt;
+
+&lt;span class="gp"&gt; #&lt;/span&gt; Disable the monitoring facility to prevent amplification attacks using ntpdc
+&lt;span class="gp"&gt; #&lt;/span&gt; monlist &lt;span class="nb"&gt;command&lt;/span&gt; when default restrict does not include the noquery flag. See
+
+&lt;span class="go"&gt;changed: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;TASK [ansible-role-ntp : Make sure the NTP service is enabled and running] *****&lt;/span&gt;
+&lt;span class="go"&gt;changed: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;RUNNING HANDLER [ansible-role-ntp : restart ntp] *******************************&lt;/span&gt;
+&lt;span class="go"&gt;changed: [ansible-role-ntp]&lt;/span&gt;
+
+&lt;span class="go"&gt;PLAY RECAP *********************************************************************&lt;/span&gt;
+&lt;span class="go"&gt;ansible-role-ntp           : ok=7    changed=5    unreachable=0    failed=0&lt;/span&gt;
+
+&lt;span class="go"&gt;--&amp;gt; Idempotence test in progress (can take a few minutes)...&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Starting Ansible Run...&lt;/span&gt;
+&lt;span class="go"&gt;Idempotence test passed.&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Executing ansible-lint...&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Executing flake8 on *.py files found in tests/...&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Executing testinfra tests found in tests/...&lt;/span&gt;
+&lt;span class="go"&gt;============================= test session starts ==============================&lt;/span&gt;
+&lt;span class="go"&gt;platform linux2 -- Python 2.7.13, pytest-3.0.6, py-1.4.32, pluggy-0.4.0&lt;/span&gt;
+&lt;span class="go"&gt;rootdir: /home/torresgi/tmp/ansible-role-ntp, inifile:&lt;/span&gt;
+&lt;span class="go"&gt;plugins: testinfra-1.5.4&lt;/span&gt;
+&lt;span class="go"&gt;collected 4 itemss&lt;/span&gt;
+
+&lt;span class="go"&gt;tests/test_default.py ....&lt;/span&gt;
+
+&lt;span class="go"&gt;============================ pytest-warning summary ============================&lt;/span&gt;
+&lt;span class="go"&gt;WP1 None Module already imported so can not be re-written: testinfra&lt;/span&gt;
+&lt;span class="go"&gt;================= 4 passed, 1 pytest-warnings in 3.12 seconds ==================&lt;/span&gt;
+&lt;span class="go"&gt;--&amp;gt; Destroying instances...&lt;/span&gt;
+&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Removing domain...&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;Looking at the above output, Molecule does a few things after applying the role
+under test:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;run the playbook a second time to check for idempotence&lt;/li&gt;
+&lt;li&gt;runs ansible-lint against the role&lt;/li&gt;
+&lt;li&gt;runs flake8 against tests&lt;/li&gt;
+&lt;/ul&gt;
+&lt;p&gt;These checks encourage good coding practices.  Idempotence is very important
+for creating stable and predictable roles.  The tests ensure that our role
+works as expected after making continuous improvements.&lt;/p&gt;
+&lt;p&gt;If you want to test a different platform configured in &lt;code&gt;molecule.yml&lt;/code&gt;, use the
+&lt;strong&gt;--platform&lt;/strong&gt; option to specify a platform:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;molecule test --platform debian8
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h2&gt;Tips&lt;/h2&gt;
+&lt;h3&gt;Disable NFS synced folder&lt;/h3&gt;
+&lt;p&gt;I've noticed that some Vagrant boxes will prompt for a password to enable NFS
+on the host for sharing with the virtual machines.  You may see a similar error
+as the following:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;==&amp;gt; ansible-role-ntp: Mounting NFS shared folders...&lt;/span&gt;
+&lt;span class="go"&gt;The following SSH command responded with a non-zero exit status.&lt;/span&gt;
+&lt;span class="go"&gt;Vagrant assumes that this means the command failed!&lt;/span&gt;
+
+&lt;span class="go"&gt;set -e&lt;/span&gt;
+&lt;span class="go"&gt;mkdir -p /vagrant&lt;/span&gt;
+&lt;span class="go"&gt;mount -o vers=4 192.168.121.1:/home/torresgi/tmp/ansible-role-ntp /vagrant&lt;/span&gt;
+&lt;span class="go"&gt;if command -v /sbin/init &amp;amp;&amp;amp; /sbin/init --version | grep upstart; then&lt;/span&gt;
+&lt;span class="go"&gt;  /sbin/initctl emit --no-wait vagrant-mounted MOUNTPOINT=/vagrant&lt;/span&gt;
+&lt;span class="go"&gt;fi&lt;/span&gt;
+
+
+&lt;span class="go"&gt;Stdout from the command:&lt;/span&gt;
+
+
+
+&lt;span class="go"&gt;Stderr from the command:&lt;/span&gt;
+
+&lt;span class="go"&gt;stdin: is not a tty&lt;/span&gt;
+&lt;span class="go"&gt;mount.nfs: access denied by server while mounting 192.168.121.1:/home/torresgi/tmp/ansible-role-ntp&lt;/span&gt;
+
+&lt;span class="go"&gt;ERROR: Command &amp;#39;[&amp;#39;/usr/bin/vagrant&amp;#39;, &amp;#39;up&amp;#39;, &amp;#39;--no-provision&amp;#39;]&amp;#39; returned non-zero exit status 1&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;p&gt;To workaround this and bypass the need for NFS, which is not needed for this
+guide, add the following snippet to your local Vagrantfile,
+&lt;code&gt;~/.vagrant.d/Vagrantfile&lt;/code&gt;:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="no"&gt;Vagrant&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;configure&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="s1"&gt;&amp;#39;2&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt; &lt;span class="k"&gt;do&lt;/span&gt; &lt;span class="o"&gt;|&lt;/span&gt;&lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="o"&gt;|&lt;/span&gt;
+  &lt;span class="n"&gt;config&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;vm&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;synced_folder&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;.&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="s1"&gt;&amp;#39;/vagrant&amp;#39;&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt; &lt;span class="ss"&gt;disabled&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt; &lt;span class="kp"&gt;true&lt;/span&gt;
+&lt;span class="k"&gt;end&lt;/span&gt;
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;h3&gt;Taming the Password Prompt&lt;/h3&gt;
+&lt;p&gt;When Molecule calls Vagrant, it may prompt several times for your sudo password
+to create the virtual machine.  To avoid this, you can add your user to the
+&lt;strong&gt;libvirt&lt;/strong&gt; group:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;usermod -aG libvirt giovanni
+&lt;/pre&gt;&lt;/div&gt;
+
+
+&lt;blockquote&gt;
+&lt;p&gt;Note: Be careful when doing this.  This is probably okay on your local
+workstation, but not suitable on a production hypervisor.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;p&gt;Using a combination of Molecule, TestInfra, Vagrant, Ansible and Git, it
+becomes easier to write testable roles and version control the roles along with
+the tests in the same repository.
+time.&lt;/p&gt;</summary><category term="ansible"></category><category term="vagrant"></category><category term="molecule"></category><category term="testinfra"></category><category term="testing"></category></entry><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Whether you are testing a new clustered application, validating configuration
 management playbooks or studying for the RHCE, it's convenient to have access
 to a set of Linux virtual machines.  This is the beauty of the cloud.  You can

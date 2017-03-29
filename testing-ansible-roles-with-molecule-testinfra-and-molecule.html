@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="en" prefix="og: http://ogp.me/ns# fb: https://www.facebook.com/2008/fbml">
+<head>
+    <title>Testing Ansible Roles with Molecule, TestInfra and Molecule - Giovanni Torres</title>
+    <!-- Using the latest rendering mode for IE -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+
+<link rel="canonical" href="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-molecule.html">
+
+        <meta name="author" content="Giovanni Torres" />
+        <meta name="keywords" content="ansible,vagrant,molecule,testinfra,testing" />
+        <meta name="description" content="Introduction You&#39;ve started down the path of using configuration management and decided to use Ansible. You began with a big monolithic playbook and now it&#39;s time to break it down into modular roles that can be applied to groups of hosts as needed. As you create roles, how ..." />
+
+        <meta property="og:site_name" content="Giovanni Torres" />
+        <meta property="og:type" content="article"/>
+        <meta property="og:title" content="Testing Ansible Roles with Molecule, TestInfra and Molecule"/>
+        <meta property="og:url" content="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-molecule.html"/>
+        <meta property="og:description" content="Introduction You&#39;ve started down the path of using configuration management and decided to use Ansible. You began with a big monolithic playbook and now it&#39;s time to break it down into modular roles that can be applied to groups of hosts as needed. As you create roles, how ..."/>
+        <meta property="article:published_time" content="2017-03-28" />
+            <meta property="article:section" content="Ansible" />
+            <meta property="article:tag" content="ansible" />
+            <meta property="article:tag" content="vagrant" />
+            <meta property="article:tag" content="molecule" />
+            <meta property="article:tag" content="testinfra" />
+            <meta property="article:tag" content="testing" />
+            <meta property="article:author" content="Giovanni Torres" />
+
+
+    <!-- Bootstrap -->
+        <link rel="stylesheet" href="http://giovannitorres.me/theme/css/bootstrap.cosmo.min.css" type="text/css"/>
+    <link href="http://giovannitorres.me/theme/css/font-awesome.min.css" rel="stylesheet">
+
+    <link href="http://giovannitorres.me/theme/css/pygments/native.css" rel="stylesheet">
+    <link rel="stylesheet" href="http://giovannitorres.me/theme/css/style.css" type="text/css"/>
+
+        <link href="http://giovannitorres.me/feeds/all.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres ATOM Feed"/>
+
+
+
+        <link href="http://giovannitorres.me/feeds/ansible.atom.xml" type="application/atom+xml" rel="alternate"
+              title="Giovanni Torres Ansible ATOM Feed"/>
+
+</head>
+<body>
+
+<div class="navbar navbar-default navbar-fixed-top" role="navigation">
+	<div class="container">
+        <div class="navbar-header">
+            <a href="http://giovannitorres.me/" class="navbar-brand">
+Giovanni Torres            </a>
+        </div>
+        <div class="collapse navbar-collapse navbar-ex1-collapse">
+            <ul class="nav navbar-nav">
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+              <li><a href="http://giovannitorres.me/reading-list.html"><i class="fa fa-book"></i><span class="icon-label">Reading List</span></a></li>
+              <li><a href="http://giovannitorres.me/about.html"><i class="fa fa-user"></i><span class="icon-label">About Me</span></a></li>
+            </ul>
+        </div>
+        <!-- /.navbar-collapse -->
+    </div>
+</div> <!-- /.navbar -->
+<!-- Banner -->
+<!-- End Banner -->
+<div class="container">
+    <div class="row">
+        <div class="col-sm-9">
+    <section id="content">
+        <article>
+            <header class="page-header">
+                <h1>
+                    <a href="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-molecule.html"
+                       rel="bookmark"
+                       title="Permalink to Testing Ansible Roles with Molecule, TestInfra and Molecule">
+                        Testing Ansible Roles with Molecule, TestInfra and Molecule
+                    </a>
+                </h1>
+            </header>
+            <div class="entry-content">
+                <div class="panel">
+                    <div class="panel-body">
+<footer class="post-info">
+    <span class="label label-default">Date</span>
+    <span class="published">
+        <i class="fa fa-calendar"></i><time datetime="2017-03-28T19:45:00-04:00"> Tue 28 March 2017</time>
+    </span>
+
+
+
+
+
+<span class="label label-default">Tags</span>
+	<a href="http://giovannitorres.me/tag/ansible.html">ansible</a>
+        /
+	<a href="http://giovannitorres.me/tag/vagrant.html">vagrant</a>
+        /
+	<a href="http://giovannitorres.me/tag/molecule.html">molecule</a>
+        /
+	<a href="http://giovannitorres.me/tag/testinfra.html">testinfra</a>
+        /
+	<a href="http://giovannitorres.me/tag/testing.html">testing</a>
+    
+</footer><!-- /.post-info -->                    </div>
+                </div>
+                <h2>Introduction</h2>
+<p>You've started down the path of using configuration management and decided to
+use Ansible.  You began with a big monolithic playbook and now it's time to
+break it down into modular roles that can be applied to groups of hosts as
+needed.</p>
+<p>As you create roles, how do you ensure that your roles are working as
+expected, <strong>before</strong> applying the roles to your servers?  You also have a
+heterogeneous environment with multiple operating systems.  How do you ensure
+that updates to existing roles will continue to work as expected?</p>
+<p>This guide will show you how to test your roles against multiple operating
+systems on your local development workstation before committing your changes to
+version control.  <em>(You are version controlling your roles, right?)</em></p>
+<h2>Stack</h2>
+<p>We will use the following tools to create a local Ansible development
+environment.</p>
+<ul>
+<li>Fedora 25 Workstation</li>
+<li>KVM Hypervisor and libvirt</li>
+<li><a href="https://www.vagrantup.com/">Vagrant</a> with the
+  <a href="https://github.com/vagrant-libvirt/vagrant-libvirt">vagrant-libvirt</a> plugin</li>
+<li><a href="https://github.com/metacloud/molecule">Molecule</a></li>
+<li><a href="https://github.com/philpep/testinfra">TestInfra</a></li>
+<li>Ansible</li>
+</ul>
+<h2>Setup</h2>
+<h3>Installing the KVM Hypervisor</h3>
+<p>You will first need to setup the KVM hypervisor on your workstation, assuming
+your CPU supports virtualization extensions (most recent CPUs do).  If you
+don't have KVM already installed, install the virtualization group packages:</p>
+<div class="highlight"><pre><span></span>sudo dnf install @virtualization
+</pre></div>
+
+
+<p>Start the libvirtd service and have it start at boot time:</p>
+<div class="highlight"><pre><span></span>sudo systemctl start libvirtd.service
+sudo systemctl enable libvirtd.service
+</pre></div>
+
+
+<h3>Installing Packages with DNF</h3>
+<p>This setup requires Vagrant, a tool to create and configure lightweight virtual
+machines.  It works great for creating development environments locally using
+virtual machines.  Vagrant has plugins that support libvirt as a provider.
+Therefore, we can use Vagrant to launch virtual machines using the local KVM
+hypervisor.</p>
+<div class="highlight"><pre><span></span>sudo dnf install vagrant vagrant-libvirt
+</pre></div>
+
+
+<p>The Vagrant <a href="https://www.vagrantup.com/docs/installation/">installation</a> page
+warns that some distributions have much older versions in their repositories.
+At the time of this writing, Fedora 25 is one minor release (1.8.5) behind the
+latest available (1.9.2) and is sufficient for this guide.</p>
+<p>Other development packages are also required for building Molecule:</p>
+<div class="highlight"><pre><span></span>sudo dnf install gcc python-devel openssl-devel libffi-devel
+</pre></div>
+
+
+<h3>Installing Packages with pip</h3>
+<p>The remainder of the required packages are not available in the Fedora 25
+repositories.  Therefore, we'll go directly to
+<a href="https://pypi.python.org/pypi">PyPi</a> to fetch these packages:</p>
+<div class="highlight"><pre><span></span>sudo pip install molecule testinfra python-vagrant ansible
+</pre></div>
+
+
+<p>If you already have a version of Ansible installed from the
+repositories and don't want to update, use <code>pip list</code> to check the current
+version and then specify the existing version when calling <code>pip install</code>:</p>
+<div class="highlight"><pre><span></span>pip list | grep -w ^ansible
+sudo pip install molecule testinfra python-vagrant ansible==2.2.1.0
+</pre></div>
+
+
+<h2>Initializing a Role with Molecule</h2>
+<p>Molecule can take of initializing a new role.  It will create the default
+directories, similar to <code>ansible-galaxy init</code>.  It will also create a
+<code>molecule.yml</code> and a <code>playbook.yml</code> file.  These files will instruct Molecule
+which Vagrant boxes to use, and run TestInfra tests against the virtual machine
+after the role has been applied.  Create a new NTP role:</p>
+<div class="highlight"><pre><span></span>molecule init --role ansible-role-ntp --driver vagrant --verifier testinfra
+</pre></div>
+
+
+<p>This will create a new directory named <code>ansible-role-ntp</code>.  Change to this
+directory and start building out the role:</p>
+<div class="highlight"><pre><span></span>cd ansible-role-ntp
+</pre></div>
+
+
+<h3>Building an NTP Role</h3>
+<p>We need a role to test.  If you already have a role that you would like to
+test, skip to the next section (<strong>Setting up the Tests</strong>).</p>
+<p>A role for NTP makes a good example because it requires multiple Ansible
+modules for installing the package, customizing the configuration, and starting
+the service.  Also, the NTP daemon name is different between CentOS and Debian,
+which requires us to use role variables.</p>
+<h4>Tasks</h4>
+<p>Configure the tasks that Ansible will carry out to install and configure NTP
+both CentOS 7 and Debian 8. We will provide a <strong>name</strong> for each task which
+serves as built-in documentation for each task. Add the following tasks to
+<code>tasks/main.yml</code>:</p>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Include OS-specific variables.</span>
+  <span class="l l-Scalar l-Scalar-Plain">include_vars</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">ansible_os_family</span><span class="nv"> </span><span class="s">}}.yml&quot;</span>
+
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Install NTP.</span>
+  <span class="l l-Scalar l-Scalar-Plain">package</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ntp</span>
+    <span class="l l-Scalar l-Scalar-Plain">state</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">present</span>
+
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Set Time Zone.</span>
+  <span class="l l-Scalar l-Scalar-Plain">file</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">src</span><span class="p p-Indicator">:</span> <span class="s">&quot;/usr/share/zoneinfo/{{</span><span class="nv"> </span><span class="s">ntp_timezone</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="l l-Scalar l-Scalar-Plain">dest</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/etc/localtime</span>
+    <span class="l l-Scalar l-Scalar-Plain">state</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">link</span>
+    <span class="l l-Scalar l-Scalar-Plain">force</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Configure main NTP configuration file.</span>
+  <span class="l l-Scalar l-Scalar-Plain">template</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">src</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ntp.conf.j2</span>
+    <span class="l l-Scalar l-Scalar-Plain">dest</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">/etc/ntp.conf</span>
+    <span class="l l-Scalar l-Scalar-Plain">owner</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
+    <span class="l l-Scalar l-Scalar-Plain">group</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">root</span>
+    <span class="l l-Scalar l-Scalar-Plain">mode</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">0644</span>
+  <span class="l l-Scalar l-Scalar-Plain">notify</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">restart ntp</span>
+
+<span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">Ensure the NTP service is running and enabled at boot time.</span>
+  <span class="l l-Scalar l-Scalar-Plain">service</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">ntp_daemon</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="l l-Scalar l-Scalar-Plain">enabled</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">yes</span>
+    <span class="l l-Scalar l-Scalar-Plain">state</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">started</span>
+</pre></div>
+
+
+<p>There are three variables in the tasks above: <code>ansible_os_family</code>,
+<code>ntp_timezone</code>, and <code>ntp_daemon</code>.</p>
+<p>Here, we take advantage of Ansible's <a href="https://docs.ansible.com/ansible/setup_module.html">fact
+gathering</a>.  When the role
+is applied, Ansible will retrieve facts about the remote system and return them
+as variables that can be used throughout the role.  The <code>ansible_os_family</code>
+variable will resolve to either <strong>RedHat</strong> or <strong>Debian</strong>.  Therefore, the role
+will include all variables in either <code>vars/RedHat.yml</code> or <code>vars/Debian.yml</code>,
+depending on which OS is being tested. This design allows us to support
+multiple platforms without duplicating tasks, one for each OS.</p>
+<p>The other two variables in this role are custom variables.  It is a good
+practice to prefix custom variables with the name of the role, in this case
+<strong>ntp_</strong>.  This will avoid clashing of variables when applying multiple roles
+at the same time.</p>
+<h4>Vars</h4>
+<p>Variables in Ansible can exist in <a href="https://docs.ansible.com/ansible/playbooks_variables.html">multiple
+places</a>.  Our role
+will put variables in two places: <code>vars/</code> and <code>defaults/</code>.  We'll use the
+<code>vars/</code> directory for effectively hardcoding variables based on the operating
+system.  For example, we know that the NTP daemon on Debian is named <strong>ntp</strong>,
+while on RedHat it is named <strong>ntpd</strong>.</p>
+<p>Edit the <code>vars/Debian.yml</code> file:</p>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="l l-Scalar l-Scalar-Plain">ntp_daemon</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ntp</span>
+</pre></div>
+
+
+<p>Edit the <code>vars/RedHat.yml</code> file:</p>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="l l-Scalar l-Scalar-Plain">ntp_daemon</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ntpd</span>
+</pre></div>
+
+
+<h4>Defaults</h4>
+<p>What about that other custom variables?  We'll put the other custom variables
+in <code>defaults/main.yml</code> so that users can modify them when applying the role.</p>
+<p>Edit the <code>defaults/main.yml</code> file:</p>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="l l-Scalar l-Scalar-Plain">ntp_timezone</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">America/New_York</span>
+<span class="l l-Scalar l-Scalar-Plain">ntp_servers</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">0.us.pool.ntp.org</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">1.us.pool.ntp.org</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">2.us.pool.ntp.org</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">3.us.pool.ntp.org</span>
+</pre></div>
+
+
+<h4>Handlers</h4>
+<p>The handler is responsible for restarting the NTP service after Ansible detects
+a change in the configuration.  Edit the <code>handlers/main.yml</code> file:</p>
+<div class="highlight"><pre><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">restart ntp</span>
+  <span class="l l-Scalar l-Scalar-Plain">service</span><span class="p p-Indicator">:</span>
+    <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="s">&quot;{{</span><span class="nv"> </span><span class="s">ntp_daemon</span><span class="nv"> </span><span class="s">}}&quot;</span>
+    <span class="l l-Scalar l-Scalar-Plain">state</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">restarted</span>
+</pre></div>
+
+
+<h4>Templates</h4>
+<p>Ansible uses the <a href="http://jinja.pocoo.org/">Jinja2</a> templating engine.  We will
+replace certain parameters in the <code>ntp.conf</code> file with variables.  When Ansible
+applies the role, the values of the variables are replaced.</p>
+<p>Edit the <code>templates/ntp.conf.j2</code> file:</p>
+<div class="highlight"><pre><span></span><span class="x"># </span><span class="cp">{{</span> <span class="nv">ansible_managed</span> <span class="cp">}}</span><span class="x"></span>
+<span class="x">#</span>
+<span class="x"># Keep ntpd from panicking in the event of a large clock skew</span>
+<span class="x"># when a VM guest is suspended and resumed.</span>
+<span class="cp">{%</span> <span class="k">if</span> <span class="nv">ansible_virtualization_role</span> <span class="o">==</span> <span class="s1">&#39;guest&#39;</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">tinker panic 0</span>
+<span class="cp">{%</span> <span class="k">endif</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x"># Permit time synchronization with our time source, but do not</span>
+<span class="x"># permit the source to query or modify the service on this system.</span>
+<span class="x">restrict default kod nomodify notrap nopeer noquery</span>
+<span class="x">restrict -6 default kod nomodify notrap nopeer noquery</span>
+
+<span class="x"># Permit all access over the loopback interface.  This could</span>
+<span class="x"># be tightened as well, but to do so would effect some of</span>
+<span class="x"># the administrative functions.</span>
+<span class="x">restrict 127.0.0.1</span>
+<span class="x">restrict -6 ::1</span>
+
+<span class="cp">{%</span> <span class="k">for</span> <span class="nv">server</span> <span class="k">in</span> <span class="nv">ntp_servers</span> <span class="cp">%}</span><span class="x"></span>
+<span class="x">server </span><span class="cp">{{</span> <span class="nv">server</span> <span class="cp">}}</span><span class="x"> iburst</span>
+<span class="cp">{%</span> <span class="k">endfor</span> <span class="cp">%}</span><span class="x"></span>
+
+<span class="x"># Driftfile</span>
+<span class="x">driftfile /var/lib/ntp/drift</span>
+
+<span class="x"># Disable the monitoring facility to prevent amplification attacks using ntpdc</span>
+<span class="x"># monlist command when default restrict does not include the noquery flag. See</span>
+<span class="x"># CVE-2013-5211 for more details.</span>
+<span class="x"># Note: Monitoring will not be disabled with the limited restriction flag.</span>
+<span class="x">disable monitor</span>
+</pre></div>
+
+
+<p>Edit the <code>templates/timezone.j2</code> file:</p>
+<div class="highlight"><pre><span></span><span class="cp">{{</span> <span class="nv">ntp_timezone</span> <span class="cp">}}</span><span class="x"></span>
+</pre></div>
+
+
+<h2>Setting up the Tests</h2>
+<p>The role is complete.  Now it's time to setup the tests.  TestInfra aims to be
+a Python equivalent for <a href="http://serverspec.org/">Serverspec</a>.  It allows you
+write tests to make sure your servers are configured correctly.  The idea is to
+configure your servers with Ansible and test the state of the servers after
+configuration has been applied.</p>
+<p>If you are not using the NTP role and instead using one of your own roles while
+following this guide, you can add Molecule to an existing role:</p>
+<div class="highlight"><pre><span></span>cd my-role
+molecule init --driver vagrant --verifier testinfra
+</pre></div>
+
+
+<p>TestInfra has several
+<a href="https://testinfra.readthedocs.io/en/latest/modules.html#">modules</a> to run
+specific tests.  We will use some of these modules to add some tests for our
+role. </p>
+<p>Edit the <code>tests/test_default.py</code> file:</p>
+<div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">testinfra.utils.ansible_runner</span>
+
+<span class="n">testinfra_hosts</span> <span class="o">=</span> <span class="n">testinfra</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">ansible_runner</span><span class="o">.</span><span class="n">AnsibleRunner</span><span class="p">(</span>
+    <span class="s1">&#39;.molecule/ansible_inventory&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">get_hosts</span><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_ntp_package</span><span class="p">(</span><span class="n">Package</span><span class="p">):</span>
+    <span class="k">assert</span> <span class="n">Package</span><span class="p">(</span><span class="s2">&quot;ntp&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">is_installed</span>
+
+
+<span class="k">def</span> <span class="nf">test_ntp_file</span><span class="p">(</span><span class="n">File</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;/etc/ntp.conf&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">exists</span>
+    <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">is_file</span>
+
+
+<span class="k">def</span> <span class="nf">test_ntp_file_content</span><span class="p">(</span><span class="n">File</span><span class="p">):</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="n">File</span><span class="p">(</span><span class="s2">&quot;/etc/ntp.conf&quot;</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">f</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="s2">&quot;0.us.pool.ntp.org&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">test_ntp_service</span><span class="p">(</span><span class="n">Service</span><span class="p">,</span> <span class="n">SystemInfo</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">SystemInfo</span><span class="o">.</span><span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;debian&quot;</span><span class="p">:</span>
+        <span class="n">ntp_daemon</span> <span class="o">=</span> <span class="s2">&quot;ntp&quot;</span>
+    <span class="k">elif</span> <span class="n">SystemInfo</span><span class="o">.</span><span class="n">distribution</span> <span class="o">==</span> <span class="s2">&quot;centos&quot;</span><span class="p">:</span>
+        <span class="n">ntp_daemon</span> <span class="o">=</span> <span class="s2">&quot;ntpd&quot;</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">Service</span><span class="p">(</span><span class="n">ntp_daemon</span><span class="p">)</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">is_running</span>
+    <span class="k">assert</span> <span class="n">s</span><span class="o">.</span><span class="n">is_enabled</span>
+</pre></div>
+
+
+<h2>Configuring Molecule</h2>
+<p>The role is complete and the tests are ready.  Now, the last piece is to
+configure Molecule to use Vagrant with two platforms: CentOS 7 and Debian 8.
+We also instruct Molecule to use the libvirt provider with the kvm driver.  The
+virtual machines will be configured with 1024MB of RAM and 1 vCPU.</p>
+<p>Edit the <code>molecule.yml</code> file:</p>
+<div class="highlight"><pre><span></span><span class="nn">---</span>
+<span class="l l-Scalar l-Scalar-Plain">driver</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">vagrant</span>
+<span class="l l-Scalar l-Scalar-Plain">vagrant</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">platforms</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">centos7</span>
+      <span class="l l-Scalar l-Scalar-Plain">box</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">centos/7</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">debian8</span>
+      <span class="l l-Scalar l-Scalar-Plain">box</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">debian/jessie64</span>
+  <span class="l l-Scalar l-Scalar-Plain">providers</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">libvirt</span>
+      <span class="l l-Scalar l-Scalar-Plain">type</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">libvirt</span>
+      <span class="l l-Scalar l-Scalar-Plain">options</span><span class="p p-Indicator">:</span>
+        <span class="l l-Scalar l-Scalar-Plain">memory</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1024</span>
+        <span class="l l-Scalar l-Scalar-Plain">cpus</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">1</span>
+      <span class="l l-Scalar l-Scalar-Plain">driver</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">kvm</span>
+  <span class="l l-Scalar l-Scalar-Plain">instances</span><span class="p p-Indicator">:</span>
+    <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">ansible-role-ntp</span>
+      <span class="l l-Scalar l-Scalar-Plain">ansible_groups</span><span class="p p-Indicator">:</span>
+        <span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">group1</span>
+<span class="l l-Scalar l-Scalar-Plain">verifier</span><span class="p p-Indicator">:</span>
+  <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">testinfra</span>
+</pre></div>
+
+
+<h2>Testing the Role</h2>
+<p>Testing the role is simple after everything else is in place:</p>
+<div class="highlight"><pre><span></span>molecule test
+</pre></div>
+
+
+<p>This command will launch Vagrant, which will download a CentOS 7 image and
+create a new local virtual machine.  When the virtual machine is ready, which
+typically takes a few seconds, Ansible will apply the role and then Molecule
+will call TestInfra to run the tests.</p>
+<p>Here is the output from the command above:</p>
+<div class="highlight"><pre><span></span><span class="go">--&gt; Destroying instances...</span>
+<span class="go">--&gt; Checking playbook&#39;s syntax...</span>
+
+<span class="go">playbook: playbook.yml</span>
+<span class="go">--&gt; Creating instances...</span>
+<span class="go">Bringing machine &#39;ansible-role-ntp&#39; up with &#39;libvirt&#39; provider...</span>
+<span class="go">==&gt; ansible-role-ntp: Creating image (snapshot of base box volume).</span>
+<span class="go">==&gt; ansible-role-ntp: Creating domain with the following settings...</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Name:              ansible-role-ntp_ansible-role-ntp</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Domain type:       kvm</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Cpus:              1</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Memory:            1024M</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Management MAC:</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Loader:</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Base box:          centos/7</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Storage pool:      default</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Image:             /var/lib/libvirt/images/ansible-role-ntp_ansible-role-ntp.img (41G)</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Volume Cache:      default</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Kernel:</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Initrd:</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Graphics Type:     vnc</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Graphics Port:     5900</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Graphics IP:       127.0.0.1</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Graphics Password: Not defined</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Video Type:        cirrus</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Video VRAM:        9216</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Keymap:            en-us</span>
+<span class="go">==&gt; ansible-role-ntp:  -- TPM Path:</span>
+<span class="go">==&gt; ansible-role-ntp:  -- INPUT:             type=mouse, bus=ps2</span>
+<span class="go">==&gt; ansible-role-ntp:  -- Command line :</span>
+<span class="go">==&gt; ansible-role-ntp: Creating shared folders metadata...</span>
+<span class="go">==&gt; ansible-role-ntp: Starting domain.</span>
+<span class="go">==&gt; ansible-role-ntp: Waiting for domain to get an IP address...</span>
+<span class="go">==&gt; ansible-role-ntp: Waiting for SSH to become available...</span>
+<span class="go">    ansible-role-ntp:</span>
+<span class="go">    ansible-role-ntp: Vagrant insecure key detected. Vagrant will automatically replace</span>
+<span class="go">    ansible-role-ntp: this with a newly generated keypair for better security.</span>
+<span class="go">    ansible-role-ntp:</span>
+<span class="go">    ansible-role-ntp: Inserting generated public key within guest...</span>
+<span class="go">    ansible-role-ntp: Removing insecure key from the guest if it&#39;s present...</span>
+<span class="go">    ansible-role-ntp: Key inserted! Disconnecting and reconnecting using new SSH key...</span>
+<span class="go">==&gt; ansible-role-ntp: Setting hostname...</span>
+<span class="go">==&gt; ansible-role-ntp: Configuring and enabling network interfaces...</span>
+<span class="go">==&gt; ansible-role-ntp: Rsyncing folder: /home/torresgi/tmp/ansible-role-ntp/ =&gt; /vagrant</span>
+<span class="go">==&gt; ansible-role-ntp: Machine not provisioned because `--no-provision` is specified.</span>
+<span class="go">--&gt; Starting Ansible Run...</span>
+
+<span class="go">PLAY [all] *********************************************************************</span>
+
+<span class="go">TASK [setup] *******************************************************************</span>
+<span class="go">ok: [ansible-role-ntp]</span>
+
+<span class="go">TASK [ansible-role-ntp : Include OS-specific variables] ************************</span>
+<span class="go">ok: [ansible-role-ntp]</span>
+
+<span class="go">TASK [ansible-role-ntp : Install NTP] ******************************************</span>
+<span class="go">changed: [ansible-role-ntp]</span>
+
+<span class="go">TASK [ansible-role-ntp : Set Time Zone] ****************************************</span>
+<span class="go">changed: [ansible-role-ntp]</span>
+
+<span class="go">TASK [ansible-role-ntp : Configure main NTP configuration file] ****************</span>
+<span class="go">--- before: /etc/ntp.conf</span>
+<span class="go">+++ after: dynamically generated</span>
+<span class="go">@@ -1,55 +1,27 @@</span>
+<span class="go">-# For more information about this file, see the man pages</span>
+<span class="go">-# ntp.conf(5), ntp_acc(5), ntp_auth(5), ntp_clock(5), ntp_misc(5), ntp_mon(5).</span>
+<span class="go">-</span>
+<span class="go">-driftfile /var/lib/ntp/drift</span>
+<span class="go">+# Ansible managed: Do NOT edit this file manually!</span>
+<span class="go">+#</span>
+<span class="go">+# Keep ntpd from panicking in the event of a large clock skew</span>
+<span class="go">+# when a VM guest is suspended and resumed.</span>
+<span class="go">+tinker panic 0</span>
+
+<span class="gp"> #</span> Permit <span class="nb">time</span> synchronization with our <span class="nb">time</span> source, but <span class="k">do</span> not
+<span class="gp"> #</span> permit the <span class="nb">source</span> to query or modify the service on this system.
+<span class="go">-restrict default nomodify notrap nopeer noquery</span>
+<span class="go">+restrict default kod nomodify notrap nopeer noquery</span>
+<span class="go">+restrict -6 default kod nomodify notrap nopeer noquery</span>
+
+<span class="gp"> #</span> Permit all access over the loopback interface.  This could
+<span class="gp"> #</span> be tightened as well, but to <span class="k">do</span> so would effect some of
+<span class="gp"> #</span> the administrative functions.
+<span class="go">-restrict 127.0.0.1</span>
+<span class="go">-restrict ::1</span>
+<span class="go">+restrict 127.0.0.1</span>
+<span class="go">+restrict -6 ::1</span>
+
+<span class="go">-# Hosts on local network are less restricted.</span>
+<span class="go">-#restrict 192.168.1.0 mask 255.255.255.0 nomodify notrap</span>
+<span class="go">+server 0.us.pool.ntp.org iburst</span>
+<span class="go">+server 1.us.pool.ntp.org iburst</span>
+<span class="go">+server 2.us.pool.ntp.org iburst</span>
+<span class="go">+server 3.us.pool.ntp.org iburst</span>
+
+<span class="go">-# Use public servers from the pool.ntp.org project.</span>
+<span class="go">-# Please consider joining the pool (http://www.pool.ntp.org/join.html).</span>
+<span class="go">-server 0.centos.pool.ntp.org iburst</span>
+<span class="go">-server 1.centos.pool.ntp.org iburst</span>
+<span class="go">-server 2.centos.pool.ntp.org iburst</span>
+<span class="go">-server 3.centos.pool.ntp.org iburst</span>
+<span class="go">-</span>
+<span class="go">-#broadcast 192.168.1.255 autokey   # broadcast server</span>
+<span class="go">-#broadcastclient           # broadcast client</span>
+<span class="go">-#broadcast 224.0.1.1 autokey       # multicast server</span>
+<span class="go">-#multicastclient 224.0.1.1     # multicast client</span>
+<span class="go">-#manycastserver 239.255.254.254        # manycast server</span>
+<span class="go">-#manycastclient 239.255.254.254 autokey # manycast client</span>
+<span class="go">-</span>
+<span class="go">-# Enable public key cryptography.</span>
+<span class="go">-#crypto</span>
+<span class="go">-</span>
+<span class="go">-includefile /etc/ntp/crypto/pw</span>
+<span class="go">-</span>
+<span class="go">-# Key file containing the keys and key identifiers used when operating</span>
+<span class="go">-# with symmetric key cryptography.</span>
+<span class="go">-keys /etc/ntp/keys</span>
+<span class="go">-</span>
+<span class="go">-# Specify the key identifiers which are trusted.</span>
+<span class="go">-#trustedkey 4 8 42</span>
+<span class="go">-</span>
+<span class="go">-# Specify the key identifier to use with the ntpdc utility.</span>
+<span class="go">-#requestkey 8</span>
+<span class="go">-</span>
+<span class="go">-# Specify the key identifier to use with the ntpq utility.</span>
+<span class="go">-#controlkey 8</span>
+<span class="go">-</span>
+<span class="go">-# Enable writing of statistics records.</span>
+<span class="go">-#statistics clockstats cryptostats loopstats peerstats</span>
+<span class="go">+# Driftfile</span>
+<span class="go">+driftfile /var/lib/ntp/drift</span>
+
+<span class="gp"> #</span> Disable the monitoring facility to prevent amplification attacks using ntpdc
+<span class="gp"> #</span> monlist <span class="nb">command</span> when default restrict does not include the noquery flag. See
+
+<span class="go">changed: [ansible-role-ntp]</span>
+
+<span class="go">TASK [ansible-role-ntp : Make sure the NTP service is enabled and running] *****</span>
+<span class="go">changed: [ansible-role-ntp]</span>
+
+<span class="go">RUNNING HANDLER [ansible-role-ntp : restart ntp] *******************************</span>
+<span class="go">changed: [ansible-role-ntp]</span>
+
+<span class="go">PLAY RECAP *********************************************************************</span>
+<span class="go">ansible-role-ntp           : ok=7    changed=5    unreachable=0    failed=0</span>
+
+<span class="go">--&gt; Idempotence test in progress (can take a few minutes)...</span>
+<span class="go">--&gt; Starting Ansible Run...</span>
+<span class="go">Idempotence test passed.</span>
+<span class="go">--&gt; Executing ansible-lint...</span>
+<span class="go">--&gt; Executing flake8 on *.py files found in tests/...</span>
+<span class="go">--&gt; Executing testinfra tests found in tests/...</span>
+<span class="go">============================= test session starts ==============================</span>
+<span class="go">platform linux2 -- Python 2.7.13, pytest-3.0.6, py-1.4.32, pluggy-0.4.0</span>
+<span class="go">rootdir: /home/torresgi/tmp/ansible-role-ntp, inifile:</span>
+<span class="go">plugins: testinfra-1.5.4</span>
+<span class="go">collected 4 itemss</span>
+
+<span class="go">tests/test_default.py ....</span>
+
+<span class="go">============================ pytest-warning summary ============================</span>
+<span class="go">WP1 None Module already imported so can not be re-written: testinfra</span>
+<span class="go">================= 4 passed, 1 pytest-warnings in 3.12 seconds ==================</span>
+<span class="go">--&gt; Destroying instances...</span>
+<span class="go">==&gt; ansible-role-ntp: Removing domain...</span>
+</pre></div>
+
+
+<p>Looking at the above output, Molecule does a few things after applying the role
+under test:</p>
+<ul>
+<li>run the playbook a second time to check for idempotence</li>
+<li>runs ansible-lint against the role</li>
+<li>runs flake8 against tests</li>
+</ul>
+<p>These checks encourage good coding practices.  Idempotence is very important
+for creating stable and predictable roles.  The tests ensure that our role
+works as expected after making continuous improvements.</p>
+<p>If you want to test a different platform configured in <code>molecule.yml</code>, use the
+<strong>--platform</strong> option to specify a platform:</p>
+<div class="highlight"><pre><span></span>molecule test --platform debian8
+</pre></div>
+
+
+<h2>Tips</h2>
+<h3>Disable NFS synced folder</h3>
+<p>I've noticed that some Vagrant boxes will prompt for a password to enable NFS
+on the host for sharing with the virtual machines.  You may see a similar error
+as the following:</p>
+<div class="highlight"><pre><span></span><span class="go">==&gt; ansible-role-ntp: Mounting NFS shared folders...</span>
+<span class="go">The following SSH command responded with a non-zero exit status.</span>
+<span class="go">Vagrant assumes that this means the command failed!</span>
+
+<span class="go">set -e</span>
+<span class="go">mkdir -p /vagrant</span>
+<span class="go">mount -o vers=4 192.168.121.1:/home/torresgi/tmp/ansible-role-ntp /vagrant</span>
+<span class="go">if command -v /sbin/init &amp;&amp; /sbin/init --version | grep upstart; then</span>
+<span class="go">  /sbin/initctl emit --no-wait vagrant-mounted MOUNTPOINT=/vagrant</span>
+<span class="go">fi</span>
+
+
+<span class="go">Stdout from the command:</span>
+
+
+
+<span class="go">Stderr from the command:</span>
+
+<span class="go">stdin: is not a tty</span>
+<span class="go">mount.nfs: access denied by server while mounting 192.168.121.1:/home/torresgi/tmp/ansible-role-ntp</span>
+
+<span class="go">ERROR: Command &#39;[&#39;/usr/bin/vagrant&#39;, &#39;up&#39;, &#39;--no-provision&#39;]&#39; returned non-zero exit status 1</span>
+</pre></div>
+
+
+<p>To workaround this and bypass the need for NFS, which is not needed for this
+guide, add the following snippet to your local Vagrantfile,
+<code>~/.vagrant.d/Vagrantfile</code>:</p>
+<div class="highlight"><pre><span></span><span class="no">Vagrant</span><span class="o">.</span><span class="n">configure</span><span class="p">(</span><span class="s1">&#39;2&#39;</span><span class="p">)</span> <span class="k">do</span> <span class="o">|</span><span class="n">config</span><span class="o">|</span>
+  <span class="n">config</span><span class="o">.</span><span class="n">vm</span><span class="o">.</span><span class="n">synced_folder</span> <span class="s1">&#39;.&#39;</span><span class="p">,</span> <span class="s1">&#39;/vagrant&#39;</span><span class="p">,</span> <span class="ss">disabled</span><span class="p">:</span> <span class="kp">true</span>
+<span class="k">end</span>
+</pre></div>
+
+
+<h3>Taming the Password Prompt</h3>
+<p>When Molecule calls Vagrant, it may prompt several times for your sudo password
+to create the virtual machine.  To avoid this, you can add your user to the
+<strong>libvirt</strong> group:</p>
+<div class="highlight"><pre><span></span>usermod -aG libvirt giovanni
+</pre></div>
+
+
+<blockquote>
+<p>Note: Be careful when doing this.  This is probably okay on your local
+workstation, but not suitable on a production hypervisor.</p>
+</blockquote>
+<h2>Conclusion</h2>
+<p>Using a combination of Molecule, TestInfra, Vagrant, Ansible and Git, it
+becomes easier to write testable roles and version control the roles along with
+the tests in the same repository.
+time.</p>
+            </div>
+            <!-- /.entry-content -->
+    <hr/>
+    <section class="comments" id="comments">
+        <h2>Comments</h2>
+
+        <div id="disqus_thread"></div>
+        <script type="text/javascript">
+            /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+            var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+                    var disqus_identifier = 'testing-ansible-roles-with-molecule-testinfra-and-molecule';
+                var disqus_url = 'http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-molecule.html';
+
+            var disqus_config = function () {
+                this.language = "en";
+            };
+
+            /* * * DON'T EDIT BELOW THIS LINE * * */
+            (function () {
+                var dsq = document.createElement('script');
+                dsq.type = 'text/javascript';
+                dsq.async = true;
+                dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+            })();
+        </script>
+        <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by
+            Disqus.</a></noscript>
+        <a href="http://disqus.com" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+    </section>
+        </article>
+    </section>
+
+        </div>
+        <div class="col-sm-3" id="sidebar">
+            <aside>
+
+<section class="well well-sm">
+    <ul class="list-group list-group-flush">
+
+
+            <li class="list-group-item"><a href="http://giovannitorres.me/"><h4><i class="fa fa-home fa-lg"></i><span class="icon-label">Categories</span></h4></a>
+                <ul class="list-group" id="categories">
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/ansible.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Ansible
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/collectd.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Collectd
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/cython.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Cython
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/kvm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> KVM
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/linux.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Linux
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/rpm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> RPM
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="http://giovannitorres.me/category/slurm.html">
+                            <i class="fa fa-folder-open fa-lg"></i> Slurm
+                        </a>
+                    </li>
+                </ul>
+            </li>
+
+
+
+    <li class="list-group-item"><h4><i class="fa fa-external-link-square fa-lg"></i><span class="icon-label">Links</span></h4>
+      <ul class="list-group" id="links">
+        <li class="list-group-item">
+            <a href="https://github.com/PySlurm/pyslurm" target="_blank">
+                PySlurm
+            </a>
+        </li>
+      </ul>
+    </li>
+
+    <li class="list-group-item"><h4><i class="fa fa-github fa-lg"></i><span class="icon-label">GitHub Repos</span></h4>
+        <div id="gh_repos">
+            <p class="list-group-item">Status updating...</p>
+        </div>
+    </li>
+    </ul>
+</section>
+            </aside>
+        </div>
+    </div>
+</div>
+<footer>
+   <div class="container">
+      <hr>
+      <div class="row">
+         <div class="col-xs-10">&copy; 2017 Giovanni Torres
+            &middot; Powered by <a href="https://github.com/getpelican/pelican-themes/tree/master/pelican-bootstrap3" target="_blank">pelican-bootstrap3</a>,
+            <a href="http://docs.getpelican.com/" target="_blank">Pelican</a>,
+            <a href="http://getbootstrap.com" target="_blank">Bootstrap</a>         </div>
+         <div class="col-xs-2"><p class="pull-right"><i class="fa fa-arrow-up"></i> <a href="#">Back to top</a></p></div>
+      </div>
+   </div>
+</footer>
+<script src="http://giovannitorres.me/theme/js/jquery.min.js"></script>
+
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="http://giovannitorres.me/theme/js/bootstrap.min.js"></script>
+
+<!-- Enable responsive features in IE8 with Respond.js (https://github.com/scottjehl/Respond) -->
+<script src="http://giovannitorres.me/theme/js/respond.min.js"></script>
+
+    <!-- GitHub JS -->
+    <script type="text/javascript">
+        $(document).ready(function () {
+            if (!window.jXHR) {
+                var jxhr = document.createElement('script');
+                jxhr.type = 'text/javascript';
+                jxhr.src = 'http://giovannitorres.me/theme/js/jXHR.js';
+                var s = document.getElementsByTagName('script')[0];
+                s.parentNode.insertBefore(jxhr, s);
+            }
+
+            github.showRepos({
+                user: 'giovtorres',
+                count: 5,
+                skip_forks: true,
+                target: '#gh_repos'
+            });
+        });
+    </script>
+    <script src="http://giovannitorres.me/theme/js/github.js" type="text/javascript"></script>
+    <!-- End GitHub JS Code -->
+    <!-- Disqus -->
+    <script type="text/javascript">
+        /* * * CONFIGURATION VARIABLES: EDIT BEFORE PASTING INTO YOUR WEBPAGE * * */
+        var disqus_shortname = 'giovannitorres'; // required: replace example with your forum shortname
+
+        /* * * DON'T EDIT BELOW THIS LINE * * */
+        (function () {
+            var s = document.createElement('script');
+            s.async = true;
+            s.type = 'text/javascript';
+            s.src = '//' + disqus_shortname + '.disqus.com/count.js';
+            (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+        }());
+    </script>
+    <!-- End Disqus Code -->
+    <!-- Google Analytics -->
+    <script type="text/javascript">
+
+        var _gaq = _gaq || [];
+        _gaq.push(['_setAccount', 'UA-54838714-1']);
+        _gaq.push(['_trackPageview']);
+
+        (function () {
+            var ga = document.createElement('script');
+            ga.type = 'text/javascript';
+            ga.async = true;
+            ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(ga, s);
+        })();
+    </script>
+    <!-- End Google Analytics Code -->
+
+</body>
+</html>

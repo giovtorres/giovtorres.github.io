@@ -616,11 +616,11 @@ tap networking device.&lt;/p&gt;
 &lt;span class="c1"&gt;# Take one argument from the commandline: VM name&lt;/span&gt;
 &lt;span class="k"&gt;if&lt;/span&gt; ! &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="nv"&gt;$#&lt;/span&gt; -eq &lt;span class="m"&gt;1&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;then&lt;/span&gt;
     &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;Usage: &lt;/span&gt;&lt;span class="nv"&gt;$0&lt;/span&gt;&lt;span class="s2"&gt; &amp;lt;node-name&amp;gt;&amp;quot;&lt;/span&gt;
-    &lt;span class="nb"&gt;exit&lt;/span&gt; 1
+    &lt;span class="nb"&gt;exit&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;
 &lt;span class="k"&gt;fi&lt;/span&gt;
 
 &lt;span class="c1"&gt;# Check if domain already exists&lt;/span&gt;
-virsh dominfo &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
+virsh dominfo &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null &lt;span class="m"&gt;2&lt;/span&gt;&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;
 &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$?&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; -eq &lt;span class="m"&gt;0&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt; &lt;span class="k"&gt;then&lt;/span&gt;
     &lt;span class="nb"&gt;echo&lt;/span&gt; -n &lt;span class="s2"&gt;&amp;quot;[WARNING] &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; already exists.  &amp;quot;&lt;/span&gt;
     &lt;span class="nb"&gt;read&lt;/span&gt; -p &lt;span class="s2"&gt;&amp;quot;Do you want to overwrite &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; [y/N]? &amp;quot;&lt;/span&gt; -r
@@ -628,7 +628,7 @@ virsh dominfo &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null 2&amp;gt
         &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&amp;quot;&lt;/span&gt;
     &lt;span class="k"&gt;else&lt;/span&gt;
         &lt;span class="nb"&gt;echo&lt;/span&gt; -e &lt;span class="s2"&gt;&amp;quot;\nNot overwriting &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt;. Exiting...&amp;quot;&lt;/span&gt;
-        &lt;span class="nb"&gt;exit&lt;/span&gt; 1
+        &lt;span class="nb"&gt;exit&lt;/span&gt; &lt;span class="m"&gt;1&lt;/span&gt;
     &lt;span class="k"&gt;fi&lt;/span&gt;
 &lt;span class="k"&gt;fi&lt;/span&gt;
 
@@ -639,10 +639,10 @@ virsh dominfo &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt; /dev/null 2&amp;gt
 &lt;span class="nv"&gt;IMAGE&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="nv"&gt;$DIR&lt;/span&gt;/CentOS-7-x86_64-GenericCloud.qcow2
 
 &lt;span class="c1"&gt;# Amount of RAM in MB&lt;/span&gt;
-&lt;span class="nv"&gt;MEM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;768
+&lt;span class="nv"&gt;MEM&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;768&lt;/span&gt;
 
 &lt;span class="c1"&gt;# Number of virtual CPUs&lt;/span&gt;
-&lt;span class="nv"&gt;CPUS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;1
+&lt;span class="nv"&gt;CPUS&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;
 
 &lt;span class="c1"&gt;# Cloud init files&lt;/span&gt;
 &lt;span class="nv"&gt;USER_DATA&lt;/span&gt;&lt;span class="o"&gt;=&lt;/span&gt;user-data
@@ -665,8 +665,8 @@ mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/
     &lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="k"&gt;$(&lt;/span&gt;date -R&lt;span class="k"&gt;)&lt;/span&gt;&lt;span class="s2"&gt; Destroying the &lt;/span&gt;&lt;span class="nv"&gt;$1&lt;/span&gt;&lt;span class="s2"&gt; domain (if it exists)...&amp;quot;&lt;/span&gt;
 
     &lt;span class="c1"&gt;# Remove domain with the same name&lt;/span&gt;
-    virsh destroy &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
-    virsh undefine &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log 2&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;1
+    virsh destroy &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log &lt;span class="m"&gt;2&lt;/span&gt;&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;
+    virsh undefine &lt;span class="nv"&gt;$1&lt;/span&gt; &amp;gt;&amp;gt; &lt;span class="nv"&gt;$1&lt;/span&gt;.log &lt;span class="m"&gt;2&lt;/span&gt;&amp;gt;&lt;span class="p"&gt;&amp;amp;&lt;/span&gt;&lt;span class="m"&gt;1&lt;/span&gt;
 
     &lt;span class="c1"&gt;# cloud-init config: set hostname, remove cloud-init package,&lt;/span&gt;
     &lt;span class="c1"&gt;# and add ssh-key &lt;/span&gt;
@@ -723,7 +723,7 @@ mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/
              -n &lt;span class="m"&gt;1&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; awk &lt;span class="s1"&gt;&amp;#39;{print $2}&amp;#39;&lt;/span&gt; &lt;span class="p"&gt;|&lt;/span&gt; sed -e s/&lt;span class="se"&gt;\&amp;quot;&lt;/span&gt;//g -e s/,//&lt;span class="k"&gt;)&lt;/span&gt;
         &lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="o"&gt;[&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&lt;/span&gt;&lt;span class="nv"&gt;$IP&lt;/span&gt;&lt;span class="s2"&gt;&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;&amp;quot;&lt;/span&gt; &lt;span class="o"&gt;]&lt;/span&gt;
         &lt;span class="k"&gt;then&lt;/span&gt;
-            sleep 1
+            sleep &lt;span class="m"&gt;1&lt;/span&gt;
         &lt;span class="k"&gt;else&lt;/span&gt;
             &lt;span class="nb"&gt;break&lt;/span&gt;
         &lt;span class="k"&gt;fi&lt;/span&gt;
@@ -756,7 +756,7 @@ compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&
 
 
 &lt;p&gt;Make sure that the &lt;strong&gt;IMAGE&lt;/strong&gt; variable in the script is pointing to the image:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;IMAGE=&lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;DIR&lt;/span&gt;&lt;span class="x"&gt;/CentOS-7-x86_64-GenericCloud.qcow2&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;IMAGE=$DIR/CentOS-7-x86_64-GenericCloud.qcow2
 &lt;/pre&gt;&lt;/div&gt;
 
 
@@ -822,7 +822,9 @@ manually by shutting down the VM and virt-resize tool, which requires the
 
 
 &lt;p&gt;The script also works with CentOS 6 and Fedora 23 cloud images.  If you are
-using the latter, you may want to rename the script to &lt;strong&gt;virt-install-fedora&lt;/strong&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+using the latter, you may want to rename the script to &lt;strong&gt;virt-install-fedora&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;&lt;strong&gt;Update (16 Jun 2017)&lt;/strong&gt;: Check out an improved version of the &lt;a href="https://github.com/giovtorres/kvm-install-vm"&gt;script on
+GitHub&lt;/a&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.&lt;/p&gt;
@@ -982,7 +984,7 @@ everything together.&lt;/p&gt;
         &lt;span class="n"&gt;sys&lt;/span&gt;&lt;span class="o"&gt;.&lt;/span&gt;&lt;span class="n"&gt;exit&lt;/span&gt;&lt;span class="p"&gt;(&lt;/span&gt;&lt;span class="mi"&gt;0&lt;/span&gt;&lt;span class="p"&gt;)&lt;/span&gt;
 
 
-&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="n"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;__main__&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
+&lt;span class="k"&gt;if&lt;/span&gt; &lt;span class="vm"&gt;__name__&lt;/span&gt; &lt;span class="o"&gt;==&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;__main__&amp;quot;&lt;/span&gt;&lt;span class="p"&gt;:&lt;/span&gt;
     &lt;span class="n"&gt;main&lt;/span&gt;&lt;span class="p"&gt;()&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
@@ -1616,15 +1618,15 @@ contains custom macros for the many built-in plugins as well as subpackage
 definitions for each configured plugin.&lt;/p&gt;
 &lt;p&gt;Have a look at the spec file and then copy it to the SPECS directory in your
 rpmbuild directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/src/collectd-5.5.0/contrib/redhat&lt;/span&gt;
-&lt;span class="x"&gt;cp collectd.spec &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd $HOME/src/collectd-5.5.0/contrib/redhat
+cp collectd.spec $HOME/rpmbuild/SPECS
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Change to the SPECS directory inside your rpmbuild directory and use the
 &lt;strong&gt;spectool&lt;/strong&gt; command to download the sources listed inside the spec file.  &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
-&lt;span class="x"&gt;spectool -g -R collectd.spec&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd $HOME/rpmbuild/SPECS
+spectool -g -R collectd.spec
 &lt;/pre&gt;&lt;/div&gt;
 
 

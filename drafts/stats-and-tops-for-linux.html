@@ -158,11 +158,11 @@ tap networking device.</p>
 <span class="c1"># Take one argument from the commandline: VM name</span>
 <span class="k">if</span> ! <span class="o">[</span> <span class="nv">$#</span> -eq <span class="m">1</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
     <span class="nb">echo</span> <span class="s2">&quot;Usage: </span><span class="nv">$0</span><span class="s2"> &lt;node-name&gt;&quot;</span>
-    <span class="nb">exit</span> 1
+    <span class="nb">exit</span> <span class="m">1</span>
 <span class="k">fi</span>
 
 <span class="c1"># Check if domain already exists</span>
-virsh dominfo <span class="nv">$1</span> &gt; /dev/null 2&gt;<span class="p">&amp;</span>1
+virsh dominfo <span class="nv">$1</span> &gt; /dev/null <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
 <span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$?</span><span class="s2">&quot;</span> -eq <span class="m">0</span> <span class="o">]</span><span class="p">;</span> <span class="k">then</span>
     <span class="nb">echo</span> -n <span class="s2">&quot;[WARNING] </span><span class="nv">$1</span><span class="s2"> already exists.  &quot;</span>
     <span class="nb">read</span> -p <span class="s2">&quot;Do you want to overwrite </span><span class="nv">$1</span><span class="s2"> [y/N]? &quot;</span> -r
@@ -170,7 +170,7 @@ virsh dominfo <span class="nv">$1</span> &gt; /dev/null 2&gt;<span class="p">&am
         <span class="nb">echo</span> <span class="s2">&quot;&quot;</span>
     <span class="k">else</span>
         <span class="nb">echo</span> -e <span class="s2">&quot;\nNot overwriting </span><span class="nv">$1</span><span class="s2">. Exiting...&quot;</span>
-        <span class="nb">exit</span> 1
+        <span class="nb">exit</span> <span class="m">1</span>
     <span class="k">fi</span>
 <span class="k">fi</span>
 
@@ -181,10 +181,10 @@ virsh dominfo <span class="nv">$1</span> &gt; /dev/null 2&gt;<span class="p">&am
 <span class="nv">IMAGE</span><span class="o">=</span><span class="nv">$DIR</span>/CentOS-7-x86_64-GenericCloud.qcow2
 
 <span class="c1"># Amount of RAM in MB</span>
-<span class="nv">MEM</span><span class="o">=</span>768
+<span class="nv">MEM</span><span class="o">=</span><span class="m">768</span>
 
 <span class="c1"># Number of virtual CPUs</span>
-<span class="nv">CPUS</span><span class="o">=</span>1
+<span class="nv">CPUS</span><span class="o">=</span><span class="m">1</span>
 
 <span class="c1"># Cloud init files</span>
 <span class="nv">USER_DATA</span><span class="o">=</span>user-data
@@ -207,8 +207,8 @@ mkdir -p <span class="nv">$DIR</span>/<span class="nv">$1</span>
     <span class="nb">echo</span> <span class="s2">&quot;</span><span class="k">$(</span>date -R<span class="k">)</span><span class="s2"> Destroying the </span><span class="nv">$1</span><span class="s2"> domain (if it exists)...&quot;</span>
 
     <span class="c1"># Remove domain with the same name</span>
-    virsh destroy <span class="nv">$1</span> &gt;&gt; <span class="nv">$1</span>.log 2&gt;<span class="p">&amp;</span>1
-    virsh undefine <span class="nv">$1</span> &gt;&gt; <span class="nv">$1</span>.log 2&gt;<span class="p">&amp;</span>1
+    virsh destroy <span class="nv">$1</span> &gt;&gt; <span class="nv">$1</span>.log <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
+    virsh undefine <span class="nv">$1</span> &gt;&gt; <span class="nv">$1</span>.log <span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span>
 
     <span class="c1"># cloud-init config: set hostname, remove cloud-init package,</span>
     <span class="c1"># and add ssh-key </span>
@@ -267,7 +267,7 @@ mkdir -p <span class="nv">$DIR</span>/<span class="nv">$1</span>
              -n <span class="m">1</span> <span class="p">|</span> awk <span class="s1">&#39;{print $2}&#39;</span> <span class="p">|</span> sed -e s/<span class="se">\&quot;</span>//g -e s/,//<span class="k">)</span>
         <span class="k">if</span> <span class="o">[</span> <span class="s2">&quot;</span><span class="nv">$IP</span><span class="s2">&quot;</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span> <span class="o">]</span>
         <span class="k">then</span>
-            sleep 1
+            sleep <span class="m">1</span>
         <span class="k">else</span>
             <span class="nb">break</span>
         <span class="k">fi</span>
@@ -300,7 +300,7 @@ compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:<
 
 
 <p>Make sure that the <strong>IMAGE</strong> variable in the script is pointing to the image:</p>
-<div class="highlight"><pre><span></span><span class="x">IMAGE=</span><span class="p">$</span><span class="nv">DIR</span><span class="x">/CentOS-7-x86_64-GenericCloud.qcow2</span>
+<div class="highlight"><pre><span></span>IMAGE=$DIR/CentOS-7-x86_64-GenericCloud.qcow2
 </pre></div>
 
 

@@ -135,15 +135,15 @@ contains custom macros for the many built-in plugins as well as subpackage
 definitions for each configured plugin.</p>
 <p>Have a look at the spec file and then copy it to the SPECS directory in your
 rpmbuild directory:</p>
-<div class="highlight"><pre><span></span><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/src/collectd-5.5.0/contrib/redhat</span>
-<span class="x">cp collectd.spec </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/rpmbuild/SPECS</span>
+<div class="highlight"><pre><span></span>cd $HOME/src/collectd-5.5.0/contrib/redhat
+cp collectd.spec $HOME/rpmbuild/SPECS
 </pre></div>
 
 
 <p>Change to the SPECS directory inside your rpmbuild directory and use the
 <strong>spectool</strong> command to download the sources listed inside the spec file.  </p>
-<div class="highlight"><pre><span></span><span class="x">cd </span><span class="p">$</span><span class="nv">HOME</span><span class="x">/rpmbuild/SPECS</span>
-<span class="x">spectool -g -R collectd.spec</span>
+<div class="highlight"><pre><span></span>cd $HOME/rpmbuild/SPECS
+spectool -g -R collectd.spec
 </pre></div>
 
 

@@ -183,15 +183,15 @@ contains custom macros for the many built-in plugins as well as subpackage
 definitions for each configured plugin.&lt;/p&gt;
 &lt;p&gt;Have a look at the spec file and then copy it to the SPECS directory in your
 rpmbuild directory:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/src/collectd-5.5.0/contrib/redhat&lt;/span&gt;
-&lt;span class="x"&gt;cp collectd.spec &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd $HOME/src/collectd-5.5.0/contrib/redhat
+cp collectd.spec $HOME/rpmbuild/SPECS
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;Change to the SPECS directory inside your rpmbuild directory and use the
 &lt;strong&gt;spectool&lt;/strong&gt; command to download the sources listed inside the spec file.  &lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="x"&gt;cd &lt;/span&gt;&lt;span class="p"&gt;$&lt;/span&gt;&lt;span class="nv"&gt;HOME&lt;/span&gt;&lt;span class="x"&gt;/rpmbuild/SPECS&lt;/span&gt;
-&lt;span class="x"&gt;spectool -g -R collectd.spec&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd $HOME/rpmbuild/SPECS
+spectool -g -R collectd.spec
 &lt;/pre&gt;&lt;/div&gt;
 
 

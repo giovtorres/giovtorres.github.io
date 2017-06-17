@@ -1905,7 +1905,7 @@ SPECS directory:&lt;/p&gt;
 
 
 &lt;p&gt;As before, use &lt;strong&gt;spectool&lt;/strong&gt; to download the sources specified in the spec file:&lt;/p&gt;
-&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;spectool -R -g collectd.spec&lt;/span&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;spectool -R -g $HOME/rpmbuild/SPECS/collectd.spec&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 

@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="collectd,python,slurm" />
-        <meta name="description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write ..." />
+        <meta name="description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="Using Collectd, Python and Graphite to Graph Slurm Partitions"/>
         <meta property="og:url" content="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html"/>
-        <meta property="og:description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write ..."/>
+        <meta property="og:description" content="Introduction Collectd comes with a long list of plugins. In a previous article, we showed how to install the necessary dependencies to enable most of the collectd plugins when compiling collectd from source. One of these plugins is the Python plugin, which is a binding that allows you to write …"/>
         <meta property="article:published_time" content="2015-07-03" />
             <meta property="article:section" content="Collectd" />
             <meta property="article:tag" content="collectd" />
@@ -101,7 +101,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h4>Introduction</h4>
+                <h4 id="introduction">Introduction</h4>
 <p><a href="https://collectd.org/">Collectd</a> comes with a long <a href="https://collectd.org/wiki/index.php/Table_of_Plugins">list of
 plugins</a>.  In a previous
 <a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html">article</a>, we showed how to install the
@@ -117,7 +117,7 @@ interpreter every time the scripts need to run.</p>
 that will graph CPU cores by state from <a href="http://slurm.schedmd.com">Slurm</a>, an HPC
 resource manager. </p>
 <p><br></p>
-<h4>Prerequisites</h4>
+<h4 id="prerequisites">Prerequisites</h4>
 <p>This article assumes you have some familiarity with Collectd and have an
 existing Graphite installation. For instructions on how to install Graphite,
 read the <a href="https://graphite.readthedocs.org/en/stable/install.html">installation
@@ -132,7 +132,7 @@ Python module.  You can, however, install it easily with Pip:</p>
 
 
 <p><br></p>
-<h4>Enabling the Python Plugin</h4>
+<h4 id="enabling-the-python-plugin">Enabling the Python Plugin</h4>
 <p>The default <em>collectd.conf</em> comes with the Python plugin disabled:</p>
 <div class="highlight"><pre><span></span>## &lt;LoadPlugin python&gt;
 ##   Globals true
@@ -148,14 +148,14 @@ Python module.  You can, however, install it easily with Pip:</p>
 
 
 <p><br></p>
-<h4>Writing a Python Read Plugin</h4>
+<h4 id="writing-a-python-read-plugin">Writing a Python Read Plugin</h4>
 <p>The <a href="https://collectd.org/documentation/manpages/collectd-python.5.shtml">collectd-python
 manpage</a>
 documents how to use the Python plugin structure to create your own plugins. We
 will walk through writing a script, section by section, to understand how to
 gather and dispatch metrics to collectd.</p>
 <p><br></p>
-<h5>Importing Modules</h5>
+<h5 id="importing-modules">Importing Modules</h5>
 <p>The first part of our script will import the necessary modules.</p>
 <div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">collectd</span>
 <span class="kn">import</span> <span class="nn">signal</span>
@@ -167,7 +167,7 @@ gather and dispatch metrics to collectd.</p>
 <p>The first import statement loads the collectd module.  This is the module that
 will register the read and write functions with collectd.  The remaining
 modules are used elsewhere in the script to gather information.</p>
-<h5>Gathering Metrics</h5>
+<h5 id="gathering-metrics">Gathering Metrics</h5>
 <p>The purpose of the plugin is to gather metrics and feed it to collectd.  From
 there, collectd will send it wherever it is configured to, for example to RRD
 files, to Graphite or another time-series database. </p>
@@ -220,7 +220,7 @@ dictionary.  This will be used in the <em>read_callback</em> function.</p>
 </pre></div>
 
 
-<h5>Taking care of SIGCHLD</h5>
+<h5 id="taking-care-of-sigchld">Taking care of SIGCHLD</h5>
 <p>This particular example uses the <em>subprocess</em> module to fork a child process that will execute
 the <em>sinfo</em> command.  The Python plugin is a parent to this forked process, and
 as such, the forked process will send a <strong>SIGCHLD</strong> signal to the parent process upon
@@ -239,7 +239,7 @@ plugin can create new processes without throwing exceptions.</p>
 </pre></div>
 
 
-<h5>Defining a Read Callback</h5>
+<h5 id="defining-a-read-callback">Defining a Read Callback</h5>
 <p>The purpose of the read callback is to setup the <em>Values</em> object with the
 parameters of the metrics you are dispatching to collectd.  It sets:</p>
 <ul>
@@ -274,7 +274,7 @@ metric_name refers to each of the keys in the dictionary returned by the
 </pre></div>
 
 
-<h5>Registering Functions</h5>
+<h5 id="registering-functions">Registering Functions</h5>
 <p>The final lines of the script registers two callbacks: an init function to
 restore the behavior of <em>SIGCHLD</em> and the other to periodically run the
 read_callback function, which in turn calls the get_cpus_by_state() function to
@@ -287,7 +287,7 @@ gather metrics and dispatch the values to the daemon.</p>
 <p>Save all the bits in a file, such as <strong>slurm_core_states.py</strong> (available here
 as a <a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40">gist</a>).</p>
 <p><br></p>
-<h4>Configuring the Python Plugin Section</h4>
+<h4 id="configuring-the-python-plugin-section">Configuring the Python Plugin Section</h4>
 <p>Now that we have enabled the Python plugin in collectd and wrote a read plugin,
 the last thing needed is to configure the plugin in collectd's configuration
 file. Add the following configuration stanza to <strong>collectd.conf</strong>:</p>
@@ -310,7 +310,7 @@ script will not run interactively and is therefore set to <strong>false</strong>
 <p>The <em>Import</em> option imports our plugin into collectd's embedded Python
 interpreter.</p>
 <p><br></p>
-<h4>Verifying</h4>
+<h4 id="verifying">Verifying</h4>
 <p>After restarting the collectd service, check the logs to make sure there are no
 issues with the plugin.  If there are no warning or errors in the logs, verify
 that the plugin is working by querying the metrics.</p>
@@ -343,9 +343,9 @@ using the Graphite URL API:</p>
 
 
 <p>And finally, here is what a Graphite graph would look like:</p>
-<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png" /></p>
+<p><img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png"></p>
 <p><br></p>
-<h4>Conclusion</h4>
+<h4 id="conclusion">Conclusion</h4>
 <p>This is just one example of how to use Python and collectd to gather metrics
 and visualize them.  You could write a plugin with a similar structure to
 dispatch custom metrics to your metric collector, such as the Graphite suite or

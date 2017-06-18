@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/linux.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-08-15T00:00:00-04:00</updated><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><published>2015-08-15T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres - Linux</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/linux.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2015-08-15T00:00:00-04:00</updated><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><published>2015-08-15T00:00:00-04:00</published><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
+uses a much stronger authentication system.  While you should generally not use
+rsh for remote access, it does have some valid use cases.&lt;/p&gt;
+&lt;p&gt;In an HPC environment, for example, where the cluster is …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
 uses a much stronger authentication system.  While you should generally not use
 rsh for remote access, it does have some valid use cases.&lt;/p&gt;
@@ -10,20 +14,20 @@ offers password-less, host-based authentication to these remote nodes.&lt;/p&gt;
 &lt;p&gt;In this article, we will look at why rsh can be very slow and suggest a
 workaround for this slowness&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;In this example, the rsh client hostname is &lt;em&gt;client1&lt;/em&gt; with an IP address of
 192.168.122.200.  The rsh server hostname &lt;em&gt;server1&lt;/em&gt; with an IP address of
 192.168.122.202.  Make sure that each server has an entry in /etc/hosts for
 both servers if you are not using DNS for name resolution.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Installing the rsh Client&lt;/h4&gt;
+&lt;h4 id="installing-the-rsh-client"&gt;Installing the rsh Client&lt;/h4&gt;
 &lt;p&gt;To install the rsh client on client1, install the &lt;strong&gt;rsh&lt;/strong&gt; package:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install rsh
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Installing the rsh Server&lt;/h4&gt;
+&lt;h4 id="installing-the-rsh-server"&gt;Installing the rsh Server&lt;/h4&gt;
 &lt;p&gt;The rsh server runs under the xinetd superserver.  Install both packages on
 server1:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install xinetd rsh-server
@@ -31,7 +35,7 @@ server1:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Configuring the rsh Server&lt;/h5&gt;
+&lt;h5 id="configuring-the-rsh-server"&gt;Configuring the rsh Server&lt;/h5&gt;
 &lt;p&gt;The configuration file for rsh is &lt;strong&gt;/etc/xinetd.d/rsh&lt;/strong&gt; and is disabled by
 default:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;service shell
@@ -54,7 +58,7 @@ restart the xinetd service:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Adjusting iptables&lt;/h4&gt;
+&lt;h4 id="adjusting-iptables"&gt;Adjusting iptables&lt;/h4&gt;
 &lt;p&gt;rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
@@ -69,7 +73,7 @@ rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
 &lt;p&gt;Restart the iptables service on both client and server after adding these
 rules, adjusting the IP addresses for ones that match your configuration.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Configuring Host-Based Authentication&lt;/h4&gt;
+&lt;h4 id="configuring-host-based-authentication"&gt;Configuring Host-Based Authentication&lt;/h4&gt;
 &lt;p&gt;The authentication mechanism for rsh is based on the contents of
 &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; and or &lt;em&gt;$HOME/.rhosts&lt;/em&gt;. Both files include a list of
 hostnames that a remote user is allowed to access.&lt;/p&gt;
@@ -83,7 +87,7 @@ rsh.  On server1, &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; should have at least a s
 
 &lt;p&gt;The permissions of this file should be &lt;strong&gt;0600&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing From the Command Line&lt;/h4&gt;
+&lt;h4 id="testing-from-the-command-line"&gt;Testing From the Command Line&lt;/h4&gt;
 &lt;p&gt;Test the rsh connection from client1 to server1.  Wrap the command around a
 pair of date commands to see the time it takes to complete the remote command:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
@@ -125,7 +129,7 @@ signals an application makes from userspace to kernel space and the responses.
 We will now use strace on the server to capture system calls to see what the
 rshd daemon is doing.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing with Strace&lt;/h4&gt;
+&lt;h4 id="testing-with-strace"&gt;Testing with Strace&lt;/h4&gt;
 &lt;p&gt;First, make sure you have the strace package installed.  If not, installing it
 is easy:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install strace
@@ -223,7 +227,7 @@ file.  So, if the rsh client is near the bottom of a very long hosts.equiv
 file, it can take 10s of seconds to return a command prompt or command output
 from the remote server.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Workaround using Netgroups&lt;/h4&gt;
+&lt;h4 id="workaround-using-netgroups"&gt;Workaround using Netgroups&lt;/h4&gt;
 &lt;p&gt;It's clear that this strategy will not work.  Either abandon rsh or try to fix
 the problem if you really must use rsh.&lt;/p&gt;
 &lt;p&gt;We can work around the problem using netgroups on the rsh server.  Netgroups
@@ -290,13 +294,16 @@ the same file descriptor:&lt;/p&gt;
 reading /etc/netgroup.  Except, reading a single line from /etc/netgroup speeds
 up the rsh server response significantly.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Again, you are probably not using rsh and for good reason.  rsh should only be
 used in private networks that have no direct connection to the Internet.  However,
 if you are using it, say for launching parallel jobs in an HPC cluster, then
 hopefully this article explains why rsh is sometimes slow and how to
 workaround the slowness using netgroups.&lt;/p&gt;
-&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><published>2014-09-13T15:12:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</content><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><published>2014-09-13T15:12:00-04:00</published><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:/increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+waiting for kernel to gather sufficient entropy in order to sufficiently
+randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good …&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
 waiting for kernel to gather sufficient entropy in order to sufficiently
 randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good idea to perform
@@ -326,14 +333,14 @@ random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pse
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Start rngd&lt;/h4&gt;
+&lt;h4 id="start-rngd"&gt;Start rngd&lt;/h4&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo chkconfig rngd on
 sudo service rngd start
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Verify available kernel entropy (higher is better)&lt;/h4&gt;
+&lt;h4 id="verify-available-kernel-entropy-higher-is-better"&gt;Verify available kernel entropy (higher is better)&lt;/h4&gt;
 &lt;p&gt;Before:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cat /proc/sys/kernel/random/entropy_avail 
 173
@@ -348,10 +355,13 @@ sudo service rngd start
 
 &lt;p&gt;That's it.&lt;/p&gt;
 &lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
-&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><published>2014-08-03T12:15:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</content><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><published>2014-08-03T12:15:00-04:00</published><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:/introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
+try to put meaningful things here regarding monitoring, configuration and
+troubleshooting of processes and applications running on Linux …&lt;/p&gt;</summary><content type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
 put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
 try to put meaningful things here regarding monitoring, configuration and
 troubleshooting of processes and applications running on Linux, mostly CentOS
 6, 7 and sometimes Fedora.&lt;/p&gt;
 &lt;p&gt;I also tend to gravitate towards the areas of monitoring, visualization and documentation.&lt;/p&gt;
-&lt;p&gt;Let's see how it goes...&lt;/p&gt;</summary></entry></feed>
+&lt;p&gt;Let's see how it goes...&lt;/p&gt;</content></entry></feed>

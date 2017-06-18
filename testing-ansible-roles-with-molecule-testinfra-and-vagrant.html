@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="ansible,vagrant,molecule,testinfra,testing" />
-        <meta name="description" content="Introduction You&#39;ve started down the path of using configuration management and decided to use Ansible. You began with a big monolithic playbook and now it&#39;s time to break it down into modular roles that can be applied to groups of hosts as needed. As you create roles, how ..." />
+        <meta name="description" content="Table of Contents Introduction Stack Setup Installing the KVM Hypervisor Installing Packages with DNF Installing Packages with pip Initializing a Role with Molecule Building an NTP Role Tasks Vars Defaults Handlers Templates Setting up the Tests Configuring Molecule Testing the Role Tips Disable NFS synced folder Taming the Password Prompt …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="Testing Ansible Roles with Molecule, TestInfra and Vagrant"/>
         <meta property="og:url" content="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-vagrant.html"/>
-        <meta property="og:description" content="Introduction You&#39;ve started down the path of using configuration management and decided to use Ansible. You began with a big monolithic playbook and now it&#39;s time to break it down into modular roles that can be applied to groups of hosts as needed. As you create roles, how ..."/>
+        <meta property="og:description" content="Table of Contents Introduction Stack Setup Installing the KVM Hypervisor Installing Packages with DNF Installing Packages with pip Initializing a Role with Molecule Building an NTP Role Tasks Vars Defaults Handlers Templates Setting up the Tests Configuring Molecule Testing the Role Tips Disable NFS synced folder Taming the Password Prompt …"/>
         <meta property="article:published_time" content="2017-03-28" />
             <meta property="article:section" content="Ansible" />
             <meta property="article:tag" content="ansible" />
@@ -107,7 +107,38 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h2>Introduction</h2>
+                <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#stack">Stack</a></li>
+<li><a href="#setup">Setup</a><ul>
+<li><a href="#installing-the-kvm-hypervisor">Installing the KVM Hypervisor</a></li>
+<li><a href="#installing-packages-with-dnf">Installing Packages with DNF</a></li>
+<li><a href="#installing-packages-with-pip">Installing Packages with pip</a></li>
+</ul>
+</li>
+<li><a href="#initializing-a-role-with-molecule">Initializing a Role with Molecule</a><ul>
+<li><a href="#building-an-ntp-role">Building an NTP Role</a><ul>
+<li><a href="#tasks">Tasks</a></li>
+<li><a href="#vars">Vars</a></li>
+<li><a href="#defaults">Defaults</a></li>
+<li><a href="#handlers">Handlers</a></li>
+<li><a href="#templates">Templates</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#setting-up-the-tests">Setting up the Tests</a></li>
+<li><a href="#configuring-molecule">Configuring Molecule</a></li>
+<li><a href="#testing-the-role">Testing the Role</a></li>
+<li><a href="#tips">Tips</a><ul>
+<li><a href="#disable-nfs-synced-folder">Disable NFS synced folder</a></li>
+<li><a href="#taming-the-password-prompt">Taming the Password Prompt</a></li>
+</ul>
+</li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+<h2 id="introduction">Introduction</h2>
 <p>You've started down the path of using configuration management and decided to
 use Ansible.  You began with a big monolithic playbook and now it's time to
 break it down into modular roles that can be applied to groups of hosts as
@@ -119,7 +150,7 @@ that updates to existing roles will continue to work as expected?</p>
 <p>This guide will show you how to test your roles against multiple operating
 systems on your local development workstation before committing your changes to
 version control.  <em>(You are version controlling your roles, right?)</em></p>
-<h2>Stack</h2>
+<h2 id="stack">Stack</h2>
 <p>We will use the following tools to create a local Ansible development
 environment.</p>
 <ul>
@@ -131,8 +162,8 @@ environment.</p>
 <li><a href="https://github.com/philpep/testinfra">TestInfra</a></li>
 <li>Ansible</li>
 </ul>
-<h2>Setup</h2>
-<h3>Installing the KVM Hypervisor</h3>
+<h2 id="setup">Setup</h2>
+<h3 id="installing-the-kvm-hypervisor">Installing the KVM Hypervisor</h3>
 <p>You will first need to setup the KVM hypervisor on your workstation, assuming
 your CPU supports virtualization extensions (most recent CPUs do).  If you
 don't have KVM already installed, install the virtualization group packages:</p>
@@ -146,7 +177,7 @@ sudo systemctl enable libvirtd.service
 </pre></div>
 
 
-<h3>Installing Packages with DNF</h3>
+<h3 id="installing-packages-with-dnf">Installing Packages with DNF</h3>
 <p>This setup requires Vagrant, a tool to create and configure lightweight virtual
 machines.  It works great for creating development environments locally using
 virtual machines.  Vagrant has plugins that support libvirt as a provider.
@@ -165,7 +196,7 @@ latest available (1.9.2) and is sufficient for this guide.</p>
 </pre></div>
 
 
-<h3>Installing Packages with pip</h3>
+<h3 id="installing-packages-with-pip">Installing Packages with pip</h3>
 <p>The remainder of the required packages are not available in the Fedora 25
 repositories.  Therefore, we'll go directly to
 <a href="https://pypi.python.org/pypi">PyPi</a> to fetch these packages:</p>
@@ -181,7 +212,7 @@ sudo pip install molecule testinfra python-vagrant ansible==2.2.1.0
 </pre></div>
 
 
-<h2>Initializing a Role with Molecule</h2>
+<h2 id="initializing-a-role-with-molecule">Initializing a Role with Molecule</h2>
 <p>Molecule can take of initializing a new role.  It will create the default
 directories, similar to <code>ansible-galaxy init</code>.  It will also create a
 <code>molecule.yml</code> and a <code>playbook.yml</code> file.  These files will instruct Molecule
@@ -197,14 +228,14 @@ directory and start building out the role:</p>
 </pre></div>
 
 
-<h3>Building an NTP Role</h3>
+<h3 id="building-an-ntp-role">Building an NTP Role</h3>
 <p>We need a role to test.  If you already have a role that you would like to
 test, skip to the next section (<strong>Setting up the Tests</strong>).</p>
 <p>A role for NTP makes a good example because it requires multiple Ansible
 modules for installing the package, customizing the configuration, and starting
 the service.  Also, the NTP daemon name is different between CentOS and Debian,
 which requires us to use role variables.</p>
-<h4>Tasks</h4>
+<h4 id="tasks">Tasks</h4>
 <p>Configure the tasks that Ansible will carry out to install and configure NTP
 both CentOS 7 and Debian 8. We will provide a <strong>name</strong> for each task which
 serves as built-in documentation for each task. Add the following tasks to
@@ -257,7 +288,7 @@ multiple platforms without duplicating tasks, one for each OS.</p>
 practice to prefix custom variables with the name of the role, in this case
 <strong>ntp_</strong>.  This will avoid clashing of variables when applying multiple roles
 at the same time.</p>
-<h4>Vars</h4>
+<h4 id="vars">Vars</h4>
 <p>Variables in Ansible can exist in <a href="https://docs.ansible.com/ansible/playbooks_variables.html">multiple
 places</a>.  Our role
 will put variables in two places: <code>vars/</code> and <code>defaults/</code>.  We'll use the
@@ -276,7 +307,7 @@ while on RedHat it is named <strong>ntpd</strong>.</p>
 </pre></div>
 
 
-<h4>Defaults</h4>
+<h4 id="defaults">Defaults</h4>
 <p>What about that other custom variables?  We'll put the other custom variables
 in <code>defaults/main.yml</code> so that users can modify them when applying the role.</p>
 <p>Edit the <code>defaults/main.yml</code> file:</p>
@@ -290,7 +321,7 @@ in <code>defaults/main.yml</code> so that users can modify them when applying th
 </pre></div>
 
 
-<h4>Handlers</h4>
+<h4 id="handlers">Handlers</h4>
 <p>The handler is responsible for restarting the NTP service after Ansible detects
 a change in the configuration.  Edit the <code>handlers/main.yml</code> file:</p>
 <div class="highlight"><pre><span></span><span class="p p-Indicator">-</span> <span class="l l-Scalar l-Scalar-Plain">name</span><span class="p p-Indicator">:</span> <span class="l l-Scalar l-Scalar-Plain">restart ntp</span>
@@ -300,7 +331,7 @@ a change in the configuration.  Edit the <code>handlers/main.yml</code> file:</p
 </pre></div>
 
 
-<h4>Templates</h4>
+<h4 id="templates">Templates</h4>
 <p>Ansible uses the <a href="http://jinja.pocoo.org/">Jinja2</a> templating engine.  We will
 replace certain parameters in the <code>ntp.conf</code> file with variables.  When Ansible
 applies the role, the values of the variables are replaced.</p>
@@ -344,7 +375,7 @@ applies the role, the values of the variables are replaced.</p>
 </pre></div>
 
 
-<h2>Setting up the Tests</h2>
+<h2 id="setting-up-the-tests">Setting up the Tests</h2>
 <p>The role is complete.  Now it's time to setup the tests.  TestInfra aims to be
 a Python equivalent for <a href="http://serverspec.org/">Serverspec</a>.  It allows you
 write tests to make sure your servers are configured correctly.  The idea is to
@@ -395,7 +426,7 @@ role. </p>
 </pre></div>
 
 
-<h2>Configuring Molecule</h2>
+<h2 id="configuring-molecule">Configuring Molecule</h2>
 <p>The role is complete and the tests are ready.  Now, the last piece is to
 configure Molecule to use Vagrant with two platforms: CentOS 7 and Debian 8.
 We also instruct Molecule to use the libvirt provider with the kvm driver.  The
@@ -426,7 +457,7 @@ virtual machines will be configured with 1024MB of RAM and 1 vCPU.</p>
 </pre></div>
 
 
-<h2>Testing the Role</h2>
+<h2 id="testing-the-role">Testing the Role</h2>
 <p>Testing the role is simple after everything else is in place:</p>
 <div class="highlight"><pre><span></span>molecule test
 </pre></div>
@@ -622,8 +653,8 @@ works as expected after making continuous improvements.</p>
 </pre></div>
 
 
-<h2>Tips</h2>
-<h3>Disable NFS synced folder</h3>
+<h2 id="tips">Tips</h2>
+<h3 id="disable-nfs-synced-folder">Disable NFS synced folder</h3>
 <p>I've noticed that some Vagrant boxes will prompt for a password to enable NFS
 on the host for sharing with the virtual machines.  You may see a similar error
 as the following:</p>
@@ -661,7 +692,7 @@ guide, add the following snippet to your local Vagrantfile,
 </pre></div>
 
 
-<h3>Taming the Password Prompt</h3>
+<h3 id="taming-the-password-prompt">Taming the Password Prompt</h3>
 <p>When Molecule calls Vagrant, it may prompt several times for your sudo password
 to create the virtual machine.  To avoid this, you can add your user to the
 <strong>libvirt</strong> group:</p>
@@ -673,11 +704,10 @@ to create the virtual machine.  To avoid this, you can add your user to the
 <p>Note: Be careful when doing this.  This is probably okay on your local
 workstation, but not suitable on a production hypervisor.</p>
 </blockquote>
-<h2>Conclusion</h2>
+<h2 id="conclusion">Conclusion</h2>
 <p>Using a combination of Molecule, TestInfra, Vagrant, Ansible and Git, it
-becomes easier to write testable roles and version control the roles along with
-the tests in the same repository.
-time.</p>
+becomes easier to write testable roles and version control the roles alongside
+the tests in the same repository.</p>
             </div>
             <!-- /.entry-content -->
     <hr/>

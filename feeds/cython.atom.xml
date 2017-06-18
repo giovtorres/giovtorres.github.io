@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/cython.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres - Cython</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/cython.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-03-16T19:52:00-04:00</updated><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><updated>2016-03-16T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:/wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
+resulting in significant performance boosts, especially in numerical for loops.
+Cython also allows you to wrap C libraries and create Python C extensions.
+This means you don't have to know much C, if any, to get …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -8,12 +12,12 @@ and expose the results to Python.&lt;/p&gt;
 &lt;p&gt;In this guide, we will use Cython to wrap some C functions in Slurm's sdiag
 program and make the statistics available to Python.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are using Slurm, an HPC workload manager.  This guide
 uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.&lt;/p&gt;
 &lt;p&gt;This should also work in Python 3.5.1.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Looking at sdiag Output&lt;/h4&gt;
+&lt;h4 id="looking-at-sdiag-output"&gt;Looking at sdiag Output&lt;/h4&gt;
 &lt;p&gt;sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the &lt;code&gt;sdiag&lt;/code&gt; command and you should see similar output:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;*******************************************************
@@ -55,7 +59,7 @@ Backfilling stats
 &lt;p&gt;We want to use Cython to wrap the necessary Slurm API functions to get access
 to these statistics via Python.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Looking at the C API&lt;/h4&gt;
+&lt;h4 id="looking-at-the-c-api"&gt;Looking at the C API&lt;/h4&gt;
 &lt;p&gt;Normally, we would start with Slurm's [API
 page](http://slurm.schedmd.com/api.html], which lists various functions to get
 direct access to Slurm data structures.  This page, however, does not have any
@@ -70,13 +74,13 @@ replicate a portion of this program in order to get access to the statistics.&lt
 &lt;p&gt;Looking at the program, we need to wrap the &lt;strong&gt;slurm_get_statistics&lt;/strong&gt;,
 &lt;strong&gt;slurm_reset_statistics&lt;/strong&gt;, and the &lt;strong&gt;slurm_free_stats_response_msg&lt;/strong&gt; functions.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Organizing the Cython code&lt;/h4&gt;
+&lt;h4 id="organizing-the-cython-code"&gt;Organizing the Cython code&lt;/h4&gt;
 &lt;p&gt;We need two files for this project: an implementation (.pyx) file and a
 definition file (.pxd).&lt;/p&gt;
 &lt;p&gt;We put the C function and variable declarations in the in the definition file.
 The Cython code for wrapping the functions goes in the implementation file.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Slurm Header Files&lt;/h4&gt;
+&lt;h4 id="slurm-header-files"&gt;Slurm Header Files&lt;/h4&gt;
 &lt;p&gt;We need to declare the C functions and variables, and we get those from the
 Slurm header files.  The header file is in the include directory of your Slurm
 installation path, &lt;strong&gt;/path/to/slurm/include/slurm/slurm.h&lt;/strong&gt;&lt;/p&gt;
@@ -91,7 +95,7 @@ the functions we want to wrap.  There, we see its declaration and signature:&lt;
 &lt;em&gt;stats_info_response_msg_t&lt;/em&gt; and &lt;em&gt;stats_info_request_msg_t&lt;/em&gt;.  We will also have
 to declare both structs in the definition file.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Wrapping C Code&lt;/h4&gt;
+&lt;h4 id="wrapping-c-code"&gt;Wrapping C Code&lt;/h4&gt;
 &lt;p&gt;Let's start by declaring the structs.  The C code for the
 &lt;em&gt;stats_info_request_msg&lt;/em&gt; struct looks like:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -175,7 +179,7 @@ directly:&lt;/p&gt;
 
 &lt;p&gt;This API function is for freeing memory allocated by the stats response buffer.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Writing the Implementation File&lt;/h4&gt;
+&lt;h4 id="writing-the-implementation-file"&gt;Writing the Implementation File&lt;/h4&gt;
 &lt;p&gt;The implementation file (.pyx) is where the Cython code goes.  This is where we
 need to look at the &lt;em&gt;sdiag.c&lt;/em&gt; file and recreate the needed portions in Cython.&lt;/p&gt;
 &lt;p&gt;We will expose two functions to Python: get_stats() and reset_stats().
@@ -264,7 +268,7 @@ the definition file, using the same signature as in the implementation file:&lt;
 &lt;p&gt;The end result should look something like this
 &lt;a href="https://gist.github.com/giovtorres/274b32c8ded1a46e416c"&gt;gist&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Compiling with Cython&lt;/h4&gt;
+&lt;h4 id="compiling-with-cython"&gt;Compiling with Cython&lt;/h4&gt;
 &lt;p&gt;Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cython sdiag.pyx
@@ -276,7 +280,7 @@ errors or warnings.  This is the beauty of Cython.  It did all the hard work of
 compiling the Cython source to C code.  The resulting file will be &lt;strong&gt;sdiag.c&lt;/strong&gt;.
 Have a look and see what Cython had done for us.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Creating the Python Extension Module&lt;/h4&gt;
+&lt;h4 id="creating-the-python-extension-module"&gt;Creating the Python Extension Module&lt;/h4&gt;
 &lt;p&gt;The resulting C output file can now be converted to a Python extension module.
 The standard way of creating an extension module is through the use of
 &lt;em&gt;distutils&lt;/em&gt; in a setup.py file.&lt;/p&gt;
@@ -296,7 +300,7 @@ flags that point to Slurm's libslurm.so:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing the module&lt;/h4&gt;
+&lt;h4 id="testing-the-module"&gt;Testing the module&lt;/h4&gt;
 &lt;p&gt;Create a directory for the module:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;cd ${HOME}/local&lt;/span&gt;
@@ -341,9 +345,9 @@ your PYTHONPATH.&lt;/p&gt;
 
 &lt;p&gt;The &lt;em&gt;get_stats()&lt;/em&gt; function returns a dictionary of key value pairs of information produced by the sdiag command.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;With Cython, we are able to easily wrap C code and make it available to Python.
 We now have tighter integration with Slurm and don't have to run Slurm commands
 and parse the output.  For more examples of using Cython to wrap the Slurm C
 API, have a look at the &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; project
-on GitHub.&lt;/p&gt;</summary><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry></feed>
+on GitHub.&lt;/p&gt;</content><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry></feed>

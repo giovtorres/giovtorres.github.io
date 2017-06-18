@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="rpm,collectd" />
-        <meta name="description" content="Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will use the collectd monitoring application and walk through three different ways of building RPMs for this package: using a spec file, rebuilding a source rpm, and using mock. Prerequisites We already ..." />
+        <meta name="description" content="Table of Contents Introduction Prerequisites Building RPMs from a SPEC file Rebuilding Source RPMs (SRPMs) Building RPMs using Mock Conclusion Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will use the collectd monitoring application and walk through three different ways …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="How to Build RPMs - Collectd Example"/>
         <meta property="og:url" content="http://giovannitorres.me/how-to-build-rpms-collectd-example.html"/>
-        <meta property="og:description" content="Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will use the collectd monitoring application and walk through three different ways of building RPMs for this package: using a spec file, rebuilding a source rpm, and using mock. Prerequisites We already ..."/>
+        <meta property="og:description" content="Table of Contents Introduction Prerequisites Building RPMs from a SPEC file Rebuilding Source RPMs (SRPMs) Building RPMs using Mock Conclusion Introduction Now that we have an rpm build environment , we can build RPM packages. In this guide, we will use the collectd monitoring application and walk through three different ways …"/>
         <meta property="article:published_time" content="2015-09-19" />
             <meta property="article:section" content="RPM" />
             <meta property="article:tag" content="rpm" />
@@ -100,7 +100,16 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h4>Introduction</h4>
+                <div class="toc"><span class="toctitle">Table of Contents</span><ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#prerequisites">Prerequisites</a></li>
+<li><a href="#building-rpms-from-a-spec-file">Building RPMs from a SPEC file</a></li>
+<li><a href="#rebuilding-source-rpms-srpms">Rebuilding Source RPMs (SRPMs)</a></li>
+<li><a href="#building-rpms-using-mock">Building RPMs using Mock</a></li>
+<li><a href="#conclusion">Conclusion</a></li>
+</ul>
+</div>
+<h4 id="introduction">Introduction</h4>
 <p>Now that we have an <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">rpm build
 environment</a>
 , we can build RPM packages.</p>
@@ -109,7 +118,7 @@ three different ways of building RPMs for this package:
 using a spec file, rebuilding a source rpm, and using
 <a href="https://fedoraproject.org/wiki/Mock">mock</a>.</p>
 <p><br></p>
-<h4>Prerequisites</h4>
+<h4 id="prerequisites">Prerequisites</h4>
 <p>We already installed the necessary packages in <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part
 1</a>.  These
 packages provide the utilities that we will use to build RPMs, namely rpmbuild,
@@ -123,7 +132,7 @@ spectool, and yum-builddep.</p>
 
 
 <p><br></p>
-<h4>Building RPMs from a SPEC file</h4>
+<h4 id="building-rpms-from-a-spec-file">Building RPMs from a SPEC file</h4>
 <p>A spec file includes all the information and steps the <strong>rpmbuild</strong> command
 needs to build an RPM package.  Among other things, it lists the name and
 version of your application, all package dependencies and how the application
@@ -337,7 +346,7 @@ line as:</p>
 
 
 <p><br></p>
-<h4>Rebuilding Source RPMs (SRPMs)</h4>
+<h4 id="rebuilding-source-rpms-srpms">Rebuilding Source RPMs (SRPMs)</h4>
 <p>Building from a src rpm is admittedly easier than from a spec file. A source
 RPM, or SRPM, is the corresponding source code to a ready-to-install, compiled
 RPM. It includes a spec file, source files and possibly patch files.  It can be
@@ -374,7 +383,7 @@ or comment out the <strong>/usr/lib/rpm/check-rpaths</strong> line in your $HOME
 avoid issues with rpaths during the build.</p>
 <p>The built RPMs are again in the <strong>$HOME/rpmbuild/RPMS/x86_64/</strong> directory.</p>
 <p><br></p>
-<h4>Building RPMs using Mock</h4>
+<h4 id="building-rpms-using-mock">Building RPMs using Mock</h4>
 <p>Mock is a tool that creates chroot environments and builds RPM packages in
 them.  It comes with default configurations, but it is easy to adapt and
 customize a configuration.</p>
@@ -516,7 +525,7 @@ collectd-mysql-5.5.0-1.el6.x86_64.rpm
 
 
 <p><br></p>
-<h4>Conclusion</h4>
+<h4 id="conclusion">Conclusion</h4>
 <p>Mock is a great tool for building RPMs.  You get a clean chroot environment in
 which to build RPMs.  Building from a source rpm or a spec file is slightly
 more involved.  In the last part of this guide, Part 4, we will look at signing

@@ -1,17 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/slurm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-04-09T19:52:00-04:00</updated><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres - Slurm</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/slurm.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2016-04-09T19:52:00-04:00</updated><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><updated>2016-04-09T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:/graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.&lt;/p&gt;
 &lt;p&gt;In this guide, we will use &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; to
 graph the output from sdiag.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
+&lt;p&gt;This guide assumes you are using &lt;a href="http://slurm.schedmd.com/"&gt;Slurm&lt;/a&gt;, an HPC
+workload manager …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.&lt;/p&gt;
+&lt;p&gt;In this guide, we will use &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; to
+graph the output from sdiag.&lt;/p&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are using &lt;a href="http://slurm.schedmd.com/"&gt;Slurm&lt;/a&gt;, an HPC
 workload manager, and the
 &lt;a href="http://graphite.readthedocs.org/en/latest/"&gt;Graphite&lt;/a&gt; suite.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Getting the Statistics&lt;/h4&gt;
+&lt;h4 id="getting-the-statistics"&gt;Getting the Statistics&lt;/h4&gt;
 &lt;p&gt;The sdiag utility is a diagnostic tool that keeps statistics on the Slurm
 controller, the Main scheduler and the Backfill scheduler.  You can run this
 utility periodically, or as you make changes to the scheduler in &lt;code&gt;slurm.conf&lt;/code&gt;.
@@ -91,7 +100,7 @@ dictionary:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Sending to Graphite&lt;/h4&gt;
+&lt;h4 id="sending-to-graphite"&gt;Sending to Graphite&lt;/h4&gt;
 &lt;p&gt;Graphite is suite of three components: Carbon, Whisper and Graphite-web.
 Carbon is the metric collector.  Our script needs to send the statistics to
 Carbon, which will store the values in whisper time-series databases.  The
@@ -137,7 +146,7 @@ prefixed with &lt;code&gt;gauge-&lt;/code&gt; to signify that each value is a ga
 &lt;p&gt;Some of the values are actually counters, but we will use Graphite's Function
 API to take the derivative of the series to generate per-second values.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Bringing It Together&lt;/h4&gt;
+&lt;h4 id="bringing-it-together"&gt;Bringing It Together&lt;/h4&gt;
 &lt;p&gt;Now, we can wrap up these two functions in a &lt;code&gt;main&lt;/code&gt; function to bring
 everything together.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;CARBON_SERVER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;127.0.0.1&amp;quot;&lt;/span&gt;
@@ -192,7 +201,7 @@ minute averages and kept for 1 year.  Adjust accordingly.&lt;/p&gt;
 &lt;p&gt;Carbon re-reads this file once a minute, so there's no need to restart anything
 here.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Daemonizing the Script with Supervisor&lt;/h4&gt;
+&lt;h4 id="daemonizing-the-script-with-supervisor"&gt;Daemonizing the Script with Supervisor&lt;/h4&gt;
 &lt;p&gt;The script runs in an infinite while loop, making it easy to daemonize.  We
 will daemonize this script with &lt;a href="http://supervisord.org/"&gt;Supervisor&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The easiest way to install Supervisor is with &lt;code&gt;pip&lt;/code&gt;:&lt;/p&gt;
@@ -226,7 +235,7 @@ turn start the script:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Creating a Dashboard in Grafana&lt;/h4&gt;
+&lt;h4 id="creating-a-dashboard-in-grafana"&gt;Creating a Dashboard in Grafana&lt;/h4&gt;
 &lt;p&gt;If you are using Graphite, chances are you use a different frontend for
 creating graphs and dashboards.  &lt;a href="http://grafana.org/"&gt;Grafana&lt;/a&gt; is an excellent
 frontend for visualizing Graphite metrics, among other data sources.&lt;/p&gt;
@@ -249,11 +258,11 @@ calculate the deltas between the datapoints.&lt;/p&gt;
 &lt;li&gt;Total Backfilled Jobs&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Here are what the graphs would look like:&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png" /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png" /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png"&gt;&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Using PySlurm and Graphite/Grafana, we can keep historical data for sdiag.  The
 backfill scheduler in particular has many options that are used to tweak the
 behavior of the algorithm.  These graphs could help to provide feedback after
@@ -262,4 +271,4 @@ changing values to the scheduler.&lt;/p&gt;
 &lt;a href="https://gist.github.com/giovtorres/a26bcd754bf0eaa4b4e10b8e48bdfa22"&gt;slurm_sched_stats.py&lt;/a&gt;
 script.&lt;/p&gt;
 &lt;p&gt;This gist 
-contains the full &lt;a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870"&gt;Grafana dashboard in JSON format&lt;/a&gt;, which can be imported into Grafana.&lt;/p&gt;</summary><category term="python"></category><category term="slurm"></category><category term="pyslurm"></category><category term="graphite"></category><category term="grafana"></category></entry></feed>
+contains the full &lt;a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870"&gt;Grafana dashboard in JSON format&lt;/a&gt;, which can be imported into Grafana.&lt;/p&gt;</content><category term="python"></category><category term="slurm"></category><category term="pyslurm"></category><category term="graphite"></category><category term="grafana"></category></entry></feed>

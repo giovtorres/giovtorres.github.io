@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="rpm" />
-        <meta name="description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs ..." />
+        <meta name="description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="Signing RPMs"/>
         <meta property="og:url" content="http://giovannitorres.me/signing-rpms.html"/>
-        <meta property="og:description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs ..."/>
+        <meta property="og:description" content="Introduction So far, we have setup an RPM build environment , setup our RPM signing key, and built RPMs. The last thing left to do is to use the rpm signing key to sign our newly built RPMs. In this last part of this guide, we will sign the collectd RPMs …"/>
         <meta property="article:published_time" content="2015-11-29" />
             <meta property="article:section" content="RPM" />
             <meta property="article:tag" content="rpm" />
@@ -97,7 +97,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h4>Introduction</h4>
+                <h4 id="introduction">Introduction</h4>
 <p>So far, we have <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">setup an RPM build
 environment</a>
 , <a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html">setup our RPM signing key</a>,
@@ -106,7 +106,7 @@ thing left to do is to use the rpm signing key to sign our newly built RPMs.</p>
 <p>In this last part of this guide, we will sign the collectd RPMs that we built
 in the <a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html">Part 3</a>.</p>
 <p><br></p>
-<h4>Configure %_gpg_name in Macro File</h4>
+<h4 id="configure-_gpg_name-in-macro-file">Configure %_gpg_name in Macro File</h4>
 <p>Before we can sign RPMs, we need to tell the <strong>rpm</strong> command which gpg key to use.
 In <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part 1</a>,
 we saw the <code>.rpmmacros</code> file, which included some default rpm macros.</p>
@@ -128,7 +128,7 @@ sub   2048R/D97540C0 2015-11-30
 
 
 <p><br></p>
-<h4>Signing RPMs</h4>
+<h4 id="signing-rpms">Signing RPMs</h4>
 <p>Change to the directory where the RPMs were created.  Depending on the
 chosen method, the directory could be either of the following:</p>
 <ul>
@@ -203,7 +203,7 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 
 
 <p><br></p>
-<h4>Verifying RPMs</h4>
+<h4 id="verifying-rpms">Verifying RPMs</h4>
 <p>To verify the signature, use the <code>--checksig</code> rpm flag:</p>
 <div class="highlight"><pre><span></span><span class="gp">[makerpm@localhost x86_64]$</span> rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 <span class="go">collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK</span>
@@ -238,7 +238,7 @@ collectd-5.5.0-1.el6.x86_64.rpm:
 
 
 <p><br></p>
-<h4>RPM Distribution</h4>
+<h4 id="rpm-distribution">RPM Distribution</h4>
 <p>Now that we have signed RPMs, we are ready to distribute them to other servers
 within the infrastructure.  There are various ways to do this, so use a method
 that fits your workflow.</p>

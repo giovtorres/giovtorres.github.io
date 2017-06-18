@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="rpm,gpg" />
-        <meta name="description" content="Introduction In Part 1 of this series, we set up an RPM build environment with a dedicated user for building RPMs. Before we actually walk through the steps for building an RPM, we need to create a GPG key to sign the RPMs before they are distributed and installed. Signing ..." />
+        <meta name="description" content="Introduction In Part 1 of this series, we set up an RPM build environment with a dedicated user for building RPMs. Before we actually walk through the steps for building an RPM, we need to create a GPG key to sign the RPMs before they are distributed and installed. Signing …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="How to Setup an RPM Signing Key"/>
         <meta property="og:url" content="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"/>
-        <meta property="og:description" content="Introduction In Part 1 of this series, we set up an RPM build environment with a dedicated user for building RPMs. Before we actually walk through the steps for building an RPM, we need to create a GPG key to sign the RPMs before they are distributed and installed. Signing ..."/>
+        <meta property="og:description" content="Introduction In Part 1 of this series, we set up an RPM build environment with a dedicated user for building RPMs. Before we actually walk through the steps for building an RPM, we need to create a GPG key to sign the RPMs before they are distributed and installed. Signing …"/>
         <meta property="article:published_time" content="2015-05-29" />
             <meta property="article:section" content="RPM" />
             <meta property="article:tag" content="rpm" />
@@ -100,7 +100,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h4>Introduction</h4>
+                <h4 id="introduction">Introduction</h4>
 <p>In <a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html">Part 1</a> of
 this series, we set up an RPM build environment with a dedicated user for
 building RPMs.  </p>
@@ -111,7 +111,7 @@ environment are verified from trusted sources.</p>
 <p>In this guide, we will walk through the steps required to create your own RPM
 GPG signing key, distribute it and import it into a machine's RPM database.</p>
 <p><br></p>
-<h4>Prerequisites</h4>
+<h4 id="prerequisites">Prerequisites</h4>
 <p>Creating a GPG key requires a certain amount of entropy in order to ensure
 sufficient randomness.  If you are following this guide on a virtual machine,
 you will need to make sure that the virtual machine has sufficient entropy.</p>
@@ -121,14 +121,14 @@ continuing.</p>
 <p>Additionally, the steps in this guide will be carried out by the <strong>makerpm</strong>
 user.</p>
 <p><br></p>
-<h4>Install Packages</h4>
+<h4 id="install-packages">Install Packages</h4>
 <p>To install the GPG package, run the following:</p>
 <div class="highlight"><pre><span></span>sudo yum install gnupg2
 </pre></div>
 
 
 <p><br></p>
-<h4>Create a GPG Key Pair</h4>
+<h4 id="create-a-gpg-key-pair">Create a GPG Key Pair</h4>
 <p>Use the <em>gpg</em> command to create a new key pair:</p>
 <div class="highlight"><pre><span></span>gpg --gen-key
 </pre></div>
@@ -232,7 +232,7 @@ sub   2048R/D4F51F8B 2015-05-29
 
 
 <p><br></p>
-<h4>Confirming your keys</h4>
+<h4 id="confirming-your-keys">Confirming your keys</h4>
 <p>To list your keys, run the following command:</p>
 <div class="highlight"><pre><span></span>gpg --list-keys
 </pre></div>
@@ -248,7 +248,7 @@ sub   2048R/D4F51F8B 2015-05-29
 
 
 <p><br></p>
-<h4>Troubleshooting TTY Issues</h4>
+<h4 id="troubleshooting-tty-issues">Troubleshooting TTY Issues</h4>
 <p>There is an <a href="https://bugzilla.redhat.com/show_bug.cgi?id=659512#c5">issue</a>,
 apparently with the <em>gnupg2</em> package, where if you <em>su</em>, i.e. switch, to
 another user, a new pseudo-terminal is not opened for the switched user.</p>
@@ -279,7 +279,7 @@ gpg: Key generation canceled.
 
 
 <p><br></p>
-<h4># Workaround</h4>
+<h4 id="workaround"># Workaround</h4>
 <p>In order to work around the above TTY issue, you will need to use X11
 forwarding when switching to a different user.  To do this, you need an
 <em>export</em> file in root's <strong>.xauth</strong> directory.</p>
@@ -304,12 +304,12 @@ echo &quot;user1&quot; &gt;&gt; .xauth/export
 <p>Now, if you try to generate gpg keys, pinentry will present the passphrase
 prompt.</p>
 <p><br></p>
-<h4>Distributing the Public Key</h4>
+<h4 id="distributing-the-public-key">Distributing the Public Key</h4>
 <p>If you plan to distribute custom built RPMs to multiple or even all machines in your
 environment, you will need to distribute the public key to all machines and
 import it into each machine's local RPM database.</p>
 <p><br></p>
-<h5>Export the Signing Key</h5>
+<h5 id="export-the-signing-key">Export the Signing Key</h5>
 <p>We need to export the signing key into ASCII armored output, which is a form of
 binary-to-text encoding.  We need the <em>name</em> of the key in order to export it.</p>
 <p>Get a list of keys:</p>
@@ -336,7 +336,7 @@ output to a file:</p>
 <p>The resulting file, <strong>RPM-GPG-KEY-example-org-signing-key</strong>, is the RPM signing
 key that we can distribute to other machines.</p>
 <p><br></p>
-<h5>Importing the Key into the RPM database</h5>
+<h5 id="importing-the-key-into-the-rpm-database">Importing the Key into the RPM database</h5>
 <p>On RHEL 6 and its clones, the default location on the filesystem for RPM GPG
 keys are <strong>/etc/pki/rpm-gpg</strong>.  Use your tool of choice, such as scp, rsync,
 Puppet, Ansible, etc., to copy the file to any remote machine where you will
@@ -360,7 +360,7 @@ the key. This command will not return any output and exit with return code <stro
 
 
 <p><br></p>
-<h5>Verify Key Import</h5>
+<h5 id="verify-key-import">Verify Key Import</h5>
 <p>To verify that the key has been imported, we can search the RPM database.
 First, we need the public GPG key id.  In the output of <strong>gpg --list-keys</strong>,
 the public key id is found in the <strong>pub</strong> line.  It is the 8 hex digits after
@@ -402,7 +402,7 @@ Description :
 
 
 <p><br></p>
-<h4>Conclusion</h4>
+<h4 id="conclusion">Conclusion</h4>
 <p>You now have an RPM GPG key that you can use sign and verify custom RPMs.  In
 Part 3 of this guide, we will look at various ways of building RPMs.</p>
             </div>

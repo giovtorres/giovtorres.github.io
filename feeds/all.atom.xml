@@ -1,5 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
-<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2017-03-28T19:45:00-04:00</updated><entry><title>Testing Ansible Roles with Molecule, TestInfra and Vagrant</title><link href="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-vagrant.html" rel="alternate"></link><published>2017-03-28T19:45:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2017-03-28:testing-ansible-roles-with-molecule-testinfra-and-vagrant.html</id><summary type="html">&lt;h2&gt;Introduction&lt;/h2&gt;
+<feed xmlns="http://www.w3.org/2005/Atom"><title>Giovanni Torres</title><link href="http://giovannitorres.me/" rel="alternate"></link><link href="http://giovannitorres.me/feeds/all.atom.xml" rel="self"></link><id>http://giovannitorres.me/</id><updated>2017-03-28T19:45:00-04:00</updated><entry><title>Testing Ansible Roles with Molecule, TestInfra and Vagrant</title><link href="http://giovannitorres.me/testing-ansible-roles-with-molecule-testinfra-and-vagrant.html" rel="alternate"></link><published>2017-03-28T19:45:00-04:00</published><updated>2017-03-28T19:45:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2017-03-28:/testing-ansible-roles-with-molecule-testinfra-and-vagrant.html</id><summary type="html">&lt;div class="toc"&gt;&lt;span class="toctitle"&gt;Table of Contents&lt;/span&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#introduction"&gt;Introduction&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#stack"&gt;Stack&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#setup"&gt;Setup&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#installing-the-kvm-hypervisor"&gt;Installing the KVM Hypervisor&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#installing-packages-with-dnf"&gt;Installing Packages with DNF&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#installing-packages-with-pip"&gt;Installing Packages with pip&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#initializing-a-role-with-molecule"&gt;Initializing a Role with Molecule&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#building-an-ntp-role"&gt;Building an NTP Role&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#tasks"&gt;Tasks&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#vars"&gt;Vars&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#defaults"&gt;Defaults&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#handlers"&gt;Handlers&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#templates"&gt;Templates&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#setting-up-the-tests"&gt;Setting up the Tests&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#configuring-molecule"&gt;Configuring Molecule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#testing-the-role"&gt;Testing the Role&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#tips"&gt;Tips&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#disable-nfs-synced-folder"&gt;Disable NFS synced folder&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#taming-the-password-prompt"&gt;Taming the Password Prompt …&lt;/a&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/li&gt;&lt;/ul&gt;&lt;/div&gt;</summary><content type="html">&lt;div class="toc"&gt;&lt;span class="toctitle"&gt;Table of Contents&lt;/span&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#introduction"&gt;Introduction&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#stack"&gt;Stack&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#setup"&gt;Setup&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#installing-the-kvm-hypervisor"&gt;Installing the KVM Hypervisor&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#installing-packages-with-dnf"&gt;Installing Packages with DNF&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#installing-packages-with-pip"&gt;Installing Packages with pip&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#initializing-a-role-with-molecule"&gt;Initializing a Role with Molecule&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#building-an-ntp-role"&gt;Building an NTP Role&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#tasks"&gt;Tasks&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#vars"&gt;Vars&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#defaults"&gt;Defaults&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#handlers"&gt;Handlers&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#templates"&gt;Templates&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#setting-up-the-tests"&gt;Setting up the Tests&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#configuring-molecule"&gt;Configuring Molecule&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#testing-the-role"&gt;Testing the Role&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#tips"&gt;Tips&lt;/a&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#disable-nfs-synced-folder"&gt;Disable NFS synced folder&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#taming-the-password-prompt"&gt;Taming the Password Prompt&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
+&lt;li&gt;&lt;a href="#conclusion"&gt;Conclusion&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
 &lt;p&gt;You've started down the path of using configuration management and decided to
 use Ansible.  You began with a big monolithic playbook and now it's time to
 break it down into modular roles that can be applied to groups of hosts as
@@ -11,7 +67,7 @@ that updates to existing roles will continue to work as expected?&lt;/p&gt;
 &lt;p&gt;This guide will show you how to test your roles against multiple operating
 systems on your local development workstation before committing your changes to
 version control.  &lt;em&gt;(You are version controlling your roles, right?)&lt;/em&gt;&lt;/p&gt;
-&lt;h2&gt;Stack&lt;/h2&gt;
+&lt;h2 id="stack"&gt;Stack&lt;/h2&gt;
 &lt;p&gt;We will use the following tools to create a local Ansible development
 environment.&lt;/p&gt;
 &lt;ul&gt;
@@ -23,8 +79,8 @@ environment.&lt;/p&gt;
 &lt;li&gt;&lt;a href="https://github.com/philpep/testinfra"&gt;TestInfra&lt;/a&gt;&lt;/li&gt;
 &lt;li&gt;Ansible&lt;/li&gt;
 &lt;/ul&gt;
-&lt;h2&gt;Setup&lt;/h2&gt;
-&lt;h3&gt;Installing the KVM Hypervisor&lt;/h3&gt;
+&lt;h2 id="setup"&gt;Setup&lt;/h2&gt;
+&lt;h3 id="installing-the-kvm-hypervisor"&gt;Installing the KVM Hypervisor&lt;/h3&gt;
 &lt;p&gt;You will first need to setup the KVM hypervisor on your workstation, assuming
 your CPU supports virtualization extensions (most recent CPUs do).  If you
 don't have KVM already installed, install the virtualization group packages:&lt;/p&gt;
@@ -38,7 +94,7 @@ sudo systemctl enable libvirtd.service
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Installing Packages with DNF&lt;/h3&gt;
+&lt;h3 id="installing-packages-with-dnf"&gt;Installing Packages with DNF&lt;/h3&gt;
 &lt;p&gt;This setup requires Vagrant, a tool to create and configure lightweight virtual
 machines.  It works great for creating development environments locally using
 virtual machines.  Vagrant has plugins that support libvirt as a provider.
@@ -57,7 +113,7 @@ latest available (1.9.2) and is sufficient for this guide.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Installing Packages with pip&lt;/h3&gt;
+&lt;h3 id="installing-packages-with-pip"&gt;Installing Packages with pip&lt;/h3&gt;
 &lt;p&gt;The remainder of the required packages are not available in the Fedora 25
 repositories.  Therefore, we'll go directly to
 &lt;a href="https://pypi.python.org/pypi"&gt;PyPi&lt;/a&gt; to fetch these packages:&lt;/p&gt;
@@ -73,7 +129,7 @@ sudo pip install molecule testinfra python-vagrant ansible==2.2.1.0
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Initializing a Role with Molecule&lt;/h2&gt;
+&lt;h2 id="initializing-a-role-with-molecule"&gt;Initializing a Role with Molecule&lt;/h2&gt;
 &lt;p&gt;Molecule can take of initializing a new role.  It will create the default
 directories, similar to &lt;code&gt;ansible-galaxy init&lt;/code&gt;.  It will also create a
 &lt;code&gt;molecule.yml&lt;/code&gt; and a &lt;code&gt;playbook.yml&lt;/code&gt; file.  These files will instruct Molecule
@@ -89,14 +145,14 @@ directory and start building out the role:&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Building an NTP Role&lt;/h3&gt;
+&lt;h3 id="building-an-ntp-role"&gt;Building an NTP Role&lt;/h3&gt;
 &lt;p&gt;We need a role to test.  If you already have a role that you would like to
 test, skip to the next section (&lt;strong&gt;Setting up the Tests&lt;/strong&gt;).&lt;/p&gt;
 &lt;p&gt;A role for NTP makes a good example because it requires multiple Ansible
 modules for installing the package, customizing the configuration, and starting
 the service.  Also, the NTP daemon name is different between CentOS and Debian,
 which requires us to use role variables.&lt;/p&gt;
-&lt;h4&gt;Tasks&lt;/h4&gt;
+&lt;h4 id="tasks"&gt;Tasks&lt;/h4&gt;
 &lt;p&gt;Configure the tasks that Ansible will carry out to install and configure NTP
 both CentOS 7 and Debian 8. We will provide a &lt;strong&gt;name&lt;/strong&gt; for each task which
 serves as built-in documentation for each task. Add the following tasks to
@@ -149,7 +205,7 @@ multiple platforms without duplicating tasks, one for each OS.&lt;/p&gt;
 practice to prefix custom variables with the name of the role, in this case
 &lt;strong&gt;ntp_&lt;/strong&gt;.  This will avoid clashing of variables when applying multiple roles
 at the same time.&lt;/p&gt;
-&lt;h4&gt;Vars&lt;/h4&gt;
+&lt;h4 id="vars"&gt;Vars&lt;/h4&gt;
 &lt;p&gt;Variables in Ansible can exist in &lt;a href="https://docs.ansible.com/ansible/playbooks_variables.html"&gt;multiple
 places&lt;/a&gt;.  Our role
 will put variables in two places: &lt;code&gt;vars/&lt;/code&gt; and &lt;code&gt;defaults/&lt;/code&gt;.  We'll use the
@@ -168,7 +224,7 @@ while on RedHat it is named &lt;strong&gt;ntpd&lt;/strong&gt;.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h4&gt;Defaults&lt;/h4&gt;
+&lt;h4 id="defaults"&gt;Defaults&lt;/h4&gt;
 &lt;p&gt;What about that other custom variables?  We'll put the other custom variables
 in &lt;code&gt;defaults/main.yml&lt;/code&gt; so that users can modify them when applying the role.&lt;/p&gt;
 &lt;p&gt;Edit the &lt;code&gt;defaults/main.yml&lt;/code&gt; file:&lt;/p&gt;
@@ -182,7 +238,7 @@ in &lt;code&gt;defaults/main.yml&lt;/code&gt; so that users can modify them when
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h4&gt;Handlers&lt;/h4&gt;
+&lt;h4 id="handlers"&gt;Handlers&lt;/h4&gt;
 &lt;p&gt;The handler is responsible for restarting the NTP service after Ansible detects
 a change in the configuration.  Edit the &lt;code&gt;handlers/main.yml&lt;/code&gt; file:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="p p-Indicator"&gt;-&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;name&lt;/span&gt;&lt;span class="p p-Indicator"&gt;:&lt;/span&gt; &lt;span class="l l-Scalar l-Scalar-Plain"&gt;restart ntp&lt;/span&gt;
@@ -192,7 +248,7 @@ a change in the configuration.  Edit the &lt;code&gt;handlers/main.yml&lt;/code&
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h4&gt;Templates&lt;/h4&gt;
+&lt;h4 id="templates"&gt;Templates&lt;/h4&gt;
 &lt;p&gt;Ansible uses the &lt;a href="http://jinja.pocoo.org/"&gt;Jinja2&lt;/a&gt; templating engine.  We will
 replace certain parameters in the &lt;code&gt;ntp.conf&lt;/code&gt; file with variables.  When Ansible
 applies the role, the values of the variables are replaced.&lt;/p&gt;
@@ -236,7 +292,7 @@ applies the role, the values of the variables are replaced.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Setting up the Tests&lt;/h2&gt;
+&lt;h2 id="setting-up-the-tests"&gt;Setting up the Tests&lt;/h2&gt;
 &lt;p&gt;The role is complete.  Now it's time to setup the tests.  TestInfra aims to be
 a Python equivalent for &lt;a href="http://serverspec.org/"&gt;Serverspec&lt;/a&gt;.  It allows you
 write tests to make sure your servers are configured correctly.  The idea is to
@@ -287,7 +343,7 @@ role. &lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Configuring Molecule&lt;/h2&gt;
+&lt;h2 id="configuring-molecule"&gt;Configuring Molecule&lt;/h2&gt;
 &lt;p&gt;The role is complete and the tests are ready.  Now, the last piece is to
 configure Molecule to use Vagrant with two platforms: CentOS 7 and Debian 8.
 We also instruct Molecule to use the libvirt provider with the kvm driver.  The
@@ -318,7 +374,7 @@ virtual machines will be configured with 1024MB of RAM and 1 vCPU.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Testing the Role&lt;/h2&gt;
+&lt;h2 id="testing-the-role"&gt;Testing the Role&lt;/h2&gt;
 &lt;p&gt;Testing the role is simple after everything else is in place:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;molecule test
 &lt;/pre&gt;&lt;/div&gt;
@@ -514,8 +570,8 @@ works as expected after making continuous improvements.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h2&gt;Tips&lt;/h2&gt;
-&lt;h3&gt;Disable NFS synced folder&lt;/h3&gt;
+&lt;h2 id="tips"&gt;Tips&lt;/h2&gt;
+&lt;h3 id="disable-nfs-synced-folder"&gt;Disable NFS synced folder&lt;/h3&gt;
 &lt;p&gt;I've noticed that some Vagrant boxes will prompt for a password to enable NFS
 on the host for sharing with the virtual machines.  You may see a similar error
 as the following:&lt;/p&gt;
@@ -553,7 +609,7 @@ guide, add the following snippet to your local Vagrantfile,
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h3&gt;Taming the Password Prompt&lt;/h3&gt;
+&lt;h3 id="taming-the-password-prompt"&gt;Taming the Password Prompt&lt;/h3&gt;
 &lt;p&gt;When Molecule calls Vagrant, it may prompt several times for your sudo password
 to create the virtual machine.  To avoid this, you can add your user to the
 &lt;strong&gt;libvirt&lt;/strong&gt; group:&lt;/p&gt;
@@ -565,11 +621,15 @@ to create the virtual machine.  To avoid this, you can add your user to the
 &lt;p&gt;Note: Be careful when doing this.  This is probably okay on your local
 workstation, but not suitable on a production hypervisor.&lt;/p&gt;
 &lt;/blockquote&gt;
-&lt;h2&gt;Conclusion&lt;/h2&gt;
+&lt;h2 id="conclusion"&gt;Conclusion&lt;/h2&gt;
 &lt;p&gt;Using a combination of Molecule, TestInfra, Vagrant, Ansible and Git, it
-becomes easier to write testable roles and version control the roles along with
-the tests in the same repository.
-time.&lt;/p&gt;</summary><category term="ansible"></category><category term="vagrant"></category><category term="molecule"></category><category term="testinfra"></category><category term="testing"></category></entry><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+becomes easier to write testable roles and version control the roles alongside
+the tests in the same repository.&lt;/p&gt;</content><category term="ansible"></category><category term="vagrant"></category><category term="molecule"></category><category term="testinfra"></category><category term="testing"></category></entry><entry><title>Create a Linux Lab on KVM Using Cloud Images</title><link href="http://giovannitorres.me/create-a-linux-lab-on-kvm-using-cloud-images.html" rel="alternate"></link><published>2016-05-11T19:52:00-04:00</published><updated>2016-05-11T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-05-11:/create-a-linux-lab-on-kvm-using-cloud-images.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;Whether you are testing a new clustered application, validating configuration
+management playbooks or studying for the RHCE, it's convenient to have access
+to a set of Linux virtual machines.  This is the beauty of the cloud.  You can
+launch fresh new instances and off you go.&lt;/p&gt;
+&lt;p&gt;If you have …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Whether you are testing a new clustered application, validating configuration
 management playbooks or studying for the RHCE, it's convenient to have access
 to a set of Linux virtual machines.  This is the beauty of the cloud.  You can
@@ -580,7 +640,7 @@ own lab in a box.&lt;/p&gt;
 &lt;p&gt;We will use a script and some cloud images from CentOS to create virtual
 machines in just a few seconds.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are running a recent version of Fedora with KVM
 installed.  You will also need a few packages:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;sudo dnf install libvirt-client virt-install genisoimage&lt;/span&gt;
@@ -588,7 +648,7 @@ installed.  You will also need a few packages:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Setting up the Directory&lt;/h4&gt;
+&lt;h4 id="setting-up-the-directory"&gt;Setting up the Directory&lt;/h4&gt;
 &lt;p&gt;Create the following directory structure:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir -p ~/virt/images&lt;/span&gt;
 &lt;/pre&gt;&lt;/div&gt;
@@ -597,7 +657,7 @@ installed.  You will also need a few packages:&lt;/p&gt;
 &lt;p&gt;We will put the VM installation script in &lt;code&gt;~/virt&lt;/code&gt; and all the virtual machine
 image files will go in the &lt;code&gt;~/virt/images&lt;/code&gt; directory.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Installation Script&lt;/h4&gt;
+&lt;h4 id="installation-script"&gt;Installation Script&lt;/h4&gt;
 &lt;p&gt;This script originally came from &lt;a href="https://goldmann.pl/blog/2014/01/16/running-fedora-cloud-images-on-kvm/"&gt;Marek Goldmann's
 post&lt;/a&gt;.
 I've since modified it further to fit my needs.&lt;/p&gt;
@@ -745,7 +805,7 @@ mkdir -p &lt;span class="nv"&gt;$DIR&lt;/span&gt;/&lt;span class="nv"&gt;$1&lt;/
 &lt;p&gt;You will generate an SSH key pair if you haven't already done so.  Be sure to
 change the SSH RSA public key in the script to your own.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Getting the Cloud Images&lt;/h4&gt;
+&lt;h4 id="getting-the-cloud-images"&gt;Getting the Cloud Images&lt;/h4&gt;
 &lt;p&gt;You can find CentOS cloud images at
 &lt;a href="http://cloud.centos.org"&gt;http://cloud.centos.org&lt;/a&gt;.  Let's download a
 compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&lt;/p&gt;
@@ -761,7 +821,7 @@ compressed CentOS 7 cloud image to save time and bandwidth, then decompress it:&
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Build VMs&lt;/h4&gt;
+&lt;h4 id="build-vms"&gt;Build VMs&lt;/h4&gt;
 &lt;p&gt;Now, just run the &lt;strong&gt;virt-install-centos&lt;/strong&gt; command and pass it the name of the
 virtual machine you want to build:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;./virt-install-centos testvm1&lt;/span&gt;
@@ -791,7 +851,7 @@ already prebuilt.  The &lt;strong&gt;cloud-init&lt;/strong&gt; service runs at b
 configuration on a virtual CD-ROM device and finishes the configuration of the
 VM, like setting up SSH keys, before reaching the login prompt.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Log into the VM&lt;/h4&gt;
+&lt;h4 id="log-into-the-vm"&gt;Log into the VM&lt;/h4&gt;
 &lt;p&gt;CentOS cloud images have the username &lt;strong&gt;centos&lt;/strong&gt;.  Log in as this user to the
 new VM:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;ssh centos@192.168.124.138&lt;/span&gt;
@@ -810,7 +870,7 @@ new VM:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;The script uses cloud-init to "inject" a startup configuration to the virtual
 machine.  The image disk expands to 8GB by default.  You can expand this
 manually by shutting down the VM and virt-resize tool, which requires the
@@ -824,19 +884,28 @@ manually by shutting down the VM and virt-resize tool, which requires the
 &lt;p&gt;The script also works with CentOS 6 and Fedora 23 cloud images.  If you are
 using the latter, you may want to rename the script to &lt;strong&gt;virt-install-fedora&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;strong&gt;Update (16 Jun 2017)&lt;/strong&gt;: Check out an improved version of the &lt;a href="https://github.com/giovtorres/kvm-install-vm"&gt;script on
-GitHub&lt;/a&gt;.&lt;/p&gt;</summary><category term="kvm"></category><category term="cloud-init"></category></entry><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+GitHub&lt;/a&gt;.&lt;/p&gt;</content><category term="kvm"></category><category term="cloud-init"></category></entry><entry><title>Graphing sdiag with Graphite</title><link href="http://giovannitorres.me/graphing-sdiag-with-graphite.html" rel="alternate"></link><published>2016-04-09T19:52:00-04:00</published><updated>2016-04-09T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-04-09:/graphing-sdiag-with-graphite.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
 how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
 metrics to Python.&lt;/p&gt;
 &lt;p&gt;In this guide, we will use &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; to
 graph the output from sdiag.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
+&lt;p&gt;This guide assumes you are using &lt;a href="http://slurm.schedmd.com/"&gt;Slurm&lt;/a&gt;, an HPC
+workload manager …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;In a &lt;a href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html"&gt;previous post&lt;/a&gt;, I demonstrated
+how to use Cython to wrap C functions in Slurm's sdiag utility and expose the
+metrics to Python.&lt;/p&gt;
+&lt;p&gt;In this guide, we will use &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; to
+graph the output from sdiag.&lt;/p&gt;
+&lt;p&gt;&lt;br&gt;&lt;/p&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are using &lt;a href="http://slurm.schedmd.com/"&gt;Slurm&lt;/a&gt;, an HPC
 workload manager, and the
 &lt;a href="http://graphite.readthedocs.org/en/latest/"&gt;Graphite&lt;/a&gt; suite.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Getting the Statistics&lt;/h4&gt;
+&lt;h4 id="getting-the-statistics"&gt;Getting the Statistics&lt;/h4&gt;
 &lt;p&gt;The sdiag utility is a diagnostic tool that keeps statistics on the Slurm
 controller, the Main scheduler and the Backfill scheduler.  You can run this
 utility periodically, or as you make changes to the scheduler in &lt;code&gt;slurm.conf&lt;/code&gt;.
@@ -916,7 +985,7 @@ dictionary:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Sending to Graphite&lt;/h4&gt;
+&lt;h4 id="sending-to-graphite"&gt;Sending to Graphite&lt;/h4&gt;
 &lt;p&gt;Graphite is suite of three components: Carbon, Whisper and Graphite-web.
 Carbon is the metric collector.  Our script needs to send the statistics to
 Carbon, which will store the values in whisper time-series databases.  The
@@ -962,7 +1031,7 @@ prefixed with &lt;code&gt;gauge-&lt;/code&gt; to signify that each value is a ga
 &lt;p&gt;Some of the values are actually counters, but we will use Graphite's Function
 API to take the derivative of the series to generate per-second values.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Bringing It Together&lt;/h4&gt;
+&lt;h4 id="bringing-it-together"&gt;Bringing It Together&lt;/h4&gt;
 &lt;p&gt;Now, we can wrap up these two functions in a &lt;code&gt;main&lt;/code&gt; function to bring
 everything together.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="n"&gt;CARBON_SERVER&lt;/span&gt; &lt;span class="o"&gt;=&lt;/span&gt; &lt;span class="s2"&gt;&amp;quot;127.0.0.1&amp;quot;&lt;/span&gt;
@@ -1017,7 +1086,7 @@ minute averages and kept for 1 year.  Adjust accordingly.&lt;/p&gt;
 &lt;p&gt;Carbon re-reads this file once a minute, so there's no need to restart anything
 here.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Daemonizing the Script with Supervisor&lt;/h4&gt;
+&lt;h4 id="daemonizing-the-script-with-supervisor"&gt;Daemonizing the Script with Supervisor&lt;/h4&gt;
 &lt;p&gt;The script runs in an infinite while loop, making it easy to daemonize.  We
 will daemonize this script with &lt;a href="http://supervisord.org/"&gt;Supervisor&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;The easiest way to install Supervisor is with &lt;code&gt;pip&lt;/code&gt;:&lt;/p&gt;
@@ -1051,7 +1120,7 @@ turn start the script:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Creating a Dashboard in Grafana&lt;/h4&gt;
+&lt;h4 id="creating-a-dashboard-in-grafana"&gt;Creating a Dashboard in Grafana&lt;/h4&gt;
 &lt;p&gt;If you are using Graphite, chances are you use a different frontend for
 creating graphs and dashboards.  &lt;a href="http://grafana.org/"&gt;Grafana&lt;/a&gt; is an excellent
 frontend for visualizing Graphite metrics, among other data sources.&lt;/p&gt;
@@ -1074,11 +1143,11 @@ calculate the deltas between the datapoints.&lt;/p&gt;
 &lt;li&gt;Total Backfilled Jobs&lt;/li&gt;
 &lt;/ul&gt;
 &lt;p&gt;Here are what the graphs would look like:&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png" /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png" /&gt;&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/controller.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/main_scheduler.png"&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/bf_scheduler.png"&gt;&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Using PySlurm and Graphite/Grafana, we can keep historical data for sdiag.  The
 backfill scheduler in particular has many options that are used to tweak the
 behavior of the algorithm.  These graphs could help to provide feedback after
@@ -1087,7 +1156,11 @@ changing values to the scheduler.&lt;/p&gt;
 &lt;a href="https://gist.github.com/giovtorres/a26bcd754bf0eaa4b4e10b8e48bdfa22"&gt;slurm_sched_stats.py&lt;/a&gt;
 script.&lt;/p&gt;
 &lt;p&gt;This gist 
-contains the full &lt;a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870"&gt;Grafana dashboard in JSON format&lt;/a&gt;, which can be imported into Grafana.&lt;/p&gt;</summary><category term="python"></category><category term="slurm"></category><category term="pyslurm"></category><category term="graphite"></category><category term="grafana"></category></entry><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+contains the full &lt;a href="https://gist.github.com/giovtorres/cfad76aa4cbfd8ddd550554a7b2a7870"&gt;Grafana dashboard in JSON format&lt;/a&gt;, which can be imported into Grafana.&lt;/p&gt;</content><category term="python"></category><category term="slurm"></category><category term="pyslurm"></category><category term="graphite"></category><category term="grafana"></category></entry><entry><title>Wrapping Slurm's sdiag with Cython</title><link href="http://giovannitorres.me/wrapping-slurms-sdiag-with-cython.html" rel="alternate"></link><published>2016-03-16T19:52:00-04:00</published><updated>2016-03-16T19:52:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2016-03-16:/wrapping-slurms-sdiag-with-cython.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
+resulting in significant performance boosts, especially in numerical for loops.
+Cython also allows you to wrap C libraries and create Python C extensions.
+This means you don't have to know much C, if any, to get …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Cython is a superset of Python and allows you to statically type variables,
 resulting in significant performance boosts, especially in numerical for loops.
 Cython also allows you to wrap C libraries and create Python C extensions.
@@ -1096,12 +1169,12 @@ and expose the results to Python.&lt;/p&gt;
 &lt;p&gt;In this guide, we will use Cython to wrap some C functions in Slurm's sdiag
 program and make the statistics available to Python.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This guide assumes you are using Slurm, an HPC workload manager.  This guide
 uses Slurm 15.08.8, Cython 0.23.4 and Python 2.7.5, all on CentOS 7.2.&lt;/p&gt;
 &lt;p&gt;This should also work in Python 3.5.1.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Looking at sdiag Output&lt;/h4&gt;
+&lt;h4 id="looking-at-sdiag-output"&gt;Looking at sdiag Output&lt;/h4&gt;
 &lt;p&gt;sdiag shows diagnostics for Slurm job scheduling and other information about
 the Slurm controller. Run the &lt;code&gt;sdiag&lt;/code&gt; command and you should see similar output:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;*******************************************************
@@ -1143,7 +1216,7 @@ Backfilling stats
 &lt;p&gt;We want to use Cython to wrap the necessary Slurm API functions to get access
 to these statistics via Python.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Looking at the C API&lt;/h4&gt;
+&lt;h4 id="looking-at-the-c-api"&gt;Looking at the C API&lt;/h4&gt;
 &lt;p&gt;Normally, we would start with Slurm's [API
 page](http://slurm.schedmd.com/api.html], which lists various functions to get
 direct access to Slurm data structures.  This page, however, does not have any
@@ -1158,13 +1231,13 @@ replicate a portion of this program in order to get access to the statistics.&lt
 &lt;p&gt;Looking at the program, we need to wrap the &lt;strong&gt;slurm_get_statistics&lt;/strong&gt;,
 &lt;strong&gt;slurm_reset_statistics&lt;/strong&gt;, and the &lt;strong&gt;slurm_free_stats_response_msg&lt;/strong&gt; functions.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Organizing the Cython code&lt;/h4&gt;
+&lt;h4 id="organizing-the-cython-code"&gt;Organizing the Cython code&lt;/h4&gt;
 &lt;p&gt;We need two files for this project: an implementation (.pyx) file and a
 definition file (.pxd).&lt;/p&gt;
 &lt;p&gt;We put the C function and variable declarations in the in the definition file.
 The Cython code for wrapping the functions goes in the implementation file.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Slurm Header Files&lt;/h4&gt;
+&lt;h4 id="slurm-header-files"&gt;Slurm Header Files&lt;/h4&gt;
 &lt;p&gt;We need to declare the C functions and variables, and we get those from the
 Slurm header files.  The header file is in the include directory of your Slurm
 installation path, &lt;strong&gt;/path/to/slurm/include/slurm/slurm.h&lt;/strong&gt;&lt;/p&gt;
@@ -1179,7 +1252,7 @@ the functions we want to wrap.  There, we see its declaration and signature:&lt;
 &lt;em&gt;stats_info_response_msg_t&lt;/em&gt; and &lt;em&gt;stats_info_request_msg_t&lt;/em&gt;.  We will also have
 to declare both structs in the definition file.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Wrapping C Code&lt;/h4&gt;
+&lt;h4 id="wrapping-c-code"&gt;Wrapping C Code&lt;/h4&gt;
 &lt;p&gt;Let's start by declaring the structs.  The C code for the
 &lt;em&gt;stats_info_request_msg&lt;/em&gt; struct looks like:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="k"&gt;typedef&lt;/span&gt; &lt;span class="k"&gt;struct&lt;/span&gt; &lt;span class="n"&gt;stats_info_request_msg&lt;/span&gt; &lt;span class="p"&gt;{&lt;/span&gt;
@@ -1263,7 +1336,7 @@ directly:&lt;/p&gt;
 
 &lt;p&gt;This API function is for freeing memory allocated by the stats response buffer.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Writing the Implementation File&lt;/h4&gt;
+&lt;h4 id="writing-the-implementation-file"&gt;Writing the Implementation File&lt;/h4&gt;
 &lt;p&gt;The implementation file (.pyx) is where the Cython code goes.  This is where we
 need to look at the &lt;em&gt;sdiag.c&lt;/em&gt; file and recreate the needed portions in Cython.&lt;/p&gt;
 &lt;p&gt;We will expose two functions to Python: get_stats() and reset_stats().
@@ -1352,7 +1425,7 @@ the definition file, using the same signature as in the implementation file:&lt;
 &lt;p&gt;The end result should look something like this
 &lt;a href="https://gist.github.com/giovtorres/274b32c8ded1a46e416c"&gt;gist&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Compiling with Cython&lt;/h4&gt;
+&lt;h4 id="compiling-with-cython"&gt;Compiling with Cython&lt;/h4&gt;
 &lt;p&gt;Once we have the .pyx file ready, we can use the Cython compiler to convert it
 to a C file.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cython sdiag.pyx
@@ -1364,7 +1437,7 @@ errors or warnings.  This is the beauty of Cython.  It did all the hard work of
 compiling the Cython source to C code.  The resulting file will be &lt;strong&gt;sdiag.c&lt;/strong&gt;.
 Have a look and see what Cython had done for us.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Creating the Python Extension Module&lt;/h4&gt;
+&lt;h4 id="creating-the-python-extension-module"&gt;Creating the Python Extension Module&lt;/h4&gt;
 &lt;p&gt;The resulting C output file can now be converted to a Python extension module.
 The standard way of creating an extension module is through the use of
 &lt;em&gt;distutils&lt;/em&gt; in a setup.py file.&lt;/p&gt;
@@ -1384,7 +1457,7 @@ flags that point to Slurm's libslurm.so:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing the module&lt;/h4&gt;
+&lt;h4 id="testing-the-module"&gt;Testing the module&lt;/h4&gt;
 &lt;p&gt;Create a directory for the module:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="go"&gt;mkdir ${HOME}/local&lt;/span&gt;
 &lt;span class="go"&gt;cd ${HOME}/local&lt;/span&gt;
@@ -1429,12 +1502,18 @@ your PYTHONPATH.&lt;/p&gt;
 
 &lt;p&gt;The &lt;em&gt;get_stats()&lt;/em&gt; function returns a dictionary of key value pairs of information produced by the sdiag command.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;With Cython, we are able to easily wrap C code and make it available to Python.
 We now have tighter integration with Slurm and don't have to run Slurm commands
 and parse the output.  For more examples of using Cython to wrap the Slurm C
 API, have a look at the &lt;a href="https://github.com/PySlurm/pyslurm"&gt;PySlurm&lt;/a&gt; project
-on GitHub.&lt;/p&gt;</summary><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><published>2015-11-29T00:00:00-05:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:signing-rpms.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+on GitHub.&lt;/p&gt;</content><category term="python"></category><category term="cython"></category><category term="slurm"></category></entry><entry><title>Signing RPMs</title><link href="http://giovannitorres.me/signing-rpms.html" rel="alternate"></link><published>2015-11-29T00:00:00-05:00</published><updated>2015-11-29T00:00:00-05:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-11-29:/signing-rpms.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;So far, we have &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;setup an RPM build
+environment&lt;/a&gt;
+, &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"&gt;setup our RPM signing key&lt;/a&gt;,
+and &lt;a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html"&gt;built RPMs&lt;/a&gt;.  The last
+thing left to do is to use the rpm signing key to sign our newly built RPMs.&lt;/p&gt;
+&lt;p&gt;In this last part of this guide, we will sign the collectd RPMs …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;So far, we have &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;setup an RPM build
 environment&lt;/a&gt;
 , &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html"&gt;setup our RPM signing key&lt;/a&gt;,
@@ -1443,7 +1522,7 @@ thing left to do is to use the rpm signing key to sign our newly built RPMs.&lt;
 &lt;p&gt;In this last part of this guide, we will sign the collectd RPMs that we built
 in the &lt;a href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html"&gt;Part 3&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Configure %_gpg_name in Macro File&lt;/h4&gt;
+&lt;h4 id="configure-_gpg_name-in-macro-file"&gt;Configure %_gpg_name in Macro File&lt;/h4&gt;
 &lt;p&gt;Before we can sign RPMs, we need to tell the &lt;strong&gt;rpm&lt;/strong&gt; command which gpg key to use.
 In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt;,
 we saw the &lt;code&gt;.rpmmacros&lt;/code&gt; file, which included some default rpm macros.&lt;/p&gt;
@@ -1465,7 +1544,7 @@ sub   2048R/D97540C0 2015-11-30
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Signing RPMs&lt;/h4&gt;
+&lt;h4 id="signing-rpms"&gt;Signing RPMs&lt;/h4&gt;
 &lt;p&gt;Change to the directory where the RPMs were created.  Depending on the
 chosen method, the directory could be either of the following:&lt;/p&gt;
 &lt;ul&gt;
@@ -1540,7 +1619,7 @@ libcollectdclient-devel-5.5.0-1.el6.x86_64.rpm:
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Verifying RPMs&lt;/h4&gt;
+&lt;h4 id="verifying-rpms"&gt;Verifying RPMs&lt;/h4&gt;
 &lt;p&gt;To verify the signature, use the &lt;code&gt;--checksig&lt;/code&gt; rpm flag:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[makerpm@localhost x86_64]$&lt;/span&gt; rpm --checksig collectd-5.5.0-1.el6.x86_64.rpm 
 &lt;span class="go"&gt;collectd-5.5.0-1.el6.x86_64.rpm: rsa sha1 (md5) pgp md5 OK&lt;/span&gt;
@@ -1575,7 +1654,7 @@ collectd-5.5.0-1.el6.x86_64.rpm:
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;RPM Distribution&lt;/h4&gt;
+&lt;h4 id="rpm-distribution"&gt;RPM Distribution&lt;/h4&gt;
 &lt;p&gt;Now that we have signed RPMs, we are ready to distribute them to other servers
 within the infrastructure.  There are various ways to do this, so use a method
 that fits your workflow.&lt;/p&gt;
@@ -1583,7 +1662,30 @@ that fits your workflow.&lt;/p&gt;
 Ansible or Salt, to distribute the RPM GPG key to all machines and then
 install the RPM.  Alternatively, if you are using Spacewalk, for example, to
 manage custom YUM repositories, you could add the RPM GPG key to Spacewalk and
-also add the signed RPMs to a custom repository.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><published>2015-09-19T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+also add the signed RPMs to a custom repository.&lt;/p&gt;</content><category term="rpm"></category></entry><entry><title>How to Build RPMs - Collectd Example</title><link href="http://giovannitorres.me/how-to-build-rpms-collectd-example.html" rel="alternate"></link><published>2015-09-19T00:00:00-04:00</published><updated>2015-09-19T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-09-19:/how-to-build-rpms-collectd-example.html</id><summary type="html">&lt;div class="toc"&gt;&lt;span class="toctitle"&gt;Table of Contents&lt;/span&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#introduction"&gt;Introduction&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#prerequisites"&gt;Prerequisites&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#building-rpms-from-a-spec-file"&gt;Building RPMs from a SPEC file&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#rebuilding-source-rpms-srpms"&gt;Rebuilding Source RPMs (SRPMs)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#building-rpms-using-mock"&gt;Building RPMs using Mock&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#conclusion"&gt;Conclusion&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;Now that we have an &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;rpm build
+environment&lt;/a&gt;
+, we can build RPM packages.&lt;/p&gt;
+&lt;p&gt;In this guide, we will use the collectd monitoring application and walk through
+three different ways …&lt;/p&gt;</summary><content type="html">&lt;div class="toc"&gt;&lt;span class="toctitle"&gt;Table of Contents&lt;/span&gt;&lt;ul&gt;
+&lt;li&gt;&lt;a href="#introduction"&gt;Introduction&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#prerequisites"&gt;Prerequisites&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#building-rpms-from-a-spec-file"&gt;Building RPMs from a SPEC file&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#rebuilding-source-rpms-srpms"&gt;Rebuilding Source RPMs (SRPMs)&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#building-rpms-using-mock"&gt;Building RPMs using Mock&lt;/a&gt;&lt;/li&gt;
+&lt;li&gt;&lt;a href="#conclusion"&gt;Conclusion&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/div&gt;
+&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;Now that we have an &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;rpm build
 environment&lt;/a&gt;
 , we can build RPM packages.&lt;/p&gt;
@@ -1592,7 +1694,7 @@ three different ways of building RPMs for this package:
 using a spec file, rebuilding a source rpm, and using
 &lt;a href="https://fedoraproject.org/wiki/Mock"&gt;mock&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;We already installed the necessary packages in &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part
 1&lt;/a&gt;.  These
 packages provide the utilities that we will use to build RPMs, namely rpmbuild,
@@ -1606,7 +1708,7 @@ spectool, and yum-builddep.&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Building RPMs from a SPEC file&lt;/h4&gt;
+&lt;h4 id="building-rpms-from-a-spec-file"&gt;Building RPMs from a SPEC file&lt;/h4&gt;
 &lt;p&gt;A spec file includes all the information and steps the &lt;strong&gt;rpmbuild&lt;/strong&gt; command
 needs to build an RPM package.  Among other things, it lists the name and
 version of your application, all package dependencies and how the application
@@ -1820,7 +1922,7 @@ line as:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Rebuilding Source RPMs (SRPMs)&lt;/h4&gt;
+&lt;h4 id="rebuilding-source-rpms-srpms"&gt;Rebuilding Source RPMs (SRPMs)&lt;/h4&gt;
 &lt;p&gt;Building from a src rpm is admittedly easier than from a spec file. A source
 RPM, or SRPM, is the corresponding source code to a ready-to-install, compiled
 RPM. It includes a spec file, source files and possibly patch files.  It can be
@@ -1857,7 +1959,7 @@ or comment out the &lt;strong&gt;/usr/lib/rpm/check-rpaths&lt;/strong&gt; line i
 avoid issues with rpaths during the build.&lt;/p&gt;
 &lt;p&gt;The built RPMs are again in the &lt;strong&gt;$HOME/rpmbuild/RPMS/x86_64/&lt;/strong&gt; directory.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Building RPMs using Mock&lt;/h4&gt;
+&lt;h4 id="building-rpms-using-mock"&gt;Building RPMs using Mock&lt;/h4&gt;
 &lt;p&gt;Mock is a tool that creates chroot environments and builds RPM packages in
 them.  It comes with default configurations, but it is easy to adapt and
 customize a configuration.&lt;/p&gt;
@@ -1999,11 +2101,15 @@ collectd-mysql-5.5.0-1.el6.x86_64.rpm
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Mock is a great tool for building RPMs.  You get a clean chroot environment in
 which to build RPMs.  Building from a source rpm or a spec file is slightly
 more involved.  In the last part of this guide, Part 4, we will look at signing
-our RPMs and distributing the GPG key.&lt;/p&gt;</summary><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><published>2015-08-15T00:00:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+our RPMs and distributing the GPG key.&lt;/p&gt;</content><category term="rpm"></category><category term="collectd"></category></entry><entry><title>Troubleshooting slow rsh logins with strace on CentOS 6</title><link href="http://giovannitorres.me/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html" rel="alternate"></link><published>2015-08-15T00:00:00-04:00</published><updated>2015-08-15T00:00:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-08-15:/troubleshooting-slow-rsh-logins-with-strace-on-centos-6.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
+uses a much stronger authentication system.  While you should generally not use
+rsh for remote access, it does have some valid use cases.&lt;/p&gt;
+&lt;p&gt;In an HPC environment, for example, where the cluster is …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;rsh is the remote shell "r command" that has long been superseded by SSH as it
 uses a much stronger authentication system.  While you should generally not use
 rsh for remote access, it does have some valid use cases.&lt;/p&gt;
@@ -2014,20 +2120,20 @@ offers password-less, host-based authentication to these remote nodes.&lt;/p&gt;
 &lt;p&gt;In this article, we will look at why rsh can be very slow and suggest a
 workaround for this slowness&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;In this example, the rsh client hostname is &lt;em&gt;client1&lt;/em&gt; with an IP address of
 192.168.122.200.  The rsh server hostname &lt;em&gt;server1&lt;/em&gt; with an IP address of
 192.168.122.202.  Make sure that each server has an entry in /etc/hosts for
 both servers if you are not using DNS for name resolution.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Installing the rsh Client&lt;/h4&gt;
+&lt;h4 id="installing-the-rsh-client"&gt;Installing the rsh Client&lt;/h4&gt;
 &lt;p&gt;To install the rsh client on client1, install the &lt;strong&gt;rsh&lt;/strong&gt; package:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install rsh
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Installing the rsh Server&lt;/h4&gt;
+&lt;h4 id="installing-the-rsh-server"&gt;Installing the rsh Server&lt;/h4&gt;
 &lt;p&gt;The rsh server runs under the xinetd superserver.  Install both packages on
 server1:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install xinetd rsh-server
@@ -2035,7 +2141,7 @@ server1:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Configuring the rsh Server&lt;/h5&gt;
+&lt;h5 id="configuring-the-rsh-server"&gt;Configuring the rsh Server&lt;/h5&gt;
 &lt;p&gt;The configuration file for rsh is &lt;strong&gt;/etc/xinetd.d/rsh&lt;/strong&gt; and is disabled by
 default:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;service shell
@@ -2058,7 +2164,7 @@ restart the xinetd service:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Adjusting iptables&lt;/h4&gt;
+&lt;h4 id="adjusting-iptables"&gt;Adjusting iptables&lt;/h4&gt;
 &lt;p&gt;rsh uses a range of ports from tcp/514 to tcp/1024.  Add the following iptables
 rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;-A INPUT -m state --state NEW -m tcp -p tcp -s 192.168.122.202 --dport 514:1023 -j ACCEPT
@@ -2073,7 +2179,7 @@ rule on the &lt;em&gt;client&lt;/em&gt;:&lt;/p&gt;
 &lt;p&gt;Restart the iptables service on both client and server after adding these
 rules, adjusting the IP addresses for ones that match your configuration.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Configuring Host-Based Authentication&lt;/h4&gt;
+&lt;h4 id="configuring-host-based-authentication"&gt;Configuring Host-Based Authentication&lt;/h4&gt;
 &lt;p&gt;The authentication mechanism for rsh is based on the contents of
 &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; and or &lt;em&gt;$HOME/.rhosts&lt;/em&gt;. Both files include a list of
 hostnames that a remote user is allowed to access.&lt;/p&gt;
@@ -2087,7 +2193,7 @@ rsh.  On server1, &lt;em&gt;/etc/hosts.equiv&lt;/em&gt; should have at least a s
 
 &lt;p&gt;The permissions of this file should be &lt;strong&gt;0600&lt;/strong&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing From the Command Line&lt;/h4&gt;
+&lt;h4 id="testing-from-the-command-line"&gt;Testing From the Command Line&lt;/h4&gt;
 &lt;p&gt;Test the rsh connection from client1 to server1.  Wrap the command around a
 pair of date commands to see the time it takes to complete the remote command:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="gp"&gt;[giovanni@client1 ~]$&lt;/span&gt; date +%s.%3N&lt;span class="p"&gt;;&lt;/span&gt; /usr/bin/rsh server1 /usr/bin/uptime&lt;span class="p"&gt;;&lt;/span&gt; date +%s.%3N
@@ -2129,7 +2235,7 @@ signals an application makes from userspace to kernel space and the responses.
 We will now use strace on the server to capture system calls to see what the
 rshd daemon is doing.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Testing with Strace&lt;/h4&gt;
+&lt;h4 id="testing-with-strace"&gt;Testing with Strace&lt;/h4&gt;
 &lt;p&gt;First, make sure you have the strace package installed.  If not, installing it
 is easy:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install strace
@@ -2227,7 +2333,7 @@ file.  So, if the rsh client is near the bottom of a very long hosts.equiv
 file, it can take 10s of seconds to return a command prompt or command output
 from the remote server.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Workaround using Netgroups&lt;/h4&gt;
+&lt;h4 id="workaround-using-netgroups"&gt;Workaround using Netgroups&lt;/h4&gt;
 &lt;p&gt;It's clear that this strategy will not work.  Either abandon rsh or try to fix
 the problem if you really must use rsh.&lt;/p&gt;
 &lt;p&gt;We can work around the problem using netgroups on the rsh server.  Netgroups
@@ -2294,13 +2400,21 @@ the same file descriptor:&lt;/p&gt;
 reading /etc/netgroup.  Except, reading a single line from /etc/netgroup speeds
 up the rsh server response significantly.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Again, you are probably not using rsh and for good reason.  rsh should only be
 used in private networks that have no direct connection to the Internet.  However,
 if you are using it, say for launching parallel jobs in an HPC cluster, then
 hopefully this article explains why rsh is sometimes slow and how to
 workaround the slowness using netgroups.&lt;/p&gt;
-&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</summary><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><published>2015-07-03T12:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;For more information, see the man pages for rshd and hosts.equiv.&lt;/p&gt;</content><category term="rsh"></category><category term="strace"></category><category term="troubleshooting"></category></entry><entry><title>Using Collectd, Python and Graphite to Graph Slurm Partitions</title><link href="http://giovannitorres.me/using-collectd-python-and-graphite-to-graph-slurm-partitions.html" rel="alternate"></link><published>2015-07-03T12:47:00-04:00</published><updated>2015-07-03T12:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-07-03:/using-collectd-python-and-graphite-to-graph-slurm-partitions.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;&lt;a href="https://collectd.org/"&gt;Collectd&lt;/a&gt; comes with a long &lt;a href="https://collectd.org/wiki/index.php/Table_of_Plugins"&gt;list of
+plugins&lt;/a&gt;.  In a previous
+&lt;a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"&gt;article&lt;/a&gt;, we showed how to install the
+necessary dependencies to enable most of the collectd plugins when compiling
+collectd from source.&lt;/p&gt;
+&lt;p&gt;One of these plugins is the &lt;a href="https://collectd.org/wiki/index.php/Plugin:Python"&gt;Python
+plugin&lt;/a&gt;, which is a binding
+that allows you to write …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;&lt;a href="https://collectd.org/"&gt;Collectd&lt;/a&gt; comes with a long &lt;a href="https://collectd.org/wiki/index.php/Table_of_Plugins"&gt;list of
 plugins&lt;/a&gt;.  In a previous
 &lt;a href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html"&gt;article&lt;/a&gt;, we showed how to install the
@@ -2316,7 +2430,7 @@ interpreter every time the scripts need to run.&lt;/p&gt;
 that will graph CPU cores by state from &lt;a href="http://slurm.schedmd.com"&gt;Slurm&lt;/a&gt;, an HPC
 resource manager. &lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;This article assumes you have some familiarity with Collectd and have an
 existing Graphite installation. For instructions on how to install Graphite,
 read the &lt;a href="https://graphite.readthedocs.org/en/stable/install.html"&gt;installation
@@ -2331,7 +2445,7 @@ Python module.  You can, however, install it easily with Pip:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Enabling the Python Plugin&lt;/h4&gt;
+&lt;h4 id="enabling-the-python-plugin"&gt;Enabling the Python Plugin&lt;/h4&gt;
 &lt;p&gt;The default &lt;em&gt;collectd.conf&lt;/em&gt; comes with the Python plugin disabled:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;## &amp;lt;LoadPlugin python&amp;gt;
 ##   Globals true
@@ -2347,14 +2461,14 @@ Python module.  You can, however, install it easily with Pip:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Writing a Python Read Plugin&lt;/h4&gt;
+&lt;h4 id="writing-a-python-read-plugin"&gt;Writing a Python Read Plugin&lt;/h4&gt;
 &lt;p&gt;The &lt;a href="https://collectd.org/documentation/manpages/collectd-python.5.shtml"&gt;collectd-python
 manpage&lt;/a&gt;
 documents how to use the Python plugin structure to create your own plugins. We
 will walk through writing a script, section by section, to understand how to
 gather and dispatch metrics to collectd.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Importing Modules&lt;/h5&gt;
+&lt;h5 id="importing-modules"&gt;Importing Modules&lt;/h5&gt;
 &lt;p&gt;The first part of our script will import the necessary modules.&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;collectd&lt;/span&gt;
 &lt;span class="kn"&gt;import&lt;/span&gt; &lt;span class="nn"&gt;signal&lt;/span&gt;
@@ -2366,7 +2480,7 @@ gather and dispatch metrics to collectd.&lt;/p&gt;
 &lt;p&gt;The first import statement loads the collectd module.  This is the module that
 will register the read and write functions with collectd.  The remaining
 modules are used elsewhere in the script to gather information.&lt;/p&gt;
-&lt;h5&gt;Gathering Metrics&lt;/h5&gt;
+&lt;h5 id="gathering-metrics"&gt;Gathering Metrics&lt;/h5&gt;
 &lt;p&gt;The purpose of the plugin is to gather metrics and feed it to collectd.  From
 there, collectd will send it wherever it is configured to, for example to RRD
 files, to Graphite or another time-series database. &lt;/p&gt;
@@ -2419,7 +2533,7 @@ dictionary.  This will be used in the &lt;em&gt;read_callback&lt;/em&gt; functio
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h5&gt;Taking care of SIGCHLD&lt;/h5&gt;
+&lt;h5 id="taking-care-of-sigchld"&gt;Taking care of SIGCHLD&lt;/h5&gt;
 &lt;p&gt;This particular example uses the &lt;em&gt;subprocess&lt;/em&gt; module to fork a child process that will execute
 the &lt;em&gt;sinfo&lt;/em&gt; command.  The Python plugin is a parent to this forked process, and
 as such, the forked process will send a &lt;strong&gt;SIGCHLD&lt;/strong&gt; signal to the parent process upon
@@ -2438,7 +2552,7 @@ plugin can create new processes without throwing exceptions.&lt;/p&gt;
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h5&gt;Defining a Read Callback&lt;/h5&gt;
+&lt;h5 id="defining-a-read-callback"&gt;Defining a Read Callback&lt;/h5&gt;
 &lt;p&gt;The purpose of the read callback is to setup the &lt;em&gt;Values&lt;/em&gt; object with the
 parameters of the metrics you are dispatching to collectd.  It sets:&lt;/p&gt;
 &lt;ul&gt;
@@ -2473,7 +2587,7 @@ metric_name refers to each of the keys in the dictionary returned by the
 &lt;/pre&gt;&lt;/div&gt;
 
 
-&lt;h5&gt;Registering Functions&lt;/h5&gt;
+&lt;h5 id="registering-functions"&gt;Registering Functions&lt;/h5&gt;
 &lt;p&gt;The final lines of the script registers two callbacks: an init function to
 restore the behavior of &lt;em&gt;SIGCHLD&lt;/em&gt; and the other to periodically run the
 read_callback function, which in turn calls the get_cpus_by_state() function to
@@ -2486,7 +2600,7 @@ gather metrics and dispatch the values to the daemon.&lt;/p&gt;
 &lt;p&gt;Save all the bits in a file, such as &lt;strong&gt;slurm_core_states.py&lt;/strong&gt; (available here
 as a &lt;a href="https://gist.github.com/giovtorres/5125ca7c248d51388e40"&gt;gist&lt;/a&gt;).&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Configuring the Python Plugin Section&lt;/h4&gt;
+&lt;h4 id="configuring-the-python-plugin-section"&gt;Configuring the Python Plugin Section&lt;/h4&gt;
 &lt;p&gt;Now that we have enabled the Python plugin in collectd and wrote a read plugin,
 the last thing needed is to configure the plugin in collectd's configuration
 file. Add the following configuration stanza to &lt;strong&gt;collectd.conf&lt;/strong&gt;:&lt;/p&gt;
@@ -2509,7 +2623,7 @@ script will not run interactively and is therefore set to &lt;strong&gt;false&lt
 &lt;p&gt;The &lt;em&gt;Import&lt;/em&gt; option imports our plugin into collectd's embedded Python
 interpreter.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Verifying&lt;/h4&gt;
+&lt;h4 id="verifying"&gt;Verifying&lt;/h4&gt;
 &lt;p&gt;After restarting the collectd service, check the logs to make sure there are no
 issues with the plugin.  If there are no warning or errors in the logs, verify
 that the plugin is working by querying the metrics.&lt;/p&gt;
@@ -2542,13 +2656,17 @@ using the Graphite URL API:&lt;/p&gt;
 
 
 &lt;p&gt;And finally, here is what a Graphite graph would look like:&lt;/p&gt;
-&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png" /&gt;&lt;/p&gt;
+&lt;p&gt;&lt;img alt="Slurm Core States" src="http://giovannitorres.me/images/slurm_core_states.png"&gt;&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;This is just one example of how to use Python and collectd to gather metrics
 and visualize them.  You could write a plugin with a similar structure to
 dispatch custom metrics to your metric collector, such as the Graphite suite or
-any other time-series database.&lt;/p&gt;</summary><category term="collectd"></category><category term="python"></category><category term="slurm"></category></entry><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><published>2015-06-15T17:34:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+any other time-series database.&lt;/p&gt;</content><category term="collectd"></category><category term="python"></category><category term="slurm"></category></entry><entry><title>Enabling (Almost All) Collectd Plugins on CentOS 6</title><link href="http://giovannitorres.me/enabling-almost-all-collectd-plugins-on-centos-6.html" rel="alternate"></link><published>2015-06-15T17:34:00-04:00</published><updated>2015-06-15T17:34:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-06-15:/enabling-almost-all-collectd-plugins-on-centos-6.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;There are a variety of ways to extract system resource information from a Linux
+server. Some of these utilities are triggered by cron, such as sysstat, while others are
+based on a predefined check interval, such as Nagios.  Others are meant to be used
+interactively, such as htop or …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;There are a variety of ways to extract system resource information from a Linux
 server. Some of these utilities are triggered by cron, such as sysstat, while others are
 based on a predefined check interval, such as Nagios.  Others are meant to be used
@@ -2572,7 +2690,7 @@ more plugins that are available, the more dependencies are necessary.&lt;/p&gt;
 from source with most of the plugins enabled.  These dependencies can all be
 found in the CentOS Base and EPEL repositories.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;Compiling any package from source requires a compiler.  If you don't already
 have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install gcc
@@ -2585,7 +2703,7 @@ have one installed, go ahead and install the GNU GCC compiler:&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Downloading collectd&lt;/h4&gt;
+&lt;h4 id="downloading-collectd"&gt;Downloading collectd&lt;/h4&gt;
 &lt;p&gt;A link to the collectd source is hosted on the main page of the &lt;a href="https://collectd.org" title="collectd website"&gt;collectd
 website&lt;/a&gt;.  Download and untar the
 the latest source tarball.  At the time of this writing, version 5.5.0 is the
@@ -2595,7 +2713,7 @@ latest stable version.&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Configuring collectd&lt;/h4&gt;
+&lt;h4 id="configuring-collectd"&gt;Configuring collectd&lt;/h4&gt;
 &lt;p&gt;After downloading and extracting the source files, change to that directory:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cd collectd-5.5.0
 &lt;/pre&gt;&lt;/div&gt;
@@ -2654,7 +2772,7 @@ output the following line at the very end:&lt;/p&gt;
 &lt;p&gt;Use the two tables below to install the appropriate RPM packages for the
 plugins you would like to enable.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Libaries&lt;/h4&gt;
+&lt;h4 id="libaries"&gt;Libaries&lt;/h4&gt;
 &lt;p&gt;The following table shows the collectd libraries and their corresponding RPM
 package dependencies:&lt;/p&gt;
 &lt;table&gt;
@@ -2811,7 +2929,7 @@ package dependencies:&lt;/p&gt;
 &lt;/table&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Modules&lt;/h4&gt;
+&lt;h4 id="modules"&gt;Modules&lt;/h4&gt;
 &lt;p&gt;The following table shows the collectd modules and their corresponding RPM
 package dependencies:&lt;/p&gt;
 &lt;table&gt;
@@ -2968,7 +3086,7 @@ package dependencies:&lt;/p&gt;
 &lt;/table&gt;
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Notes&lt;/h4&gt;
+&lt;h4 id="notes"&gt;Notes&lt;/h4&gt;
 &lt;p&gt;Not all plugin dependencies were available from the CentOS Base and EPEL
 repositories.  For these particular plugins, you would either have to:&lt;/p&gt;
 &lt;ul&gt;
@@ -2981,10 +3099,16 @@ repositories.  For these particular plugins, you would either have to:&lt;/p&gt;
 addition to the 1.8.0 version listed above, are able to satisfy the java
 dependency.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;Once the plugin dependencies are sorted out, the &lt;strong&gt;make&lt;/strong&gt; and &lt;strong&gt;make install&lt;/strong&gt;
 steps typically go without a hitch.  In a future post, I will outline how to
-build the collectd RPMs using the latest available version. &lt;/p&gt;</summary><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><published>2015-05-29T13:47:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+build the collectd RPMs using the latest available version. &lt;/p&gt;</content><category term="collectd"></category></entry><entry><title>How to Setup an RPM Signing Key</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-signing-key.html" rel="alternate"></link><published>2015-05-29T13:47:00-04:00</published><updated>2015-05-29T13:47:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-29:/how-to-setup-an-rpm-signing-key.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt; of
+this series, we set up an RPM build environment with a dedicated user for
+building RPMs.  &lt;/p&gt;
+&lt;p&gt;Before we actually walk through the steps for building an RPM, we need to
+create a GPG key to sign the RPMs before they are distributed and installed.
+Signing …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;In &lt;a href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"&gt;Part 1&lt;/a&gt; of
 this series, we set up an RPM build environment with a dedicated user for
 building RPMs.  &lt;/p&gt;
@@ -2995,7 +3119,7 @@ environment are verified from trusted sources.&lt;/p&gt;
 &lt;p&gt;In this guide, we will walk through the steps required to create your own RPM
 GPG signing key, distribute it and import it into a machine's RPM database.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;Creating a GPG key requires a certain amount of entropy in order to ensure
 sufficient randomness.  If you are following this guide on a virtual machine,
 you will need to make sure that the virtual machine has sufficient entropy.&lt;/p&gt;
@@ -3005,14 +3129,14 @@ continuing.&lt;/p&gt;
 &lt;p&gt;Additionally, the steps in this guide will be carried out by the &lt;strong&gt;makerpm&lt;/strong&gt;
 user.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Install Packages&lt;/h4&gt;
+&lt;h4 id="install-packages"&gt;Install Packages&lt;/h4&gt;
 &lt;p&gt;To install the GPG package, run the following:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo yum install gnupg2
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Create a GPG Key Pair&lt;/h4&gt;
+&lt;h4 id="create-a-gpg-key-pair"&gt;Create a GPG Key Pair&lt;/h4&gt;
 &lt;p&gt;Use the &lt;em&gt;gpg&lt;/em&gt; command to create a new key pair:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --gen-key
 &lt;/pre&gt;&lt;/div&gt;
@@ -3116,7 +3240,7 @@ sub   2048R/D4F51F8B 2015-05-29
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Confirming your keys&lt;/h4&gt;
+&lt;h4 id="confirming-your-keys"&gt;Confirming your keys&lt;/h4&gt;
 &lt;p&gt;To list your keys, run the following command:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;gpg --list-keys
 &lt;/pre&gt;&lt;/div&gt;
@@ -3132,7 +3256,7 @@ sub   2048R/D4F51F8B 2015-05-29
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Troubleshooting TTY Issues&lt;/h4&gt;
+&lt;h4 id="troubleshooting-tty-issues"&gt;Troubleshooting TTY Issues&lt;/h4&gt;
 &lt;p&gt;There is an &lt;a href="https://bugzilla.redhat.com/show_bug.cgi?id=659512#c5"&gt;issue&lt;/a&gt;,
 apparently with the &lt;em&gt;gnupg2&lt;/em&gt; package, where if you &lt;em&gt;su&lt;/em&gt;, i.e. switch, to
 another user, a new pseudo-terminal is not opened for the switched user.&lt;/p&gt;
@@ -3163,7 +3287,7 @@ gpg: Key generation canceled.
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;# Workaround&lt;/h4&gt;
+&lt;h4 id="workaround"&gt;# Workaround&lt;/h4&gt;
 &lt;p&gt;In order to work around the above TTY issue, you will need to use X11
 forwarding when switching to a different user.  To do this, you need an
 &lt;em&gt;export&lt;/em&gt; file in root's &lt;strong&gt;.xauth&lt;/strong&gt; directory.&lt;/p&gt;
@@ -3188,12 +3312,12 @@ echo &amp;quot;user1&amp;quot; &amp;gt;&amp;gt; .xauth/export
 &lt;p&gt;Now, if you try to generate gpg keys, pinentry will present the passphrase
 prompt.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Distributing the Public Key&lt;/h4&gt;
+&lt;h4 id="distributing-the-public-key"&gt;Distributing the Public Key&lt;/h4&gt;
 &lt;p&gt;If you plan to distribute custom built RPMs to multiple or even all machines in your
 environment, you will need to distribute the public key to all machines and
 import it into each machine's local RPM database.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Export the Signing Key&lt;/h5&gt;
+&lt;h5 id="export-the-signing-key"&gt;Export the Signing Key&lt;/h5&gt;
 &lt;p&gt;We need to export the signing key into ASCII armored output, which is a form of
 binary-to-text encoding.  We need the &lt;em&gt;name&lt;/em&gt; of the key in order to export it.&lt;/p&gt;
 &lt;p&gt;Get a list of keys:&lt;/p&gt;
@@ -3220,7 +3344,7 @@ output to a file:&lt;/p&gt;
 &lt;p&gt;The resulting file, &lt;strong&gt;RPM-GPG-KEY-example-org-signing-key&lt;/strong&gt;, is the RPM signing
 key that we can distribute to other machines.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Importing the Key into the RPM database&lt;/h5&gt;
+&lt;h5 id="importing-the-key-into-the-rpm-database"&gt;Importing the Key into the RPM database&lt;/h5&gt;
 &lt;p&gt;On RHEL 6 and its clones, the default location on the filesystem for RPM GPG
 keys are &lt;strong&gt;/etc/pki/rpm-gpg&lt;/strong&gt;.  Use your tool of choice, such as scp, rsync,
 Puppet, Ansible, etc., to copy the file to any remote machine where you will
@@ -3244,7 +3368,7 @@ the key. This command will not return any output and exit with return code &lt;s
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h5&gt;Verify Key Import&lt;/h5&gt;
+&lt;h5 id="verify-key-import"&gt;Verify Key Import&lt;/h5&gt;
 &lt;p&gt;To verify that the key has been imported, we can search the RPM database.
 First, we need the public GPG key id.  In the output of &lt;strong&gt;gpg --list-keys&lt;/strong&gt;,
 the public key id is found in the &lt;strong&gt;pub&lt;/strong&gt; line.  It is the 8 hex digits after
@@ -3286,9 +3410,15 @@ Description :
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;You now have an RPM GPG key that you can use sign and verify custom RPMs.  In
-Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</summary><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><published>2015-05-24T10:38:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h4&gt;Introduction&lt;/h4&gt;
+Part 3 of this guide, we will look at various ways of building RPMs.&lt;/p&gt;</content><category term="rpm"></category><category term="gpg"></category></entry><entry><title>How to Setup an RPM Build Environment on CentOS 6</title><link href="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html" rel="alternate"></link><published>2015-05-24T10:38:00-04:00</published><updated>2015-05-24T10:38:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2015-05-24:/how-to-setup-an-rpm-build-environment-on-centos-6.html</id><summary type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
+&lt;p&gt;If you are working on or developing software for a RHEL based operating system,
+building RPMs is a great way to distribute packages within a group or
+enterprise.  Sometimes, the package you want is not in any of the usual RPM
+repositories, like &lt;a href="https://fedoraproject.org/wiki/EPEL" title="EPEL"&gt;EPEL&lt;/a&gt; for
+example. &lt;/p&gt;
+&lt;p&gt;At this point …&lt;/p&gt;</summary><content type="html">&lt;h4 id="introduction"&gt;Introduction&lt;/h4&gt;
 &lt;p&gt;If you are working on or developing software for a RHEL based operating system,
 building RPMs is a great way to distribute packages within a group or
 enterprise.  Sometimes, the package you want is not in any of the usual RPM
@@ -3301,11 +3431,11 @@ run the build/compile/install commands for you.&lt;/p&gt;
 &lt;p&gt;In this guide, we will walk through the steps required to setup an environment
 to build RPMs.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Prerequisites&lt;/h4&gt;
+&lt;h4 id="prerequisites"&gt;Prerequisites&lt;/h4&gt;
 &lt;p&gt;Before continuing with this guide, start with a new virtual machine with the
 EPEL yum repository configured.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Install Packages&lt;/h4&gt;
+&lt;h4 id="install-packages"&gt;Install Packages&lt;/h4&gt;
 &lt;p&gt;Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.&lt;/p&gt;
 &lt;p&gt;To install the required packages, run the following:&lt;/p&gt;
@@ -3315,7 +3445,7 @@ sudo yum install rpmdevtools yum-utils
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Create a Dedicated User&lt;/h4&gt;
+&lt;h4 id="create-a-dedicated-user"&gt;Create a Dedicated User&lt;/h4&gt;
 &lt;p&gt;Do &lt;strong&gt;not&lt;/strong&gt; build RPMs as the &lt;em&gt;root&lt;/em&gt; user!  You have been warned.  Things can go
 really wrong if the spec file is not written properly.  In fact, the &lt;em&gt;rpmbuild&lt;/em&gt;
 command will build the RPM in its own &lt;em&gt;BUILD_ROOT&lt;/em&gt;, therefore root access is
@@ -3329,7 +3459,7 @@ and use the same environment.&lt;/p&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Set Up The rpmbuild Tree&lt;/h4&gt;
+&lt;h4 id="set-up-the-rpmbuild-tree"&gt;Set Up The rpmbuild Tree&lt;/h4&gt;
 &lt;p&gt;This process is trivial when using the &lt;em&gt;rpmdevtools&lt;/em&gt; package. This package
 contains several scripts that help with building RPM packages. &lt;/p&gt;
 &lt;p&gt;As the &lt;em&gt;makerpm&lt;/em&gt; user, run the &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command:&lt;/p&gt;
@@ -3354,7 +3484,7 @@ rpmbuild/
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;The .rpmmacros File&lt;/h4&gt;
+&lt;h4 id="the-rpmmacros-file"&gt;The .rpmmacros File&lt;/h4&gt;
 &lt;p&gt;The &lt;em&gt;rpmdev-setuptree&lt;/em&gt; command also installs a &lt;em&gt;.rpmmacros&lt;/em&gt; file in the user's
 home directory.  This file contains three lines by default:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;%_topdir      %&lt;span class="o"&gt;(&lt;/span&gt;&lt;span class="nb"&gt;echo&lt;/span&gt; &lt;span class="nv"&gt;$HOME&lt;/span&gt;&lt;span class="o"&gt;)&lt;/span&gt;/rpmbuild
@@ -3384,10 +3514,13 @@ for libraries in non-standard locations.&lt;/p&gt;
 &lt;p&gt;For a more thorough explanation, see this Fedora Project link:
 &lt;a href="https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath"&gt;https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath&lt;/a&gt;.&lt;/p&gt;
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Conclusion&lt;/h4&gt;
+&lt;h4 id="conclusion"&gt;Conclusion&lt;/h4&gt;
 &lt;p&gt;You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
-follow good practice and sign your RPM packages.&lt;/p&gt;</summary><category term="rpm"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><published>2014-09-13T15:12:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+follow good practice and sign your RPM packages.&lt;/p&gt;</content><category term="rpm"></category></entry><entry><title>Increasing Entropy on Virtual Machines</title><link href="http://giovannitorres.me/increasing-entropy-on-virtual-machines.html" rel="alternate"></link><published>2014-09-13T15:12:00-04:00</published><updated>2014-09-13T15:12:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-09-13:/increasing-entropy-on-virtual-machines.html</id><summary type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
+waiting for kernel to gather sufficient entropy in order to sufficiently
+randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
+&lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good …&lt;/pre&gt;&lt;/div&gt;</summary><content type="html">&lt;p&gt;Have you ever tried to generate an SSL certificate or gpg-key and it pauses,
 waiting for kernel to gather sufficient entropy in order to sufficiently
 randomize the encrypted output?  You have probably seen a message such as:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;We need to generate a lot of random bytes. It is a good idea to perform
@@ -3417,14 +3550,14 @@ random number input.  We will use the &lt;code&gt;/dev/urandrom&lt;/code&gt; pse
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Start rngd&lt;/h4&gt;
+&lt;h4 id="start-rngd"&gt;Start rngd&lt;/h4&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;sudo chkconfig rngd on
 sudo service rngd start
 &lt;/pre&gt;&lt;/div&gt;
 
 
 &lt;p&gt;&lt;br&gt;&lt;/p&gt;
-&lt;h4&gt;Verify available kernel entropy (higher is better)&lt;/h4&gt;
+&lt;h4 id="verify-available-kernel-entropy-higher-is-better"&gt;Verify available kernel entropy (higher is better)&lt;/h4&gt;
 &lt;p&gt;Before:&lt;/p&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;cat /proc/sys/kernel/random/entropy_avail 
 173
@@ -3439,10 +3572,13 @@ sudo service rngd start
 
 &lt;p&gt;That's it.&lt;/p&gt;
 &lt;p&gt;It is good to have a large amount of entropy when the kernel needs to use random numbers.  This is good for security in order to prevent the generation of duplicate keys, for example.&lt;/p&gt;
-&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</summary><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><published>2014-08-03T12:15:00-04:00</published><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+&lt;p&gt;When spinning up virtual machines, it would be a good idea to have rngd start early in the boot process, before generating the SSH host key pairs during first boot.&lt;/p&gt;</content><category term="virtual machine"></category></entry><entry><title>Introduction</title><link href="http://giovannitorres.me/introduction.html" rel="alternate"></link><published>2014-08-03T12:15:00-04:00</published><updated>2014-08-03T12:15:00-04:00</updated><author><name>Giovanni Torres</name></author><id>tag:giovannitorres.me,2014-08-03:/introduction.html</id><summary type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
+put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
+try to put meaningful things here regarding monitoring, configuration and
+troubleshooting of processes and applications running on Linux …&lt;/p&gt;</summary><content type="html">&lt;p&gt;Ah, so finally got around to setting up a place on the Internet to squat and
 put some of my how-to's.  I came across GitHub Pages and gave it a try.  I'll
 try to put meaningful things here regarding monitoring, configuration and
 troubleshooting of processes and applications running on Linux, mostly CentOS
 6, 7 and sometimes Fedora.&lt;/p&gt;
 &lt;p&gt;I also tend to gravitate towards the areas of monitoring, visualization and documentation.&lt;/p&gt;
-&lt;p&gt;Let's see how it goes...&lt;/p&gt;</summary></entry></feed>
+&lt;p&gt;Let's see how it goes...&lt;/p&gt;</content></entry></feed>

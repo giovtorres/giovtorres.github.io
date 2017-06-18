@@ -13,13 +13,13 @@
 
         <meta name="author" content="Giovanni Torres" />
         <meta name="keywords" content="rpm" />
-        <meta name="description" content="Introduction If you are working on or developing software for a RHEL based operating system, building RPMs is a great way to distribute packages within a group or enterprise. Sometimes, the package you want is not in any of the usual RPM repositories, like EPEL for example. At this point ..." />
+        <meta name="description" content="Introduction If you are working on or developing software for a RHEL based operating system, building RPMs is a great way to distribute packages within a group or enterprise. Sometimes, the package you want is not in any of the usual RPM repositories, like EPEL for example. At this point …" />
 
         <meta property="og:site_name" content="Giovanni Torres" />
         <meta property="og:type" content="article"/>
         <meta property="og:title" content="How to Setup an RPM Build Environment on CentOS 6"/>
         <meta property="og:url" content="http://giovannitorres.me/how-to-setup-an-rpm-build-environment-on-centos-6.html"/>
-        <meta property="og:description" content="Introduction If you are working on or developing software for a RHEL based operating system, building RPMs is a great way to distribute packages within a group or enterprise. Sometimes, the package you want is not in any of the usual RPM repositories, like EPEL for example. At this point ..."/>
+        <meta property="og:description" content="Introduction If you are working on or developing software for a RHEL based operating system, building RPMs is a great way to distribute packages within a group or enterprise. Sometimes, the package you want is not in any of the usual RPM repositories, like EPEL for example. At this point …"/>
         <meta property="article:published_time" content="2015-05-24" />
             <meta property="article:section" content="RPM" />
             <meta property="article:tag" content="rpm" />
@@ -97,7 +97,7 @@ Giovanni Torres            </a>
     
 </footer><!-- /.post-info -->                    </div>
                 </div>
-                <h4>Introduction</h4>
+                <h4 id="introduction">Introduction</h4>
 <p>If you are working on or developing software for a RHEL based operating system,
 building RPMs is a great way to distribute packages within a group or
 enterprise.  Sometimes, the package you want is not in any of the usual RPM
@@ -110,11 +110,11 @@ run the build/compile/install commands for you.</p>
 <p>In this guide, we will walk through the steps required to setup an environment
 to build RPMs.</p>
 <p><br></p>
-<h4>Prerequisites</h4>
+<h4 id="prerequisites">Prerequisites</h4>
 <p>Before continuing with this guide, start with a new virtual machine with the
 EPEL yum repository configured.</p>
 <p><br></p>
-<h4>Install Packages</h4>
+<h4 id="install-packages">Install Packages</h4>
 <p>Building RPMs requires several development packages such as the GCC compiler
 and the autotools suite.</p>
 <p>To install the required packages, run the following:</p>
@@ -124,7 +124,7 @@ sudo yum install rpmdevtools yum-utils
 
 
 <p><br></p>
-<h4>Create a Dedicated User</h4>
+<h4 id="create-a-dedicated-user">Create a Dedicated User</h4>
 <p>Do <strong>not</strong> build RPMs as the <em>root</em> user!  You have been warned.  Things can go
 really wrong if the spec file is not written properly.  In fact, the <em>rpmbuild</em>
 command will build the RPM in its own <em>BUILD_ROOT</em>, therefore root access is
@@ -138,7 +138,7 @@ and use the same environment.</p>
 
 
 <p><br></p>
-<h4>Set Up The rpmbuild Tree</h4>
+<h4 id="set-up-the-rpmbuild-tree">Set Up The rpmbuild Tree</h4>
 <p>This process is trivial when using the <em>rpmdevtools</em> package. This package
 contains several scripts that help with building RPM packages. </p>
 <p>As the <em>makerpm</em> user, run the <em>rpmdev-setuptree</em> command:</p>
@@ -163,7 +163,7 @@ rpmbuild/
 
 
 <p><br></p>
-<h4>The .rpmmacros File</h4>
+<h4 id="the-rpmmacros-file">The .rpmmacros File</h4>
 <p>The <em>rpmdev-setuptree</em> command also installs a <em>.rpmmacros</em> file in the user's
 home directory.  This file contains three lines by default:</p>
 <div class="highlight"><pre><span></span>%_topdir      %<span class="o">(</span><span class="nb">echo</span> <span class="nv">$HOME</span><span class="o">)</span>/rpmbuild
@@ -193,7 +193,7 @@ for libraries in non-standard locations.</p>
 <p>For a more thorough explanation, see this Fedora Project link:
 <a href="https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath">https://fedoraproject.org/wiki/Packaging:Guidelines#Beware_of_Rpath</a>.</p>
 <p><br></p>
-<h4>Conclusion</h4>
+<h4 id="conclusion">Conclusion</h4>
 <p>You now have a working RPM build environment with a dedicated user for building
 RPMs.  In the Part 2 of this guide, we will setup a signing key so that you can
 follow good practice and sign your RPM packages.</p>

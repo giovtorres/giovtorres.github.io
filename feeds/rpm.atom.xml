@@ -307,7 +307,7 @@ necessary dependencies:&lt;/p&gt;
 
 
 &lt;p&gt;The reason it fails is because collectd hardcodes the &lt;strong&gt;/usr/lib64&lt;/strong&gt; path
-into the the collectd-nagios, collectdctl and collectd-tg binaries when the
+into the collectd-nagios, collectdctl and collectd-tg binaries when the
 Linux dynamic loader will automatically load libraries from this path, given that it
 is a system default library path.  Therefore, hardcoding this particular path
 in the library is redundant.&lt;/p&gt;

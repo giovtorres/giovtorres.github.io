@@ -73,11 +73,11 @@ environment.&lt;/p&gt;
 &lt;ul&gt;
 &lt;li&gt;Fedora 25 Workstation&lt;/li&gt;
 &lt;li&gt;KVM Hypervisor and libvirt&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://www.vagrantup.com/"&gt;Vagrant&lt;/a&gt; with the
-  &lt;a href="https://github.com/vagrant-libvirt/vagrant-libvirt"&gt;vagrant-libvirt&lt;/a&gt; plugin&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://github.com/metacloud/molecule"&gt;Molecule&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://github.com/philpep/testinfra"&gt;TestInfra&lt;/a&gt;&lt;/li&gt;
-&lt;li&gt;Ansible&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://www.vagrantup.com/"&gt;Vagrant&lt;/a&gt; 1.8.5 with the
+  &lt;a href="https://github.com/vagrant-libvirt/vagrant-libvirt"&gt;vagrant-libvirt&lt;/a&gt; 0.0.37 plugin&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/metacloud/molecule"&gt;Molecule&lt;/a&gt; 1.25.0&lt;/li&gt;
+&lt;li&gt;&lt;a href="https://github.com/philpep/testinfra"&gt;TestInfra&lt;/a&gt; 1.6.3&lt;/li&gt;
+&lt;li&gt;Ansible 2.2&lt;/li&gt;
 &lt;/ul&gt;
 &lt;h2 id="setup"&gt;Setup&lt;/h2&gt;
 &lt;h3 id="installing-the-kvm-hypervisor"&gt;Installing the KVM Hypervisor&lt;/h3&gt;
